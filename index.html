@@ -3,324 +3,335 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>RouteBoy — Realtime Delivery Tracking</title>
+<title>RouteBoy Pro — Ultimate Tracking</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --navy:#10192E; --navy-2:#16223D; --paper:#F5F4EF; --orange:#F2653A;
-    --mint:#2AC2A6; --slate:#8A93A6; --line:#28324A; --white:#FFFFFF;
-    --danger:#E85B5B; --radius:10px;
+  :root { --navy: #0A0F1E; --primary: #F2653A; --mint: #2AC2A6; --paper: #F8F9FC; --slate: #64748B; --white: #ffffff; }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+  body { background: var(--paper); height: 100vh; overflow: hidden; }
+
+  /* LOGIN PAGE */
+  #loginPage { position: fixed; inset: 0; background: var(--navy); z-index: 2000; display: flex; align-items: center; justify-content: center; color: white; padding: 20px; }
+  .login-card { background: #161C2D; padding: 30px; border-radius: 20px; width: 100%; max-width: 400px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+  .login-card h2 { font-family: 'Space Grotesk'; font-size: 28px; margin-bottom: 20px; text-align: center; }
+  .login-card select, .login-card input { width: 100%; padding: 12px; margin-bottom: 15px; border-radius: 10px; border: 1px solid #2D3748; background: #0A0F1E; color: white; }
+  .btn-login { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px; }
+
+  /* MAIN LAYOUT */
+  #header { height: 60px; background: var(--navy); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; color: white; }
+  .logo { font-family: 'Space Grotesk'; font-weight: bold; font-size: 20px; }
+  #app { display: flex; height: calc(100vh - 60px); }
+  
+  #sidebar { width: 400px; background: white; border-right: 1px solid #E2E8F0; display: flex; flex-direction: column; transition: 0.3s; }
+  #map { flex: 1; position: relative; }
+
+  /* MOBILE RESPONSIVE */
+  @media (max-width: 768px) {
+    #app { flex-direction: column-reverse; }
+    #sidebar { width: 100%; height: 50%; }
   }
-  *{box-sizing:border-box; margin:0; padding:0;}
-  body{font-family:'Inter', sans-serif; background:var(--paper); color:var(--navy); height:100vh; overflow:hidden;}
-  h1,h2,h3,.display{font-family:'Space Grotesk', sans-serif;}
-  .mono{font-family:'JetBrains Mono', monospace;}
-  button{font-family:inherit;}
-  ::-webkit-scrollbar{width:6px;} ::-webkit-scrollbar-thumb{background:#DEDBCF; border-radius:4px;}
 
-  /* TOPBAR */
-  #topbar{height:56px; background:var(--navy); display:flex; align-items:center; justify-content:space-between; padding:0 18px; color:white; gap:16px;}
-  #topbar .brand{display:flex; align-items:center; gap:10px; font-family:'Space Grotesk'; font-weight:700; font-size:17px;}
-  #topbar .brand .dot{width:10px; height:10px; border-radius:50%; background:var(--orange); box-shadow:0 0 0 4px rgba(242,101,58,.2);}
-  #roleSwitch{display:flex; background:var(--navy-2); border-radius:999px; padding:3px; gap:2px;}
-  #roleSwitch button{border:none; background:transparent; color:var(--slate); font-weight:600; font-size:13px; padding:7px 16px; border-radius:999px; cursor:pointer;}
-  #roleSwitch button.active{background:var(--orange); color:white;}
-  #whoami{display:flex; align-items:center; gap:10px; font-size:13px; color:var(--slate); margin-left:auto;}
-  #whoami b{color:white;}
-  #whoami button{background:transparent; border:1px solid var(--line); color:var(--slate); font-size:11px; padding:4px 8px; border-radius:5px; cursor:pointer;}
+  .scroll-area { flex: 1; overflow-y: auto; padding: 20px; }
+  .tabs { display: flex; border-bottom: 1px solid #eee; }
+  .tab-btn { flex: 1; padding: 15px; border: none; background: none; font-weight: 600; color: var(--slate); cursor: pointer; }
+  .tab-btn.active { color: var(--primary); border-bottom: 2px solid var(--primary); }
 
-  /* LAYOUT */
-  #app{display:flex; height:calc(100vh - 56px);}
-  #sidebar{width:400px; min-width:400px; background:var(--white); border-right:1px solid #E4E1D6; display:flex; flex-direction:column; overflow:hidden;}
-  #mapWrap{flex:1; position:relative;}
-  #map{width:100%; height:100%;}
+  /* CARDS */
+  .card { background: #fcfcfc; border: 1px solid #edf2f7; padding: 15px; border-radius: 12px; margin-bottom: 15px; position: relative; }
+  .status-badge { font-size: 10px; padding: 4px 8px; border-radius: 20px; font-weight: bold; float: right; }
+  .status-pending { background: #FFF7ED; color: #C2410C; }
+  .status-done { background: #ECFDF5; color: #047857; }
 
-  .tabbar{display:flex; gap:4px; padding:12px 14px 0 14px; border-bottom:1px solid #EEECE2;}
-  .tabbar button{flex:1; border:none; background:transparent; color:var(--slate); font-weight:600; font-size:12px; padding:9px 4px; cursor:pointer;}
-  .tabbar button.active{color:var(--navy); box-shadow:0 -2px 0 var(--orange) inset;}
-  .scroll-area{flex:1; overflow-y:auto; padding:16px 18px;}
+  /* MAP ICONS */
+  .marker-boy { background: var(--navy); border: 2px solid white; border-radius: 50%; width: 35px; height: 35px; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 12px; }
+  .marker-house { width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
 
-  .field{margin-bottom:11px;}
-  .field label{display:block; font-size:11px; font-weight:600; text-transform:uppercase; color:var(--slate); margin-bottom:5px;}
-  .field input, .field select{width:100%; border:1px solid #DEDBCF; border-radius:8px; padding:9px 10px; font-size:13px; background:#FBFAF6;}
-
-  .btn{border:none; border-radius:8px; padding:10px 14px; font-weight:600; font-size:13px; cursor:pointer;}
-  .btn-primary{background:var(--orange); color:white; width:100%;}
-  .btn-mint{background:var(--mint); color:white;}
-  .btn-danger{background:#FBEFEF; color:var(--danger); border:1px solid #F3D3D3;}
-  .btn-sm{padding:6px 10px; font-size:11px;}
-
-  .stats-row{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px;}
-  .stat-card{background:var(--navy); color:white; border-radius:10px; padding:12px;}
-  .stat-card .num{font-family:'JetBrains Mono'; font-size:20px; font-weight:600;}
-  .stat-card .label{font-size:10px; color:var(--slate); text-transform:uppercase;}
-
-  .item-card{background:#FBFAF6; border:1px solid #EEECE2; border-radius:10px; padding:12px; margin-bottom:9px;}
-  .online-pill{font-size:10px; font-weight:700; padding:2px 8px; border-radius:999px;}
-  .on{background:#E4F8F3; color:#1D9E86;}
-  .off{background:#F0EEE4; color:var(--slate);}
-
-  .stop{display:flex; gap:10px; padding:11px 0; border-bottom:1px solid #F0EEE4;}
-  .stop .idx{width:26px; height:26px; border-radius:50%; background:#F0EEE4; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:bold;}
-  .stop.done .idx{background:var(--mint); color:white;}
-  .stop.nearest .idx{background:var(--orange); color:white;}
-
-  .modal-backdrop{position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:900; display:none; align-items:center; justify-content:center;}
-  .modal-backdrop.show{display:flex;}
-  .modal{background:white; border-radius:14px; padding:22px; width:340px;}
-
-  .toast{position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--navy); color:white; padding:11px 18px; border-radius:9px; font-size:13px; z-index:1100; display:none;}
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--navy); color: white; padding: 12px 25px; border-radius: 50px; z-index: 3000; display: none; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
 </style>
 </head>
 <body>
 
-<div id="topbar">
-  <div class="brand"><span class="dot"></span> RouteBoy</div>
-  <div id="roleSwitch">
-    <button id="btnAdmin" class="active">Admin</button>
-    <button id="btnDelivery">Delivery Boy</button>
+<!-- LOGIN -->
+<div id="loginPage">
+  <div class="login-card">
+    <h2>RouteBoy Pro</h2>
+    <select id="loginRole" onchange="toggleLoginInputs()">
+      <option value="admin">Login as Admin</option>
+      <option value="delivery">Login as Delivery Boy</option>
+    </select>
+    <div id="boySelection" style="display:none;">
+      <select id="boyIdentity"><option value="">Select Your Name</option></select>
+    </div>
+    <input type="password" id="loginPass" placeholder="Enter Password">
+    <button class="btn-login" onclick="handleLogin()">Login System</button>
   </div>
-  <div id="whoami"></div>
+</div>
+
+<!-- HEADER -->
+<div id="header">
+  <div class="logo">RouteBoy PRO</div>
+  <div id="userLabel" style="font-size: 14px; opacity: 0.8;"></div>
+  <button onclick="logout()" style="background:none; border:1px solid #333; color:white; padding:5px 10px; border-radius:5px; cursor:pointer;">Logout</button>
 </div>
 
 <div id="app">
   <div id="sidebar">
-    <div id="adminView">
-      <div class="tabbar">
-        <button class="tabbtn active" data-tab="overview">Overview</button>
-        <button class="tabbtn" data-tab="customers">Customers</button>
-        <button class="tabbtn" data-tab="boys">Team</button>
+    <!-- ADMIN SIDEBAR -->
+    <div id="adminPanel" style="display:none; height:100%;">
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('orders')">Orders</button>
+        <button class="tab-btn" onclick="switchTab('fleet')">Fleet</button>
       </div>
-
-      <div id="tab-overview" class="scroll-area">
-        <div class="stats-row">
-          <div class="stat-card"><div class="num" id="ovDone">0</div><div class="label">Delivered</div></div>
-          <div class="stat-card"><div class="num" id="ovPending">0</div><div class="label">Pending</div></div>
-        </div>
-        <div id="overviewBoyList"></div>
-      </div>
-
-      <div id="tab-customers" class="scroll-area" style="display:none;">
-        <div class="field"><label>Customer Name</label><input id="custName" type="text"></div>
-        <div class="field"><label>Phone</label><input id="custPhone" type="text"></div>
-        <div class="field"><label>Assign Boy</label><select id="custAssign"><option value="">Unassigned</option></select></div>
-        <p style="font-size:11px; color:var(--orange); margin-bottom:10px;">📍 Map pe click karke location set karein</p>
-        <button class="btn btn-primary" id="saveCustBtn">Save Customer</button>
-        <div id="adminCustList" style="margin-top:20px;"></div>
-      </div>
-
-      <div id="tab-boys" class="scroll-area" style="display:none;">
-        <div class="field"><label>Boy Name</label><input id="boyName" type="text"></div>
-        <button class="btn btn-primary" id="addBoyBtn">Add Boy</button>
-        <div id="teamList" style="margin-top:20px;"></div>
-      </div>
-    </div>
-
-    <div id="deliveryView" style="display:none;">
       <div class="scroll-area">
-        <button class="btn btn-mint" id="trackSwitch" style="margin-bottom:15px;">Start Live Tracking</button>
-        <div id="deliveryCustList"></div>
+        <div id="tab-orders">
+          <h3>Add Delivery</h3>
+          <input type="text" id="custName" placeholder="Customer Name" style="width:100%; padding:10px; margin:10px 0;">
+          <input type="text" id="custPhone" placeholder="Phone Number" style="width:100%; padding:10px; margin-bottom:10px;">
+          <select id="assignTo" style="width:100%; padding:10px; margin-bottom:10px;"></select>
+          <p style="font-size:11px; color:var(--primary);">*Map par click karke house select karein</p>
+          <button class="btn-login" onclick="saveOrder()" style="margin:10px 0;">Assign House Location</button>
+          <div id="orderList"></div>
+        </div>
+        <div id="tab-fleet" style="display:none;">
+          <h3>Management</h3>
+          <input type="text" id="newBoyName" placeholder="New Boy Name" style="width:100%; padding:10px; margin:10px 0;">
+          <button class="btn-login" onclick="addBoy()">Add Delivery Boy</button>
+          <div id="fleetList" style="margin-top:20px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DELIVERY SIDEBAR -->
+    <div id="deliveryPanel" style="display:none; height:100%;">
+      <div class="scroll-area">
+        <div id="gpsAlert" style="background:#ECFDF5; color:#047857; padding:10px; border-radius:8px; margin-bottom:15px; font-size:12px; font-weight:bold;">
+          🟢 GPS Live Tracking is ON
+        </div>
+        <div id="boyTasks"></div>
       </div>
     </div>
   </div>
-  <div id="mapWrap"><div id="map"></div></div>
+
+  <div id="map"></div>
 </div>
 
-<!-- Identity Modal -->
-<div class="modal-backdrop" id="identityModal">
-  <div class="modal">
-    <h3>Who are you?</h3>
-    <div class="field"><select id="identitySelect"></select></div>
-    <button class="btn btn-primary" id="identityOk">Continue</button>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
+<div id="toast" class="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, set, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getDatabase, ref, set, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyA4q2qD7K7o5yN5v9H9jSIvWsTPWlAvurY",
-  authDomain: "delivry-tracking-system.firebaseapp.com",
-  databaseURL: "https://delivry-tracking-system-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "delivry-tracking-system",
-  storageBucket: "delivry-tracking-system.firebasestorage.app",
-  messagingSenderId: "181704924735",
-  appId: "1:181704924735:web:7c57448137e91b745ca28a"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
-
-let boys = {}, customers = {}, role = 'admin', myBoyId = localStorage.getItem('rb_id'), selectedLatLng = null;
-
-// --- UTILS ---
-function showToast(m){ const t=document.getElementById('toast'); t.innerText=m; t.style.display='block'; setTimeout(()=>t.style.display='none',3000); }
-
-// --- MAP ---
-const map = L.map('map').setView([28.61, 77.20], 12);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-let boyMarkers = {}, custMarkers = {}, tempMarker = null;
-
-map.on('click', (e) => {
-  if(role !== 'admin') return;
-  selectedLatLng = e.latlng;
-  if(tempMarker) map.removeLayer(tempMarker);
-  tempMarker = L.marker(e.latlng).addTo(map);
-});
-
-// --- LISTENERS ---
-onValue(ref(db, 'boys'), (snap) => {
-  boys = snap.val() || {};
-  renderAll();
-});
-
-onValue(ref(db, 'customers'), (snap) => {
-  customers = snap.val() || {};
-  renderAll();
-});
-
-// --- ADMIN ACTIONS ---
-document.getElementById('addBoyBtn').onclick = () => {
-  const name = document.getElementById('boyName').value;
-  if(!name) return;
-  const newRef = push(ref(db, 'boys'));
-  set(newRef, { name, lat: 0, lng: 0, lastUpdate: Date.now() });
-  document.getElementById('boyName').value = '';
-};
-
-document.getElementById('saveCustBtn').onclick = () => {
-  const name = document.getElementById('custName').value;
-  const phone = document.getElementById('custPhone').value;
-  const boyId = document.getElementById('custAssign').value;
-  if(!name || !selectedLatLng) return showToast("Name aur Map location zaroori hai");
-
-  const newRef = push(ref(db, 'customers'));
-  set(newRef, { name, phone, assignedTo: boyId, lat: selectedLatLng.lat, lng: selectedLatLng.lng, status: 'pending' });
-  
-  document.getElementById('custName').value = '';
-  if(tempMarker) map.removeLayer(tempMarker);
-  selectedLatLng = null;
-  showToast("Customer Saved!");
-};
-
-// --- RENDER ---
-function renderAll() {
-  // Update Dropdowns
-  const boyOpts = '<option value="">Unassigned</option>' + Object.entries(boys).map(([id, b]) => `<option value="${id}">${b.name}</option>`).join('');
-  document.getElementById('custAssign').innerHTML = boyOpts;
-  document.getElementById('identitySelect').innerHTML = Object.entries(boys).map(([id, b]) => `<option value="${id}">${b.name}</option>`).join('');
-
-  // Clear Map Markers
-  Object.values(boyMarkers).forEach(m => map.removeLayer(m));
-  Object.values(custMarkers).forEach(m => map.removeLayer(m));
-  boyMarkers = {}; custMarkers = {};
-
-  // Draw Boys
-  Object.entries(boys).forEach(([id, b]) => {
-    if(b.lat) {
-      boyMarkers[id] = L.circleMarker([b.lat, b.lng], {color:'blue', radius:8}).addTo(map).bindPopup(b.name);
-    }
-  });
-
-  // Draw Customers
-  Object.entries(customers).forEach(([id, c]) => {
-    const color = c.status === 'completed' ? 'green' : 'orange';
-    custMarkers[id] = L.circleMarker([c.lat, c.lng], {color: color, radius:6}).addTo(map).bindPopup(c.name);
-  });
-
-  // Render Lists
-  if(role === 'admin') renderAdmin(); else renderDelivery();
-}
-
-function renderAdmin() {
-  const pending = Object.values(customers).filter(c => c.status !== 'completed').length;
-  const done = Object.values(customers).filter(c => c.status === 'completed').length;
-  document.getElementById('ovPending').innerText = pending;
-  document.getElementById('ovDone').innerText = done;
-
-  document.getElementById('adminCustList').innerHTML = Object.entries(customers).map(([id, c]) => `
-    <div class="stop ${c.status==='completed'?'done':''}">
-      <div class="idx">•</div>
-      <div><b>${c.name}</b><br><small>${c.status}</small></div>
-      <button onclick="deleteData('customers/${id}')" style="margin-left:auto" class="btn btn-sm btn-danger">X</button>
-    </div>
-  `).join('');
-
-  document.getElementById('teamList').innerHTML = Object.entries(boys).map(([id, b]) => `
-    <div class="item-card"><b>${b.name}</b></div>
-  `).join('');
-}
-
-window.deleteData = (path) => { remove(ref(db, path)); };
-
-function renderDelivery() {
-  if(!myBoyId) return;
-  const myStops = Object.entries(customers).filter(([id, c]) => c.assignedTo === myBoyId);
-  document.getElementById('deliveryCustList').innerHTML = myStops.map(([id, c]) => `
-    <div class="stop ${c.status==='completed'?'done':''}">
-      <div class="idx">•</div>
-      <div style="flex:1"><b>${c.name}</b><br><small>${c.phone}</small></div>
-      ${c.status==='pending' ? `<button onclick="markDone('${id}')" class="btn btn-sm btn-mint">Done</button>` : ''}
-    </div>
-  `).join('');
-}
-
-window.markDone = (id) => { update(ref(db, `customers/${id}`), { status: 'completed' }); };
-
-// --- ROLE SWITCH ---
-function setRole(r) {
-  role = r;
-  document.getElementById('adminView').style.display = r === 'admin' ? 'block' : 'none';
-  document.getElementById('deliveryView').style.display = r === 'delivery' ? 'block' : 'none';
-  document.getElementById('btnAdmin').classList.toggle('active', r === 'admin');
-  document.getElementById('btnDelivery').classList.toggle('active', r === 'delivery');
-  if(r === 'delivery' && !myBoyId) document.getElementById('identityModal').classList.add('show');
-}
-document.getElementById('btnAdmin').onclick = () => setRole('admin');
-document.getElementById('btnDelivery').onclick = () => setRole('delivery');
-
-document.getElementById('identityOk').onclick = () => {
-  myBoyId = document.getElementById('identitySelect').value;
-  localStorage.setItem('rb_id', myBoyId);
-  document.getElementById('identityModal').classList.remove('show');
-  renderAll();
-};
-
-// --- TRACKING ---
-let isTracking = false, watchId;
-document.getElementById('trackSwitch').onclick = () => {
-  if(!myBoyId) return;
-  isTracking = !isTracking;
-  const btn = document.getElementById('trackSwitch');
-  if(isTracking) {
-    btn.innerText = "Tracking On"; btn.className = "btn btn-danger";
-    watchId = navigator.geolocation.watchPosition(p => {
-      update(ref(db, `boys/${myBoyId}`), { lat: p.coords.latitude, lng: p.coords.longitude, lastUpdate: Date.now() });
-    });
-  } else {
-    btn.innerText = "Start Live Tracking"; btn.className = "btn btn-mint";
-    navigator.geolocation.clearWatch(watchId);
-  }
-};
-
-// Tabs
-document.querySelectorAll('.tabbtn').forEach(btn => {
-  btn.onclick = () => {
-    document.querySelectorAll('.tabbtn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    ['overview','customers','boys'].forEach(t => document.getElementById('tab-'+t).style.display = 'none');
-    document.getElementById('tab-'+btn.dataset.tab).style.display = 'block';
+  const firebaseConfig = {
+    apiKey: "AIzaSyA4q2qD7K7o5yN5v9H9jSIvWsTPWlAvurY",
+    authDomain: "delivry-tracking-system.firebaseapp.com",
+    databaseURL: "https://delivry-tracking-system-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "delivry-tracking-system",
+    storageBucket: "delivry-tracking-system.firebasestorage.app",
+    messagingSenderId: "181704924735",
+    appId: "1:181704924735:web:7c57448137e91b745ca28a"
   };
-});
 
-renderAll();
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  let boys = {}, orders = {}, currentUser = null, selectedLatLng = null;
+  let boyMarkers = {}, orderMarkers = {}, pathLines = {};
+  let watchId = null;
+
+  const map = L.map('map').setView([28.61, 77.20], 13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+  // --- AUTH SYSTEM ---
+  window.toggleLoginInputs = () => {
+    const role = document.getElementById('loginRole').value;
+    document.getElementById('boySelection').style.display = role === 'delivery' ? 'block' : 'none';
+  };
+
+  window.handleLogin = () => {
+    const role = document.getElementById('loginRole').value;
+    const pass = document.getElementById('loginPass').value;
+    const boyId = document.getElementById('boyIdentity').value;
+
+    if (role === 'admin' && pass === 'admin123') {
+      currentUser = { role: 'admin' };
+    } else if (role === 'delivery' && pass === '123' && boyId) {
+      currentUser = { role: 'delivery', id: boyId, name: boys[boyId].name };
+      startGPS();
+    } else {
+      return alert("Invalid Password or Selection!");
+    }
+
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('userLabel').innerText = currentUser.role === 'admin' ? "Admin Mode" : "Driver: " + currentUser.name;
+    initView();
+  };
+
+  window.logout = () => { location.reload(); };
+
+  function initView() {
+    document.getElementById('adminPanel').style.display = currentUser.role === 'admin' ? 'block' : 'none';
+    document.getElementById('deliveryPanel').style.display = currentUser.role === 'delivery' ? 'block' : 'none';
+    render();
+  }
+
+  // --- DATABASE LISTENERS ---
+  onValue(ref(db, 'boys'), (snap) => {
+    boys = snap.val() || {};
+    const boyOpts = Object.entries(boys).map(([id, b]) => `<option value="${id}">${b.name}</option>`).join('');
+    document.getElementById('boyIdentity').innerHTML = '<option value="">Select Your Name</option>' + boyOpts;
+    document.getElementById('assignTo').innerHTML = '<option value="">Unassigned</option>' + boyOpts;
+    render();
+  });
+
+  onValue(ref(db, 'orders'), (snap) => {
+    orders = snap.val() || {};
+    render();
+  });
+
+  // --- ADMIN ACTIONS ---
+  window.addBoy = () => {
+    const name = document.getElementById('newBoyName').value;
+    if (!name) return;
+    push(ref(db, 'boys'), { name, lat: 0, lng: 0, status: 'offline' });
+    document.getElementById('newBoyName').value = '';
+    showToast("Delivery boy added!");
+  };
+
+  map.on('click', (e) => {
+    if (currentUser?.role !== 'admin') return;
+    selectedLatLng = e.latlng;
+    L.marker(e.latlng).addTo(map).bindPopup("House Location Selected").openPopup();
+  });
+
+  window.saveOrder = () => {
+    const name = document.getElementById('custName').value;
+    const phone = document.getElementById('custPhone').value;
+    const bId = document.getElementById('assignTo').value;
+    if (!name || !selectedLatLng) return alert("Fill name & Click house on map!");
+
+    push(ref(db, 'orders'), {
+      name, phone, lat: selectedLatLng.lat, lng: selectedLatLng.lng,
+      assignedTo: bId, status: 'pending', timestamp: Date.now()
+    });
+    showToast("Order Assigned!");
+    selectedLatLng = null;
+  };
+
+  // --- DELIVERY ACTIONS ---
+  function startGPS() {
+    if (navigator.geolocation) {
+      watchId = navigator.geolocation.watchPosition((pos) => {
+        update(ref(db, `boys/${currentUser.id}`), {
+          lat: pos.coords.latitude, lng: pos.coords.longitude, status: 'online'
+        });
+      }, null, { enableHighAccuracy: true });
+    }
+  }
+
+  window.markDone = (id) => {
+    update(ref(db, `orders/${id}`), { status: 'completed' });
+    showToast("Delivery Done!");
+    
+    // Check if last delivery
+    const remaining = Object.values(orders).filter(o => o.assignedTo === currentUser.id && o.status === 'pending').length;
+    if (remaining === 1) { // Current one is the last
+      navigator.geolocation.clearWatch(watchId);
+      update(ref(db, `boys/${currentUser.id}`), { status: 'offline' });
+      showToast("All done! GPS turned off.");
+    }
+  };
+
+  // --- RENDER ENGINE ---
+  function render() {
+    // Clear Map
+    Object.values(boyMarkers).forEach(m => map.removeLayer(m));
+    Object.values(orderMarkers).forEach(m => map.removeLayer(m));
+    Object.values(pathLines).forEach(l => map.removeLayer(l));
+
+    // Render Boys
+    Object.entries(boys).forEach(([id, b]) => {
+      if (b.lat) {
+        boyMarkers[id] = L.marker([b.lat, b.lng], {
+          icon: L.divIcon({ className: '', html: `<div class="marker-boy" style="background:${b.status==='online'?'#2AC2A6':'#333'}">${b.name[0]}</div>` })
+        }).addTo(map).bindPopup(b.name + ` (${b.status})`);
+      }
+    });
+
+    // Render Orders & Path Lines
+    const boyPaths = {};
+
+    Object.entries(orders).forEach(([id, o]) => {
+      const isDone = o.status === 'completed';
+      const color = isDone ? '#2AC2A6' : '#F2653A';
+      
+      orderMarkers[id] = L.marker([o.lat, o.lng], {
+        icon: L.divIcon({ className: '', html: `<div class="marker-house" style="background:${color}">${isDone?'✓':'!'}</div>` })
+      }).addTo(map).bindPopup(`<b>${o.name}</b><br>${o.phone}`);
+
+      // Path collection
+      if (!isDone && o.assignedTo && boys[o.assignedTo]?.lat) {
+        if (!boyPaths[o.assignedTo]) boyPaths[o.assignedTo] = [[boys[o.assignedTo].lat, boys[o.assignedTo].lng]];
+        boyPaths[o.assignedTo].push([o.lat, o.lng]);
+      }
+    });
+
+    // Draw Live Paths
+    Object.entries(boyPaths).forEach(([bId, points]) => {
+      pathLines[bId] = L.polyline(points, { color: '#F2653A', weight: 3, dashArray: '10, 10', opacity: 0.5 }).addTo(map);
+    });
+
+    // Sidebar Lists
+    if (currentUser?.role === 'admin') {
+      document.getElementById('orderList').innerHTML = Object.entries(orders).map(([id, o]) => `
+        <div class="card">
+          <span class="status-badge status-${o.status}">${o.status}</span>
+          <b>${o.name}</b><br><small>Assigned: ${boys[o.assignedTo]?.name || 'No One'}</small>
+        </div>
+      `).join('');
+      
+      document.getElementById('fleetList').innerHTML = Object.entries(boys).map(([id, b]) => `
+        <div class="card">
+          <span class="status-badge" style="background:${b.status==='online'?'#2AC2A6':'#eee'}; color:${b.status==='online'?'white':'#999'}">${b.status}</span>
+          <b>${b.name}</b>
+        </div>
+      `).join('');
+    } else if (currentUser?.role === 'delivery') {
+      const myOrders = Object.entries(orders).filter(([id, o]) => o.assignedTo === currentUser.id && o.status === 'pending');
+      const me = boys[currentUser.id];
+      
+      // Nearest Sort Logic
+      if (me?.lat) {
+        myOrders.sort((a,b) => {
+          const distA = Math.hypot(a[1].lat - me.lat, a[1].lng - me.lng);
+          const distB = Math.hypot(b[1].lat - me.lat, b[1].lng - me.lng);
+          return distA - distB;
+        });
+      }
+
+      document.getElementById('boyTasks').innerHTML = myOrders.map(([id, o], index) => {
+        const dist = me?.lat ? (Math.hypot(o.lat - me.lat, o.lng - me.lng) * 111).toFixed(2) : "?";
+        return `
+        <div class="card" style="${index === 0 ? 'border-left: 5px solid var(--primary)' : ''}">
+          <button class="btn-login" onclick="markDone('${id}')" style="width:auto; float:right; padding:5px 15px; background:var(--mint);">Done</button>
+          <b>${o.name}</b><br>
+          <small>${o.phone}</small><br>
+          <div style="margin-top:10px; font-size:12px; color:var(--slate);">📍 Distance: ${dist} KM | Stop #${index+1}</div>
+          ${index === 0 ? '<div style="color:var(--primary); font-size:11px; font-weight:bold; margin-top:5px;">NEXT TARGET HOUSE</div>' : ''}
+        </div>
+      `}).join('') || "<h3>No pending deliveries! 🎉</h3>";
+    }
+  }
+
+  function showToast(m) { const t=document.getElementById('toast'); t.innerText=m; t.style.display='block'; setTimeout(()=>t.style.display='none',3000); }
+  window.switchTab = (t) => {
+    document.getElementById('tab-orders').style.display = t === 'orders' ? 'block' : 'none';
+    document.getElementById('tab-fleet').style.display = t === 'fleet' ? 'block' : 'none';
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.innerText.toLowerCase().includes(t)));
+  };
+
 </script>
 </body>
 </html>
