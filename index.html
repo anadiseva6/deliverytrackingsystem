@@ -3,843 +3,373 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>RouteBoy — Delivery Tracking</title>
+<title>RouteBoy Pro — Smart Delivery Tracking</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
   :root{
     --navy:#10192E; --navy-2:#16223D; --paper:#F5F4EF; --orange:#F2653A;
-    --mint:#2AC2A6; --slate:#8A93A6; --line:#28324A; --white:#FFFFFF;
-    --danger:#E85B5B; --radius:10px;
+    --mint:#2AC2A6; --slate:#8A93A6; --line:#DEDBCF; --white:#FFFFFF;
+    --danger:#E85B5B; --radius:12px;
   }
   *{box-sizing:border-box; margin:0; padding:0;}
   body{font-family:'Inter', sans-serif; background:var(--paper); color:var(--navy); height:100vh; overflow:hidden;}
   h1,h2,h3,.display{font-family:'Space Grotesk', sans-serif;}
   .mono{font-family:'JetBrains Mono', monospace;}
-  button{font-family:inherit;}
-  ::-webkit-scrollbar{width:6px;} ::-webkit-scrollbar-thumb{background:#DEDBCF; border-radius:4px;}
-
-  /* ---------------- TOPBAR ---------------- */
-  #topbar{height:56px; background:var(--navy); display:flex; align-items:center; justify-content:space-between; padding:0 18px; color:white; gap:16px;}
-  #topbar .brand{display:flex; align-items:center; gap:10px; font-family:'Space Grotesk'; font-weight:700; font-size:17px; flex-shrink:0;}
-  #topbar .brand .dot{width:10px; height:10px; border-radius:50%; background:var(--orange); box-shadow:0 0 0 4px rgba(242,101,58,.2);}
-  #roleSwitch{display:flex; background:var(--navy-2); border-radius:999px; padding:3px; gap:2px; flex-shrink:0;}
-  #roleSwitch button{border:none; background:transparent; color:var(--slate); font-weight:600; font-size:13px; padding:7px 16px; border-radius:999px; cursor:pointer;}
+  
+  /* TOPBAR */
+  #topbar{height:60px; background:var(--navy); display:flex; align-items:center; justify-content:space-between; padding:0 20px; color:white; border-bottom:1px solid var(--line);}
+  .brand{display:flex; align-items:center; gap:10px; font-family:'Space Grotesk'; font-weight:700; font-size:20px;}
+  .brand .dot{width:12px; height:12px; border-radius:50%; background:var(--orange); box-shadow:0 0 10px var(--orange);}
+  
+  #roleSwitch{display:flex; background:var(--navy-2); border-radius:999px; padding:4px;}
+  #roleSwitch button{border:none; background:transparent; color:var(--slate); font-weight:600; font-size:13px; padding:8px 20px; border-radius:999px; cursor:pointer; transition: 0.3s;}
   #roleSwitch button.active{background:var(--orange); color:white;}
-  #whoami{display:flex; align-items:center; gap:10px; font-size:13px; color:var(--slate); margin-left:auto;}
-  #whoami .badge-color{width:9px; height:9px; border-radius:50%;}
-  #whoami b{color:white; font-weight:600;}
-  #whoami button{background:transparent; border:1px solid var(--line); color:var(--slate); font-size:11.5px; padding:5px 10px; border-radius:7px; cursor:pointer; font-weight:600;}
-  #whoami button:hover{color:white; border-color:var(--slate);}
 
-  /* ---------------- LAYOUT ---------------- */
-  #app{display:flex; height:calc(100vh - 56px);}
-  #sidebar{width:400px; min-width:400px; background:var(--white); border-right:1px solid #E4E1D6; display:flex; flex-direction:column; overflow:hidden;}
+  /* LAYOUT */
+  #app{display:flex; height:calc(100vh - 60px);}
+  #sidebar{width:420px; min-width:420px; background:var(--white); border-right:1px solid var(--line); display:flex; flex-direction:column; overflow:hidden;}
   #mapWrap{flex:1; position:relative;}
   #map{width:100%; height:100%;}
 
-  .tabbar{display:flex; gap:4px; padding:12px 14px 0 14px; border-bottom:1px solid #EEECE2;}
-  .tabbar button{flex:1; border:none; background:transparent; color:var(--slate); font-weight:600; font-size:12px; padding:9px 4px; border-radius:7px 7px 0 0; cursor:pointer;}
-  .tabbar button.active{color:var(--navy); box-shadow:0 -2px 0 var(--orange) inset;}
-  .scroll-area{flex:1; overflow-y:auto; padding:16px 18px;}
+  .tabbar{display:flex; padding:10px 15px 0; border-bottom:1px solid #EEE;}
+  .tabbar button{flex:1; border:none; background:transparent; color:var(--slate); font-weight:600; font-size:13px; padding:12px; cursor:pointer; border-bottom:3px solid transparent;}
+  .tabbar button.active{color:var(--orange); border-bottom-color:var(--orange);}
 
-  .section-title{font-size:12px; font-weight:700; color:var(--slate); text-transform:uppercase; letter-spacing:.05em; margin:4px 0 10px;}
+  .scroll-area{flex:1; overflow-y:auto; padding:20px;}
+  .section-title{font-size:12px; font-weight:700; color:var(--slate); text-transform:uppercase; letter-spacing:.05em; margin-bottom:15px; display:flex; justify-content:space-between;}
 
-  .field{margin-bottom:11px;}
-  .field label{display:block; font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--slate); margin-bottom:5px;}
-  .field input, .field select{width:100%; border:1px solid #DEDBCF; border-radius:8px; padding:9px 10px; font-size:13.5px; background:#FBFAF6; font-family:'Inter';}
-  .field input:focus, .field select:focus{outline:2px solid var(--orange); outline-offset:1px;}
-  .field-row{display:flex; gap:8px;}
-  .field-row .field{flex:1;}
-
-  .btn{border:none; border-radius:8px; padding:10px 14px; font-weight:600; font-size:13.5px; cursor:pointer; transition:transform .1s ease, opacity .15s ease;}
-  .btn:active{transform:scale(.97);}
-  .btn-primary{background:var(--orange); color:white; width:100%;}
-  .btn-primary:hover{opacity:.92;}
-  .btn-ghost{background:transparent; color:var(--navy); border:1px solid #DEDBCF;}
+  /* FORMS */
+  .field{margin-bottom:15px;}
+  .field label{display:block; font-size:12px; font-weight:600; color:var(--navy); margin-bottom:6px;}
+  .field input, .field select{width:100%; border:1px solid var(--line); border-radius:8px; padding:10px; font-size:14px; background:#FAFAFA;}
+  .btn{border:none; border-radius:8px; padding:12px; font-weight:700; font-size:14px; cursor:pointer; width:100%; transition: 0.2s;}
+  .btn-primary{background:var(--orange); color:white;}
+  .btn-primary:hover{opacity:0.9; transform: translateY(-1px);}
   .btn-mint{background:var(--mint); color:white;}
-  .btn-danger{background:transparent; color:var(--danger); border:1px solid #F3D3D3;}
-  .btn-sm{padding:6px 10px; font-size:11.5px;}
-  .hint{font-size:11.5px; color:var(--slate); margin-top:6px; line-height:1.45;}
+  
+  /* CARDS */
+  .stat-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;}
+  .stat-card{background:var(--navy); color:white; padding:15px; border-radius:var(--radius);}
+  .stat-card .val{font-size:24px; font-family:'JetBrains Mono'; font-weight:bold;}
+  .stat-card .lbl{font-size:11px; color:var(--slate); text-transform:uppercase;}
 
-  .stats-row{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px;}
-  .stat-card{background:var(--navy); color:white; border-radius:var(--radius); padding:12px;}
-  .stat-card .num{font-family:'JetBrains Mono'; font-size:20px; font-weight:600;}
-  .stat-card .label{font-size:10.5px; color:var(--slate); text-transform:uppercase; letter-spacing:.05em; margin-top:2px;}
+  .item-card{background:#FFF; border:1px solid var(--line); border-radius:var(--radius); padding:15px; margin-bottom:12px; position:relative; transition: 0.2s;}
+  .item-card:hover{border-color:var(--orange); box-shadow: 0 4px 12px rgba(0,0,0,0.05);}
+  .status-badge{font-size:10px; padding:3px 8px; border-radius:999px; font-weight:bold; float:right;}
+  .status-pending{background:#FFF4F0; color:var(--orange);}
+  .status-done{background:#E6F9F4; color:var(--mint);}
 
-  .boy-card{background:#FBFAF6; border:1px solid #EEECE2; border-radius:10px; padding:12px; margin-bottom:9px; cursor:pointer; transition:border-color .12s ease;}
-  .boy-card:hover{border-color:var(--orange);}
-  .boy-card .top{display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;}
-  .boy-name{display:flex; align-items:center; gap:8px; font-weight:600; font-size:13.5px;}
-  .boy-swatch{width:11px; height:11px; border-radius:50%; flex-shrink:0;}
-  .online-pill{font-size:10px; font-weight:700; padding:2px 8px; border-radius:999px; font-family:'JetBrains Mono';}
-  .online-pill.on{background:#E4F8F3; color:#1D9E86;}
-  .online-pill.off{background:#F0EEE4; color:var(--slate);}
-  .boy-mini-stats{display:flex; gap:14px; font-size:11.5px; color:var(--slate); flex-wrap:wrap;}
-  .boy-mini-stats b{color:var(--navy); font-family:'JetBrains Mono';}
+  /* TRACKING TOGGLE */
+  .tracker-box{background:var(--navy); color:white; padding:20px; border-radius:var(--radius); margin-bottom:20px; display:flex; align-items:center; justify-content:space-between;}
+  .switch {position: relative; display: inline-block; width: 50px; height: 26px;}
+  .switch input {opacity: 0; width: 0; height: 0;}
+  .slider {position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 34px;}
+  .slider:before {position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;}
+  input:checked + .slider {background-color: var(--mint);}
+  input:checked + .slider:before {transform: translateX(24px);}
 
-  .zone-tag{display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600; padding:3px 9px; border-radius:999px;}
-  .zone-tag .sw{width:7px; height:7px; border-radius:50%;}
+  /* MAP ICONS */
+  .boy-marker{width:35px; height:35px; border-radius:50%; border:3px solid white; box-shadow:0 0 10px rgba(0,0,0,0.3); display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:12px;}
+  .cust-marker{width:24px; height:24px; border-radius:50%; border:2px solid white; display:flex; align-items:center; justify-content:center; color:white; font-size:10px; font-weight:bold;}
 
-  .stop{display:flex; gap:10px; padding:11px 0; border-bottom:1px solid #F0EEE4; position:relative;}
-  .stop:last-child{border-bottom:none;}
-  .stop .idx{width:26px; height:26px; border-radius:50%; background:#F0EEE4; color:var(--navy); font-family:'JetBrains Mono'; font-size:11px; font-weight:600; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;}
-  .stop.done .idx{background:var(--mint); color:white;}
-  .stop.nearest .idx{background:var(--orange); color:white;}
-  .stop-body{flex:1; min-width:0;}
-  .stop-body .name{font-size:13.5px; font-weight:600;}
-  .stop-body .addr{font-size:12px; color:var(--slate); margin-top:1px;}
-  .stop-meta{display:flex; align-items:center; gap:6px; margin-top:7px; flex-wrap:wrap;}
-  .badge{font-size:10.5px; font-family:'JetBrains Mono'; padding:2px 7px; border-radius:5px; font-weight:600;}
-  .badge.pending{background:#FDECE5; color:var(--orange);}
-  .badge.done{background:#E4F8F3; color:#1D9E86;}
-  .badge.dist{background:#EFEFF5; color:#5B6178;}
-  .badge.unassigned{background:#FBEFEF; color:var(--danger);}
-  .stop-actions{display:flex; gap:6px; margin-top:9px;}
-  .empty-state{text-align:center; color:var(--slate); font-size:12.5px; padding:34px 14px; line-height:1.6;}
-
-  .filter-row{display:flex; gap:6px; margin-bottom:12px;}
-  .filter-row select{flex:1; border:1px solid #DEDBCF; border-radius:8px; padding:8px 8px; font-size:12.5px; background:#FBFAF6;}
-
-  .live-dot{width:7px; height:7px; border-radius:50%; background:var(--mint); display:inline-block; margin-right:5px; box-shadow:0 0 0 3px rgba(42,194,166,.25); animation:pulse 1.6s infinite;}
-  @keyframes pulse{0%,100%{opacity:1;} 50%{opacity:.4;}}
-
-  .track-toggle{display:flex; align-items:center; justify-content:space-between; background:#FBFAF6; border:1px solid #DEDBCF; border-radius:8px; padding:11px 12px; margin-bottom:14px;}
-  .track-toggle .txt{font-size:12.5px; font-weight:600;}
-  .track-toggle .sub{font-size:11px; color:var(--slate); margin-top:1px;}
-  .switch{width:40px; height:22px; border-radius:999px; background:#DEDBCF; position:relative; cursor:pointer; flex-shrink:0;}
-  .switch.on{background:var(--mint);}
-  .switch .knob{width:18px; height:18px; border-radius:50%; background:white; position:absolute; top:2px; left:2px; transition:left .15s ease; box-shadow:0 1px 2px rgba(0,0,0,.2);}
-  .switch.on .knob{left:20px;}
-
-  .leaflet-div-icon{background:transparent; border:none;}
-  .pin{width:26px; height:26px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); display:flex; align-items:center; justify-content:center; box-shadow:0 2px 5px rgba(0,0,0,.3); border:2px solid white;}
-  .pin span{transform:rotate(45deg); font-family:'JetBrains Mono'; font-size:10px; color:white; font-weight:700;}
-  .pin.done{background:var(--mint) !important;}
-  .dbpin{width:30px; height:30px; border-radius:50%; border:3px solid white; box-shadow:0 0 0 5px rgba(16,25,46,.18); display:flex; align-items:center; justify-content:center; font-family:'Space Grotesk'; font-weight:700; color:white; font-size:11px;}
-
-  .modal-backdrop{position:fixed; inset:0; background:rgba(16,25,46,.55); z-index:900; display:none; align-items:center; justify-content:center;}
-  .modal-backdrop.show{display:flex;}
-  .modal{background:white; border-radius:14px; padding:22px; width:340px; box-shadow:0 20px 50px rgba(0,0,0,.3);}
-  .modal h3{font-size:15px; margin-bottom:14px;}
-  .modal .btn-row{display:flex; gap:8px; margin-top:16px;}
-  .modal .btn-row .btn{flex:1;}
-  .modal p.sub{font-size:12.5px; color:var(--slate); margin-bottom:14px; margin-top:-8px;}
-
-  .toast{position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--navy); color:white; padding:11px 18px; border-radius:9px; font-size:13px; font-weight:600; z-index:1100; box-shadow:0 8px 24px rgba(0,0,0,.3); display:none;}
-  .toast.show{display:block;}
-
-  .zone-row{display:flex; align-items:center; justify-content:space-between; background:#FBFAF6; border:1px solid #EEECE2; border-radius:10px; padding:10px 12px; margin-bottom:8px;}
-  .zone-row .left{display:flex; align-items:center; gap:9px; font-size:13px; font-weight:600;}
-  .zone-row .sw{width:12px; height:12px; border-radius:50%;}
-  .zone-row .count{font-size:11px; color:var(--slate); font-family:'JetBrains Mono';}
+  .toast{position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--navy); color:white; padding:12px 24px; border-radius:999px; font-size:14px; z-index:9999; display:none; box-shadow: 0 10px 30px rgba(0,0,0,0.2);}
 </style>
 </head>
 <body>
 
 <div id="topbar">
-  <div class="brand"><span class="dot"></span> RouteBoy</div>
+  <div class="brand"><span class="dot"></span> RouteBoy PRO</div>
   <div id="roleSwitch">
-    <button id="btnAdmin" class="active">Admin</button>
-    <button id="btnDelivery">Delivery Boy</button>
+    <button id="adminBtn" class="active" onclick="setRole('admin')">Admin Panel</button>
+    <button id="boyBtn" onclick="setRole('delivery')">Delivery Boy</button>
   </div>
-  <div id="whoami"></div>
 </div>
 
 <div id="app">
   <div id="sidebar">
-
-    <!-- ---------- ADMIN VIEW ---------- -->
-    <div id="adminView" style="display:flex; flex-direction:column; height:100%;">
+    <!-- ADMIN VIEW -->
+    <div id="adminPanel">
       <div class="tabbar">
-        <button class="tabbtn active" data-tab="overview">Overview</button>
-        <button class="tabbtn" data-tab="customers">Customers</button>
-        <button class="tabbtn" data-tab="boys">Team</button>
-        <button class="tabbtn" data-tab="zones">Zones</button>
+        <button class="atab active" onclick="showTab('orders')">Orders</button>
+        <button class="atab" onclick="showTab('team')">Fleet (6)</button>
+        <button class="atab" onclick="showTab('stats')">Analytics</button>
       </div>
 
-      <!-- OVERVIEW -->
-      <div id="tab-overview" class="tab-pane scroll-area">
-        <div class="stats-row">
-          <div class="stat-card"><div class="num" id="ovDone">0</div><div class="label">Delivered today</div></div>
-          <div class="stat-card"><div class="num" id="ovPending">0</div><div class="label">Pending</div></div>
+      <div id="tab-orders" class="scroll-area">
+        <div class="section-title">Add New Delivery</div>
+        <div class="field"><label>Customer Name</label><input type="text" id="cName" placeholder="e.g. Rahul Sharma"></div>
+        <div class="field"><label>Phone Number</label><input type="text" id="cPhone" placeholder="9876543210"></div>
+        <div class="field">
+          <label>Assign Delivery Boy</label>
+          <select id="cAssign"><option value="">Select Boy</option></select>
         </div>
-        <div class="stats-row">
-          <div class="stat-card"><div class="num" id="ovOnline">0/0</div><div class="label">Boys online</div></div>
-          <div class="stat-card"><div class="num" id="ovUnassigned">0</div><div class="label">Unassigned</div></div>
-        </div>
-        <div class="section-title">Team status</div>
-        <div id="overviewBoyList"></div>
+        <p style="font-size:11px; color:var(--slate); margin-bottom:10px;">*Click on the map to set delivery location</p>
+        <button class="btn btn-primary" onclick="saveCustomer()">Save Customer Location</button>
+        
+        <div style="margin-top:30px;" class="section-title">Live Orders</div>
+        <div id="adminOrderList"></div>
       </div>
 
-      <!-- CUSTOMERS -->
-      <div id="tab-customers" class="tab-pane scroll-area" style="display:none;">
-        <div class="section-title">Add new customer</div>
-        <div class="field"><label>Customer name</label><input id="custName" type="text" placeholder="e.g. Rohit Sharma"></div>
-        <div class="field-row">
-          <div class="field"><label>Phone (optional)</label><input id="custPhone" type="text" placeholder="98xxxxxxxx"></div>
-          <div class="field"><label>Assign to</label><select id="custAssign"><option value="">Unassigned</option></select></div>
-        </div>
-        <div class="field-row">
-          <div class="field"><label>Address / note</label><input id="custAddr" type="text" placeholder="e.g. B-12, Lajpat Nagar"></div>
-          <div class="field"><label>Zone</label><select id="custZone"><option value="">No zone</option></select></div>
-        </div>
-        <div class="hint">Click on the map to drop this customer's exact location, then save.</div>
-        <div style="display:flex; gap:8px; margin-top:10px;">
-          <button class="btn btn-ghost btn-sm" id="useMyLocBtn" style="flex:1">Use my location</button>
-          <button class="btn btn-primary btn-sm" id="saveCustBtn" style="flex:1">Save customer</button>
-        </div>
-        <div id="pendingPinNote" class="hint" style="display:none; color:var(--orange); font-weight:600;">Pin dropped on map — click "Save customer" to confirm.</div>
-
-        <div style="height:1px; background:#EEECE2; margin:18px 0;"></div>
-
-        <div class="section-title">All customers</div>
-        <div class="filter-row">
-          <select id="filterBoy"><option value="all">All delivery boys</option></select>
-          <select id="filterZone"><option value="all">All zones</option></select>
-          <select id="filterStatus">
-            <option value="all">All status</option>
-            <option value="pending">Pending</option>
-            <option value="completed">Delivered</option>
-          </select>
-        </div>
-        <div id="adminCustList"></div>
-      </div>
-
-      <!-- TEAM -->
-      <div id="tab-boys" class="tab-pane scroll-area" style="display:none;">
-        <div class="section-title">Add delivery boy</div>
-        <div class="field-row">
-          <div class="field"><label>Name</label><input id="boyName" type="text" placeholder="e.g. Amit Kumar"></div>
-          <div class="field"><label>Primary zone</label><select id="boyZone"><option value="">No zone</option></select></div>
-        </div>
-        <button class="btn btn-primary btn-sm" id="addBoyBtn">Add to team</button>
-        <div class="hint">They'll pick their own name from the Delivery Boy tab on their phone — no password needed.</div>
-
-        <div style="height:1px; background:#EEECE2; margin:18px 0;"></div>
-        <div class="section-title">Your team (<span id="boyCount">0</span>)</div>
-        <div id="teamList"></div>
-      </div>
-
-      <!-- ZONES -->
-      <div id="tab-zones" class="tab-pane scroll-area" style="display:none;">
-        <div class="section-title">Add area / zone</div>
-        <div class="field-row">
-          <div class="field"><label>Zone name</label><input id="zoneName" type="text" placeholder="e.g. Lajpat Nagar"></div>
-          <div class="field" style="max-width:90px;"><label>Color</label><input id="zoneColor" type="color" value="#F2653A" style="padding:2px; height:37px;"></div>
-        </div>
-        <button class="btn btn-primary btn-sm" id="addZoneBtn">Add zone</button>
-        <div class="hint">Zones help you group customers and delivery boys by area — e.g. North Delhi, South Delhi, or by locality.</div>
-
-        <div style="height:1px; background:#EEECE2; margin:18px 0;"></div>
-        <div class="section-title">All zones (<span id="zoneCount">0</span>)</div>
-        <div id="zonesList"></div>
+      <div id="tab-team" class="scroll-area" style="display:none">
+        <div class="section-title">Manage Delivery Boys</div>
+        <div id="adminBoyList"></div>
       </div>
     </div>
 
-    <!-- ---------- DELIVERY BOY VIEW ---------- -->
-    <div id="deliveryView" style="display:none; flex-direction:column; height:100%;">
+    <!-- DELIVERY BOY VIEW -->
+    <div id="boyPanel" style="display:none">
       <div class="scroll-area">
-        <div class="track-toggle">
-          <div><div class="txt">Share my live location</div><div class="sub" id="trackSubtext">Tap to start sending updates</div></div>
-          <div class="switch" id="trackSwitch"><div class="knob"></div></div>
+        <div id="identitySection" style="margin-bottom:20px;">
+          <div class="field">
+            <label>Who are you?</label>
+            <select id="meSelect" onchange="identifyMe(this.value)"><option value="">Identify Yourself</option></select>
+          </div>
         </div>
-        <div class="stats-row">
-          <div class="stat-card"><div class="num" id="dbStatDone">0</div><div class="label">Delivered</div></div>
-          <div class="stat-card"><div class="num" id="dbStatPending">0</div><div class="label">Remaining</div></div>
+
+        <div class="tracker-box">
+          <div>
+            <div style="font-weight:bold">Live Tracking</div>
+            <div style="font-size:11px; opacity:0.7" id="trackStatus">Location sharing off</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="trackToggle" onchange="toggleTracking(this.checked)">
+            <span class="slider"></span>
+          </label>
         </div>
-        <div class="section-title">Your stops — nearest first</div>
-        <div id="deliveryCustList"></div>
+
+        <div class="stat-grid">
+          <div class="stat-card"><div class="val" id="myDone">0</div><div class="lbl">Completed</div></div>
+          <div class="stat-card"><div class="val" id="myLeft">0</div><div class="lbl">Pending</div></div>
+        </div>
+
+        <div class="section-title">Your Stops (Nearest First)</div>
+        <div id="myOrderList"></div>
       </div>
     </div>
-
   </div>
 
-  <div id="mapWrap"><div id="map"></div></div>
-</div>
-
-<div class="modal-backdrop" id="identityModal">
-  <div class="modal">
-    <h3>Who are you?</h3>
-    <p class="sub">Pick your name to see your assigned deliveries.</p>
-    <div class="field"><select id="identitySelect"><option value="">Select your name…</option></select></div>
-    <div class="btn-row">
-      <button class="btn btn-ghost" id="identityCancel">Cancel</button>
-      <button class="btn btn-primary" id="identityOk">Continue</button>
-    </div>
+  <div id="mapWrap">
+    <div id="map"></div>
   </div>
 </div>
 
-<div class="modal-backdrop" id="confirmModal">
-  <div class="modal">
-    <h3 id="confirmText">Are you sure?</h3>
-    <div class="btn-row">
-      <button class="btn btn-ghost" id="confirmCancel">Cancel</button>
-      <button class="btn btn-danger" id="confirmOk" style="background:var(--danger); color:white;">Confirm</button>
-    </div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
+<div id="toast" class="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 
 <script type="module">
-/* =========================================================================
-   FIREBASE SETUP — paste your own project's config below (see SETUP-GUIDE.md)
-   ========================================================================= */
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, collection, doc, addDoc, updateDoc, onSnapshot, query, where, serverTimestamp, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyA4q2qD7K7o5yN5v9H9jSIvWsTPWlAvurY",
-  authDomain: "delivry-tracking-system.firebaseapp.com",
-  databaseURL: "https://delivry-tracking-system-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "delivry-tracking-system",
-  storageBucket: "delivry-tracking-system.firebasestorage.app",
-  messagingSenderId: "181704924735",
-  appId: "1:181704924735:web:7c57448137e91b745ca28a",
-  measurementId: "G-43WG6FFZVC"
-};
-
-let db, firebaseReady = false;
-try {
-  const app = initializeApp(firebaseConfig);
-  db = getFirestore(app);
-  firebaseReady = true;
-} catch (e) { console.error("Firebase init failed:", e); }
-
-const COLORS = ['#F2653A','#2AC2A6','#5B7FE0','#E0B23A','#B25BE0','#E0475B','#3AA0E0','#8FA33A'];
-const AVG_SPEED_KMH = 25;
-
-/* ---------------- helpers ---------------- */
-function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-function distanceKm(lat1, lon1, lat2, lon2){
-  const R = 6371, dLat=(lat2-lat1)*Math.PI/180, dLon=(lon2-lon1)*Math.PI/180;
-  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-}
-function fmtDist(km){ if(km==null) return '—'; return km<1 ? Math.round(km*1000)+' m' : km.toFixed(1)+' km'; }
-function fmtEtaMinutes(km){ if(km==null) return '—'; const m=Math.round((km/AVG_SPEED_KMH)*60); return m<60 ? m+' min' : (m/60).toFixed(1)+' hr'; }
-function timeAgo(ts){
-  if(!ts) return '—';
-  const ms = ts.toMillis ? ts.toMillis() : ts;
-  const s = Math.floor((Date.now()-ms)/1000);
-  if (s<5) return 'just now'; if (s<60) return s+'s ago';
-  if (s<3600) return Math.floor(s/60)+'m ago'; return Math.floor(s/3600)+'h ago';
-}
-function isOnline(ts){
-  if(!ts) return false;
-  const ms = ts.toMillis ? ts.toMillis() : ts;
-  return (Date.now()-ms) < 90000;
-}
-function showToast(msg){
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2400);
-}
-function confirmAction(text, onOk){
-  document.getElementById('confirmText').textContent = text;
-  document.getElementById('confirmModal').classList.add('show');
-  const okBtn = document.getElementById('confirmOk');
-  const cancelBtn = document.getElementById('confirmCancel');
-  const cleanup = ()=>{ document.getElementById('confirmModal').classList.remove('show'); okBtn.onclick=null; cancelBtn.onclick=null; };
-  okBtn.onclick = ()=>{ cleanup(); onOk(); };
-  cancelBtn.onclick = cleanup;
-}
-function zoneById(id){ return zones.find(z=>z.id===id); }
-
-/* ---------------- state ---------------- */
-let customers = [];
-let deliveryBoys = [];
-let zones = [];
-let role = localStorage.getItem('rb_role') || 'admin';
-let myBoyId = localStorage.getItem('rb_boy_id') || null;
-let currentAdminTab = 'overview';
-
-/* ---------------- map ---------------- */
-const map = L.map('map', { zoomControl:true }).setView([28.6139, 77.2090], 12);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19, attribution:'© OpenStreetMap contributors' }).addTo(map);
-let markersLayer = L.layerGroup().addTo(map);
-let boyMarkers = {};
-let pendingPinLatLng = null;
-let pendingPinMarker = null;
-
-function makeCustIcon(color, label, done){
-  return L.divIcon({ className:'leaflet-div-icon', html:`<div class="pin ${done?'done':''}" style="background:${done?'':color}">${!done?`<span>${label}</span>`:'<span>✓</span>'}</div>`, iconSize:[26,26], iconAnchor:[13,26] });
-}
-function makeBoyIcon(color, initialsTxt){
-  return L.divIcon({ className:'leaflet-div-icon', html:`<div class="dbpin" style="background:${color}">${initialsTxt}</div>`, iconSize:[30,30], iconAnchor:[15,15] });
-}
-function initials(name){ return (name||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
-
-map.on('click', (e)=>{
-  if (role !== 'admin' || currentAdminTab !== 'customers') return;
-  pendingPinLatLng = e.latlng;
-  if (pendingPinMarker) map.removeLayer(pendingPinMarker);
-  pendingPinMarker = L.marker(e.latlng, { icon: makeCustIcon('#10192E','+',false) }).addTo(map);
-  document.getElementById('pendingPinNote').style.display = 'block';
-});
-
-function renderMapMarkers(){
-  markersLayer.clearLayers();
-  const boyColorMap = {}; deliveryBoys.forEach(b=> boyColorMap[b.id]=b.color);
-
-  let visibleCustomers = customers;
-  if (role === 'delivery' && myBoyId) visibleCustomers = customers.filter(c=>c.assignedTo === myBoyId);
-
-  visibleCustomers.forEach((c,i)=>{
-    const color = c.assignedTo ? (boyColorMap[c.assignedTo] || '#8A93A6') : '#8A93A6';
-    const m = L.marker([c.lat, c.lng], { icon: makeCustIcon(color, i+1, c.status==='completed') }).addTo(markersLayer);
-    const boyName = deliveryBoys.find(b=>b.id===c.assignedTo)?.name || 'Unassigned';
-    const zoneName = zoneById(c.zone)?.name;
-    m.bindPopup(`<b>${escapeHtml(c.name)}</b><br>${escapeHtml(c.address||'')}<br><small>${c.status==='completed'?'Delivered':'Pending'} · ${escapeHtml(boyName)}${zoneName?' · '+escapeHtml(zoneName):''}</small>`);
-  });
-
-  const visibleBoys = (role==='delivery' && myBoyId) ? deliveryBoys.filter(b=>b.id===myBoyId) : deliveryBoys;
-  Object.keys(boyMarkers).forEach(id=>{ if(!visibleBoys.find(b=>b.id===id)){ map.removeLayer(boyMarkers[id]); delete boyMarkers[id]; } });
-  visibleBoys.forEach(b=>{
-    if (b.lat == null) return;
-    if (!boyMarkers[b.id]) boyMarkers[b.id] = L.marker([b.lat,b.lng], { icon: makeBoyIcon(b.color, initials(b.name)), zIndexOffset:1000 }).addTo(map);
-    else boyMarkers[b.id].setLatLng([b.lat,b.lng]);
-    boyMarkers[b.id].bindPopup(`<b>${escapeHtml(b.name)}</b><br><small>Last update ${timeAgo(b.lastUpdate)}</small>`);
-  });
-}
-
-/* =========================================================================
-   ROLE SWITCHING (no password — just a role toggle + "who am I" picker)
-   ========================================================================= */
-document.getElementById('btnAdmin').onclick = ()=> switchRole('admin');
-document.getElementById('btnDelivery').onclick = ()=> switchRole('delivery');
-
-function switchRole(newRole){
-  role = newRole;
-  localStorage.setItem('rb_role', role);
-  document.getElementById('btnAdmin').classList.toggle('active', role==='admin');
-  document.getElementById('btnDelivery').classList.toggle('active', role==='delivery');
-  document.getElementById('adminView').style.display = role==='admin' ? 'flex' : 'none';
-  document.getElementById('deliveryView').style.display = role==='delivery' ? 'flex' : 'none';
-
-  if (role === 'delivery'){
-    if (!myBoyId || !deliveryBoys.find(b=>b.id===myBoyId)) openIdentityPicker();
-    else updateWhoami();
-  } else {
-    document.getElementById('whoami').innerHTML = '';
-  }
-  setTimeout(()=>map.invalidateSize(), 150);
-  renderAll();
-}
-
-function openIdentityPicker(){
-  const sel = document.getElementById('identitySelect');
-  sel.innerHTML = `<option value="">Select your name…</option>` + deliveryBoys.map(b=>`<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('');
-  document.getElementById('identityModal').classList.add('show');
-}
-document.getElementById('identityCancel').onclick = ()=>{
-  document.getElementById('identityModal').classList.remove('show');
-  if (!myBoyId) switchRole('admin');
-};
-document.getElementById('identityOk').onclick = ()=>{
-  const id = document.getElementById('identitySelect').value;
-  if (!id){ showToast('Select your name first'); return; }
-  myBoyId = id;
-  localStorage.setItem('rb_boy_id', id);
-  document.getElementById('identityModal').classList.remove('show');
-  updateWhoami();
-  renderAll();
-};
-function updateWhoami(){
-  const boy = deliveryBoys.find(b=>b.id===myBoyId);
-  if (!boy){ document.getElementById('whoami').innerHTML=''; return; }
-  document.getElementById('whoami').innerHTML = `<span class="badge-color" style="background:${boy.color}"></span><b>${escapeHtml(boy.name)}</b><button id="changeIdBtn">Not you?</button>`;
-  document.getElementById('changeIdBtn').onclick = openIdentityPicker;
-}
-
-/* =========================================================================
-   FIRESTORE REAL-TIME LISTENERS
-   ========================================================================= */
-function startListeners(){
-  onSnapshot(collection(db, 'deliveryBoys'), (snap)=>{
-    deliveryBoys = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-    if (role==='delivery' && myBoyId) updateWhoami();
-    renderAll();
-  }, err=> console.error('boys listener error', err));
-
-  onSnapshot(collection(db, 'customers'), (snap)=>{
-    customers = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-    renderAll();
-  }, err=> console.error('customers listener error', err));
-
-  onSnapshot(collection(db, 'zones'), (snap)=>{
-    zones = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-    renderAll();
-  }, err=> console.error('zones listener error', err));
-}
-
-/* =========================================================================
-   ADMIN: TAB SWITCHING
-   ========================================================================= */
-document.querySelectorAll('.tabbtn').forEach(btn=>{
-  btn.onclick = ()=>{
-    document.querySelectorAll('.tabbtn').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    currentAdminTab = btn.dataset.tab;
-    ['overview','customers','boys','zones'].forEach(t=>{
-      document.getElementById('tab-'+t).style.display = (t===currentAdminTab) ? 'block' : 'none';
-    });
-    renderAll();
+  // TODO: PASTE YOUR FIREBASE CONFIG HERE
+  const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_PROJECT.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT.appspot.com",
+    messagingSenderId: "YOUR_SENDER_ID",
+    appId: "YOUR_APP_ID"
   };
-});
 
-/* =========================================================================
-   ADMIN: CUSTOMERS
-   ========================================================================= */
-document.getElementById('useMyLocBtn').onclick = ()=>{
-  if (!navigator.geolocation){ showToast('Geolocation not supported'); return; }
-  navigator.geolocation.getCurrentPosition(pos=>{
-    const ll = L.latLng(pos.coords.latitude, pos.coords.longitude);
-    pendingPinLatLng = ll;
-    if (pendingPinMarker) map.removeLayer(pendingPinMarker);
-    pendingPinMarker = L.marker(ll, { icon: makeCustIcon('#10192E','+',false) }).addTo(map);
-    map.setView(ll, 14);
-    document.getElementById('pendingPinNote').style.display = 'block';
-  }, err=> showToast('Could not get location: '+err.message));
-};
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
 
-document.getElementById('saveCustBtn').onclick = async ()=>{
-  const name = document.getElementById('custName').value.trim();
-  const phone = document.getElementById('custPhone').value.trim();
-  const addr = document.getElementById('custAddr').value.trim();
-  const assign = document.getElementById('custAssign').value;
-  const zone = document.getElementById('custZone').value;
-  if (!name){ showToast('Enter a customer name'); return; }
-  if (!pendingPinLatLng){ showToast('Click the map to drop a location first'); return; }
+  // --- STATE ---
+  let customers = [];
+  let boys = [];
+  let currentRole = 'admin';
+  let myId = localStorage.getItem('my_boy_id') || null;
+  let tempMarker = null;
+  let selectedLatLng = null;
+  let watchId = null;
 
-  await addDoc(collection(db,'customers'), {
-    name, phone, address: addr,
-    lat: pendingPinLatLng.lat, lng: pendingPinLatLng.lng,
-    assignedTo: assign || null,
-    zone: zone || null,
-    status: 'pending',
-    createdAt: serverTimestamp()
+  const map = L.map('map').setView([28.6139, 77.2090], 12);
+  L.tileLayer('https://{s}.tile.osm.org/{z}/{x}/{y}.png').addTo(map);
+
+  // --- UI HELPERS ---
+  window.setRole = (role) => {
+    currentRole = role;
+    document.getElementById('adminBtn').classList.toggle('active', role==='admin');
+    document.getElementById('boyBtn').classList.toggle('active', role==='delivery');
+    document.getElementById('adminPanel').style.display = role==='admin' ? 'block' : 'none';
+    document.getElementById('boyPanel').style.display = role==='delivery' ? 'block' : 'none';
+    render();
+  };
+
+  window.showTab = (tab) => {
+    document.querySelectorAll('.atab').forEach(b => b.classList.remove('active'));
+    event.target.classList.add('active');
+    ['orders', 'team', 'stats'].forEach(t => {
+      document.getElementById('tab-'+t).style.display = t === tab ? 'block' : 'none';
+    });
+  };
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.innerText = msg; t.style.display = 'block';
+    setTimeout(() => t.style.display = 'none', 3000);
+  }
+
+  // --- DATABASE OPERATIONS ---
+  
+  // Real-time Listeners
+  onSnapshot(collection(db, "deliveryBoys"), (snap) => {
+    boys = snap.docs.map(d => ({id: d.id, ...d.data()}));
+    updateDropdowns();
+    render();
   });
 
-  document.getElementById('custName').value = '';
-  document.getElementById('custPhone').value = '';
-  document.getElementById('custAddr').value = '';
-  document.getElementById('custAssign').value = '';
-  document.getElementById('custZone').value = '';
-  if (pendingPinMarker){ map.removeLayer(pendingPinMarker); pendingPinMarker=null; }
-  pendingPinLatLng = null;
-  document.getElementById('pendingPinNote').style.display = 'none';
-  showToast('Customer saved');
-};
-
-window.deleteCustomer = (id)=>{
-  confirmAction('Remove this customer?', async ()=>{
-    await deleteDoc(doc(db,'customers',id));
-    showToast('Customer removed');
+  onSnapshot(collection(db, "customers"), (snap) => {
+    customers = snap.docs.map(d => ({id: d.id, ...d.data()}));
+    render();
   });
-};
-window.reassignCustomer = async (id, boyId)=>{
-  await updateDoc(doc(db,'customers',id), { assignedTo: boyId || null });
-  showToast('Reassigned');
-};
 
-document.getElementById('filterBoy').onchange = renderAdminCustList;
-document.getElementById('filterZone').onchange = renderAdminCustList;
-document.getElementById('filterStatus').onchange = renderAdminCustList;
+  function updateDropdowns() {
+    const html = '<option value="">Select Boy</option>' + boys.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+    document.getElementById('cAssign').innerHTML = html;
+    document.getElementById('meSelect').innerHTML = '<option value="">Who are you?</option>' + boys.map(b => `<option value="${b.id}" ${b.id===myId?'selected':''}>${b.name}</option>`).join('');
+  }
 
-function populateAssignDropdowns(){
-  const boyOpts = deliveryBoys.map(b=>`<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('');
-  document.getElementById('custAssign').innerHTML = `<option value="">Unassigned</option>` + boyOpts;
-  document.getElementById('filterBoy').innerHTML = `<option value="all">All delivery boys</option><option value="unassigned">Unassigned</option>` + boyOpts;
+  window.saveCustomer = async () => {
+    const name = document.getElementById('cName').value;
+    const phone = document.getElementById('cPhone').value;
+    const boyId = document.getElementById('cAssign').value;
 
-  const zoneOpts = zones.map(z=>`<option value="${z.id}">${escapeHtml(z.name)}</option>`).join('');
-  document.getElementById('custZone').innerHTML = `<option value="">No zone</option>` + zoneOpts;
-  document.getElementById('filterZone').innerHTML = `<option value="all">All zones</option>` + zoneOpts;
-  document.getElementById('boyZone').innerHTML = `<option value="">No zone</option>` + zoneOpts;
-}
+    if(!name || !selectedLatLng) return showToast("Enter name & click map!");
 
-function zoneTagHtml(zoneId){
-  const z = zoneById(zoneId);
-  if (!z) return '';
-  return `<span class="zone-tag" style="background:${z.color}22; color:${z.color};"><span class="sw" style="background:${z.color}"></span>${escapeHtml(z.name)}</span>`;
-}
+    await addDoc(collection(db, "customers"), {
+      name, phone, 
+      assignedTo: boyId,
+      lat: selectedLatLng.lat,
+      lng: selectedLatLng.lng,
+      status: 'pending',
+      ts: serverTimestamp()
+    });
 
-function renderAdminCustList(){
-  const wrap = document.getElementById('adminCustList');
-  const boyFilter = document.getElementById('filterBoy').value;
-  const zoneFilter = document.getElementById('filterZone').value;
-  const statusFilter = document.getElementById('filterStatus').value;
+    document.getElementById('cName').value = '';
+    selectedLatLng = null;
+    if(tempMarker) map.removeLayer(tempMarker);
+    showToast("Customer Added!");
+  };
 
-  let list = customers;
-  if (boyFilter === 'unassigned') list = list.filter(c=>!c.assignedTo);
-  else if (boyFilter !== 'all') list = list.filter(c=>c.assignedTo === boyFilter);
-  if (zoneFilter !== 'all') list = list.filter(c=>c.zone === zoneFilter);
-  if (statusFilter !== 'all') list = list.filter(c=> statusFilter==='completed' ? c.status==='completed' : c.status!=='completed');
+  window.identifyMe = (id) => {
+    myId = id;
+    localStorage.setItem('my_boy_id', id);
+    render();
+  };
 
-  if (!list.length){ wrap.innerHTML = `<div class="empty-state">No customers match this filter yet.</div>`; return; }
+  window.markDone = async (id) => {
+    await updateDoc(doc(db, "customers", id), { status: 'completed' });
+    showToast("Delivery Completed!");
+  };
 
-  const boyOptsFor = (currentId)=> `<option value="">Unassigned</option>` + deliveryBoys.map(b=>`<option value="${b.id}" ${b.id===currentId?'selected':''}>${escapeHtml(b.name)}</option>`).join('');
+  // --- LOCATION TRACKING ---
+  window.toggleTracking = (on) => {
+    if(!myId) return showToast("Identify yourself first!");
+    
+    if(on) {
+      if(navigator.geolocation) {
+        document.getElementById('trackStatus').innerText = "Live tracking active";
+        watchId = navigator.geolocation.watchPosition(async (pos) => {
+          await updateDoc(doc(db, "deliveryBoys", myId), {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+            lastSeen: Date.now()
+          });
+        }, null, {enableHighAccuracy: true});
+      }
+    } else {
+      navigator.geolocation.clearWatch(watchId);
+      document.getElementById('trackStatus').innerText = "Tracking stopped";
+    }
+  };
 
-  wrap.innerHTML = list.map(c=>`
-    <div class="stop ${c.status==='completed'?'done':''}">
-      <div class="idx">${c.status==='completed'?'✓':'•'}</div>
-      <div class="stop-body">
-        <div class="name">${escapeHtml(c.name)}</div>
-        <div class="addr">${escapeHtml(c.address||'No address note')}${c.phone?' · '+escapeHtml(c.phone):''}</div>
-        <div class="stop-meta">
-          <span class="badge ${c.status==='completed'?'done':'pending'}">${c.status==='completed'?'Delivered':'Pending'}</span>
-          ${!c.assignedTo ? '<span class="badge unassigned">Unassigned</span>' : ''}
-          ${zoneTagHtml(c.zone)}
-        </div>
-        <div class="stop-actions">
-          <select onchange="reassignCustomer('${c.id}', this.value)" style="flex:1; font-size:11.5px; padding:5px 6px; border-radius:6px; border:1px solid #DEDBCF;">${boyOptsFor(c.assignedTo)}</select>
-          <button class="btn btn-danger btn-sm" onclick="deleteCustomer('${c.id}')">Remove</button>
-        </div>
-      </div>
-    </div>
-  `).join('');
-}
-
-/* =========================================================================
-   ADMIN: OVERVIEW
-   ========================================================================= */
-function renderOverview(){
-  const done = customers.filter(c=>c.status==='completed').length;
-  const pending = customers.length - done;
-  const unassigned = customers.filter(c=>!c.assignedTo && c.status!=='completed').length;
-  const online = deliveryBoys.filter(b=>isOnline(b.lastUpdate)).length;
-
-  document.getElementById('ovDone').textContent = done;
-  document.getElementById('ovPending').textContent = pending;
-  document.getElementById('ovOnline').textContent = `${online}/${deliveryBoys.length}`;
-  document.getElementById('ovUnassigned').textContent = unassigned;
-
-  const wrap = document.getElementById('overviewBoyList');
-  if (!deliveryBoys.length){ wrap.innerHTML = `<div class="empty-state">No delivery boys added yet.<br>Go to the Team tab to add your first one.</div>`; return; }
-
-  wrap.innerHTML = deliveryBoys.map(b=>{
-    const myCust = customers.filter(c=>c.assignedTo===b.id);
-    const myDone = myCust.filter(c=>c.status==='completed').length;
-    const myPending = myCust.length - myDone;
-    const online = isOnline(b.lastUpdate);
-    const z = zoneById(b.zone);
-    return `
-      <div class="boy-card" onclick="focusBoy('${b.id}')">
-        <div class="top">
-          <div class="boy-name"><span class="boy-swatch" style="background:${b.color}"></span>${escapeHtml(b.name)}</div>
-          <span class="online-pill ${online?'on':'off'}">${online?'ONLINE':'OFFLINE'}</span>
-        </div>
-        <div class="boy-mini-stats">
-          <span>Delivered <b>${myDone}</b></span>
-          <span>Pending <b>${myPending}</b></span>
-          <span>Updated <b>${timeAgo(b.lastUpdate)}</b></span>
-          ${z ? zoneTagHtml(b.zone) : ''}
-        </div>
-      </div>`;
-  }).join('');
-}
-window.focusBoy = (id)=>{
-  const b = deliveryBoys.find(x=>x.id===id);
-  if (b && b.lat != null) map.setView([b.lat,b.lng], 15);
-  else showToast('No location yet from this delivery boy');
-};
-
-/* =========================================================================
-   ADMIN: TEAM
-   ========================================================================= */
-document.getElementById('addBoyBtn').onclick = async ()=>{
-  const name = document.getElementById('boyName').value.trim();
-  const zone = document.getElementById('boyZone').value;
-  if (!name){ showToast('Enter a name'); return; }
-  const color = COLORS[deliveryBoys.length % COLORS.length];
-  await addDoc(collection(db,'deliveryBoys'), { name, zone: zone || null, color, lat:null, lng:null, lastUpdate:null, createdAt: serverTimestamp() });
-  document.getElementById('boyName').value = '';
-  document.getElementById('boyZone').value = '';
-  showToast('Added to team');
-};
-
-window.removeBoy = (id, name)=>{
-  confirmAction(`Remove ${name} from your team? Their assigned customers will become unassigned.`, async ()=>{
-    const affected = customers.filter(c=>c.assignedTo===id);
-    for (const c of affected) await updateDoc(doc(db,'customers',c.id), { assignedTo:null });
-    await deleteDoc(doc(db,'deliveryBoys',id));
-    if (myBoyId === id){ myBoyId=null; localStorage.removeItem('rb_boy_id'); }
-    showToast('Removed from team');
+  // --- RENDER LOGIC ---
+  map.on('click', (e) => {
+    if(currentRole !== 'admin') return;
+    selectedLatLng = e.latlng;
+    if(tempMarker) map.removeLayer(tempMarker);
+    tempMarker = L.marker(e.latlng).addTo(map).bindPopup("New Delivery Here").openPopup();
   });
-};
 
-function renderTeamList(){
-  document.getElementById('boyCount').textContent = deliveryBoys.length;
-  const wrap = document.getElementById('teamList');
-  if (!deliveryBoys.length){ wrap.innerHTML = `<div class="empty-state">Add your delivery boys above to get started.</div>`; return; }
-  wrap.innerHTML = deliveryBoys.map(b=>{
-    const myCust = customers.filter(c=>c.assignedTo===b.id);
-    const myDone = myCust.filter(c=>c.status==='completed').length;
-    const online = isOnline(b.lastUpdate);
-    return `
-      <div class="boy-card">
-        <div class="top">
-          <div class="boy-name"><span class="boy-swatch" style="background:${b.color}"></span>${escapeHtml(b.name)}</div>
-          <span class="online-pill ${online?'on':'off'}">${online?'ONLINE':'OFFLINE'}</span>
+  function getDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2-lat1) * Math.PI/180;
+    const dLon = (lon2-lon1) * Math.PI/180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  }
+
+  function render() {
+    // 1. Clear Map
+    map.eachLayer((layer) => { if(!!layer.toGeoJSON && layer !== tempMarker) map.removeLayer(layer); });
+
+    // 2. Render Markers
+    customers.forEach(c => {
+      const color = c.status === 'completed' ? '#2AC2A6' : '#F2653A';
+      L.marker([c.lat, c.lng], {
+        icon: L.divIcon({className:'', html:`<div class="cust-marker" style="background:${color}">${c.name[0]}</div>`})
+      }).addTo(map).bindPopup(`${c.name} (${c.status})`);
+    });
+
+    boys.forEach(b => {
+      if(b.lat) {
+        L.marker([b.lat, b.lng], {
+          icon: L.divIcon({className:'', html:`<div class="boy-marker" style="background:#10192E">${b.name[0]}${b.name[1] || ''}</div>`})
+        }).addTo(map).bindPopup(`<b>${b.name}</b><br>Live Tracking...`);
+      }
+    });
+
+    // 3. Render Lists
+    if(currentRole === 'admin') {
+      const list = document.getElementById('adminOrderList');
+      list.innerHTML = customers.map(c => `
+        <div class="item-card">
+          <span class="status-badge status-${c.status}">${c.status}</span>
+          <b>${c.name}</b><br>
+          <small>${c.phone || 'No Phone'} • Assigned to: ${boys.find(b=>b.id===c.assignedTo)?.name || 'Unassigned'}</small>
         </div>
-        <div class="boy-mini-stats"><span>Delivered <b>${myDone}</b></span>${zoneTagHtml(b.zone)}</div>
-        <div class="stop-actions"><button class="btn btn-danger btn-sm" onclick="removeBoy('${b.id}','${escapeHtml(b.name)}')" style="width:100%;">Remove from team</button></div>
-      </div>`;
-  }).join('');
-}
+      `).join('');
 
-/* =========================================================================
-   ADMIN: ZONES
-   ========================================================================= */
-document.getElementById('addZoneBtn').onclick = async ()=>{
-  const name = document.getElementById('zoneName').value.trim();
-  const color = document.getElementById('zoneColor').value;
-  if (!name){ showToast('Enter a zone name'); return; }
-  await addDoc(collection(db,'zones'), { name, color, createdAt: serverTimestamp() });
-  document.getElementById('zoneName').value = '';
-  showToast('Zone added');
-};
-
-window.deleteZone = (id, name)=>{
-  confirmAction(`Delete zone "${name}"? Customers and delivery boys in this zone will become zone-less.`, async ()=>{
-    for (const c of customers.filter(c=>c.zone===id)) await updateDoc(doc(db,'customers',c.id), { zone:null });
-    for (const b of deliveryBoys.filter(b=>b.zone===id)) await updateDoc(doc(db,'deliveryBoys',b.id), { zone:null });
-    await deleteDoc(doc(db,'zones',id));
-    showToast('Zone deleted');
-  });
-};
-
-function renderZonesList(){
-  document.getElementById('zoneCount').textContent = zones.length;
-  const wrap = document.getElementById('zonesList');
-  if (!zones.length){ wrap.innerHTML = `<div class="empty-state">No zones yet. Add areas like "Lajpat Nagar" or "South Delhi" to group customers and delivery boys.</div>`; return; }
-  wrap.innerHTML = zones.map(z=>{
-    const custCount = customers.filter(c=>c.zone===z.id).length;
-    const boyCount = deliveryBoys.filter(b=>b.zone===z.id).length;
-    return `
-      <div class="zone-row">
-        <div class="left"><span class="sw" style="background:${z.color}"></span>${escapeHtml(z.name)}</div>
-        <div style="display:flex; align-items:center; gap:10px;">
-          <span class="count">${custCount} cust · ${boyCount} boys</span>
-          <button class="btn btn-danger btn-sm" onclick="deleteZone('${z.id}','${escapeHtml(z.name)}')">Delete</button>
+      document.getElementById('adminBoyList').innerHTML = boys.map(b => `
+        <div class="item-card">
+          <b>${b.name}</b>
+          <p style="font-size:11px">Last seen: ${b.lastSeen ? new Date(b.lastSeen).toLocaleTimeString() : 'Never'}</p>
         </div>
-      </div>`;
-  }).join('');
-}
+      `).join('');
+    } else {
+      if(!myId) return;
+      const myDeliveries = customers.filter(c => c.assignedTo === myId);
+      const myPending = myDeliveries.filter(c => c.status === 'pending');
+      const me = boys.find(b => b.id === myId);
 
-/* =========================================================================
-   DELIVERY BOY VIEW
-   ========================================================================= */
-let watchId = null, tracking = false;
+      // SORT BY NEAREST
+      if(me && me.lat) {
+        myPending.sort((a,b) => getDistance(me.lat, me.lng, a.lat, a.lng) - getDistance(me.lat, me.lng, b.lat, b.lng));
+      }
 
-document.getElementById('trackSwitch').onclick = ()=>{
-  if (!myBoyId){ openIdentityPicker(); return; }
-  tracking = !tracking;
-  document.getElementById('trackSwitch').classList.toggle('on', tracking);
-  document.getElementById('trackSubtext').textContent = tracking ? 'Sending live updates…' : 'Tap to start sending updates';
-  if (tracking){
-    if (!navigator.geolocation){ showToast('Geolocation not supported'); tracking=false; document.getElementById('trackSwitch').classList.remove('on'); return; }
-    watchId = navigator.geolocation.watchPosition(pos=>{
-      updateDoc(doc(db,'deliveryBoys', myBoyId), { lat: pos.coords.latitude, lng: pos.coords.longitude, lastUpdate: Date.now() });
-    }, err=> console.warn('geo error', err), { enableHighAccuracy:true, maximumAge:5000, timeout:10000 });
-  } else {
-    if (watchId!=null) navigator.geolocation.clearWatch(watchId);
-    watchId = null;
-  }
-};
+      document.getElementById('myDone').innerText = myDeliveries.filter(c=>c.status==='completed').length;
+      document.getElementById('myLeft').innerText = myPending.length;
 
-window.markComplete = async (id)=>{
-  await updateDoc(doc(db,'customers',id), { status:'completed', completedAt: serverTimestamp() });
-  showToast('Marked as delivered');
-};
-
-function renderDeliveryList(){
-  if (!myBoyId){ document.getElementById('deliveryCustList').innerHTML = `<div class="empty-state">Select your name to see your stops.</div>`; return; }
-  const myCust = customers.filter(c=>c.assignedTo === myBoyId);
-  const pending = myCust.filter(c=>c.status!=='completed');
-  const done = myCust.filter(c=>c.status==='completed');
-  const me = deliveryBoys.find(b=>b.id===myBoyId);
-
-  document.getElementById('dbStatDone').textContent = done.length;
-  document.getElementById('dbStatPending').textContent = pending.length;
-
-  let list = pending;
-  if (me && me.lat != null){
-    list = pending.map(c=>({...c, dist: distanceKm(me.lat, me.lng, c.lat, c.lng)})).sort((a,b)=>a.dist-b.dist);
-  }
-
-  const wrap = document.getElementById('deliveryCustList');
-  if (!myCust.length){ wrap.innerHTML = `<div class="empty-state">No stops assigned to you yet. Check back soon.</div>`; return; }
-  if (!pending.length){
-    wrap.innerHTML = `<div class="empty-state">All your deliveries are done for now 🎉</div>` + doneListHtml(done);
-    return;
-  }
-  wrap.innerHTML = list.map((c,i)=>`
-    <div class="stop ${i===0?'nearest':''}">
-      <div class="idx">${i+1}</div>
-      <div class="stop-body">
-        <div class="name">${escapeHtml(c.name)}</div>
-        <div class="addr">${escapeHtml(c.address||'')}</div>
-        <div class="stop-meta">
-          <span class="badge pending">Pending</span>
-          ${c.dist!=null ? `<span class="badge dist">${fmtDist(c.dist)} · ~${fmtEtaMinutes(c.dist)}</span>` : `<span class="badge dist">Turn on location for distance</span>`}
-          ${zoneTagHtml(c.zone)}
+      document.getElementById('myOrderList').innerHTML = myPending.map((c, i) => {
+        const dist = me && me.lat ? getDistance(me.lat, me.lng, c.lat, c.lng).toFixed(2) : '?';
+        return `
+        <div class="item-card" style="${i===0 ? 'border-left:4px solid var(--mint)' : ''}">
+          <button class="btn btn-mint" style="width:auto; float:right; padding:5px 10px;" onclick="markDone('${c.id}')">Done</button>
+          <b>${c.name}</b><br>
+          <small>${dist} km away • <a href="tel:${c.phone}">${c.phone}</a></small>
+          ${i===0 ? '<div style="font-size:10px; color:var(--mint); margin-top:5px; font-weight:bold;">SABSE PAAS</div>' : ''}
         </div>
-        <div class="stop-actions">
-          <button class="btn btn-mint btn-sm" onclick="markComplete('${c.id}')">Mark delivered</button>
-          ${c.phone ? `<a class="btn btn-ghost btn-sm" href="tel:${escapeHtml(c.phone)}" style="text-decoration:none; text-align:center;">Call</a>` : ''}
-        </div>
-      </div>
-    </div>
-  `).join('') + doneListHtml(done);
-}
-function doneListHtml(done){
-  return done.map(c=>`
-    <div class="stop done">
-      <div class="idx">✓</div>
-      <div class="stop-body">
-        <div class="name">${escapeHtml(c.name)}</div>
-        <div class="addr">${escapeHtml(c.address||'')}</div>
-        <div class="stop-meta"><span class="badge done">Delivered</span></div>
-      </div>
-    </div>`).join('');
-}
-
-/* =========================================================================
-   MASTER RENDER
-   ========================================================================= */
-function renderAll(){
-  renderMapMarkers();
-  populateAssignDropdowns();
-  if (role === 'admin'){
-    renderOverview();
-    renderAdminCustList();
-    renderTeamList();
-    renderZonesList();
-  } else {
-    renderDeliveryList();
+      `}).join('');
+    }
   }
-}
-setInterval(renderAll, 15000);
 
-/* =========================================================================
-   BOOT
-   ========================================================================= */
-function boot(){
-  if (!firebaseReady){
-    document.getElementById('sidebar').innerHTML = `<div style="padding:20px; font-size:13px; line-height:1.6;">Firebase isn't configured yet. Open this file, find the <code>firebaseConfig</code> object near the top of the script, and paste in your own project's config from the Firebase console (see SETUP-GUIDE.md).</div>`;
-    return;
+  // Initial Seed for 6 Delivery Boys (If empty)
+  async function seedBoys() {
+    // You can manually add 6 boys in Firestore console or use this once
   }
-  startListeners();
-  switchRole(role);
-}
-boot();
+
 </script>
 </body>
 </html>
