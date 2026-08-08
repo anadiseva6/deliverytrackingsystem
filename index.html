@@ -397,8 +397,8 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, serverTimestamp
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  getDatabase, ref, push, set, update, remove, onValue, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyA4q2qD7K7o5yN5v9H9jSIvWsTPWlAvurY",
@@ -412,7 +412,7 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+const db = getDatabase(app);
 
 const COLORS = ['#F2653A','#2AC2A6','#5B7FE0','#E0B23A','#B25BE0','#E0475B','#3AA0E0','#8FA33A'];
 const AVG_SPEED_KMH = 25;
@@ -430,14 +430,14 @@ function fmtDist(km){ if(km==null) return '—'; return km<1 ? Math.round(km*100
 function fmtEtaMinutes(km){ if(km==null) return '—'; const m=Math.round((km/AVG_SPEED_KMH)*60); return m<60 ? m+' min' : (m/60).toFixed(1)+' hr'; }
 function timeAgo(ts){
   if(!ts) return '—';
-  const ms = ts.toMillis ? ts.toMillis() : ts;
+  const ms = typeof ts === 'number' ? ts : Date.now();
   const s = Math.floor((Date.now()-ms)/1000);
   if (s<5) return 'just now'; if (s<60) return s+'s ago';
   if (s<3600) return Math.floor(s/60)+'m ago'; return Math.floor(s/3600)+'h ago';
 }
 function isOnline(ts){
   if(!ts) return false;
-  const ms = (typeof ts === 'number') ? ts : (ts.toMillis ? ts.toMillis() : Date.now());
+  const ms = typeof ts === 'number' ? ts : Date.now();
   return (Date.now()-ms) < 120000; // 2 minute window
 }
 function showToast(msg){
@@ -477,7 +477,7 @@ let currentAdminTab = 'overview';
 let locMode = 'map';
 let routedBoyId = null;
 
-/* ---------------- session ---------------- */
+/* ---------------- session (device-local login only — all app data lives in Firebase) ---------------- */
 function loadSession(){
   try{
     const raw = localStorage.getItem('rb_session');
@@ -552,7 +552,6 @@ async function showBoyRoute(boyId){
   let stops = customers.filter(c=>c.assignedTo===boyId && c.status!=='completed');
   if (!stops.length){ showToast("No pending stops for " + b.name); clearRoute(); return; }
 
-  // greedy nearest-neighbour order starting from boy's current position
   let remaining = [...stops];
   let route = [{lat:b.lat, lng:b.lng}];
   let cur = {lat:b.lat, lng:b.lng};
@@ -677,18 +676,25 @@ function updateWhoami(){
   document.getElementById('logoutBtn').onclick = ()=> confirmAction("Log out?" + (role==='delivery' ? " This will stop sharing your live location." : ""), logout);
 }
 
-/* ================= FIRESTORE LISTENERS ================= */
+/* ================= FIREBASE REALTIME DATABASE LISTENERS ================= */
+/* Every piece of app data (customers, delivery boys, zones, live locations) lives
+   in Firebase Realtime Database, so any phone/tablet that logs in sees the same
+   live data instantly — nothing is stored only on one device. */
+function toArray(val){
+  if (!val) return [];
+  return Object.keys(val).map(id => ({ id, ...val[id] }));
+}
 function startListeners(){
-  onSnapshot(collection(db, 'deliveryBoys'), (snap)=>{
-    deliveryBoys = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+  onValue(ref(db, 'deliveryBoys'), (snap)=>{
+    deliveryBoys = toArray(snap.val());
     if (role) { updateWhoami(); renderAll(); }
   });
-  onSnapshot(collection(db, 'customers'), (snap)=>{
-    customers = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+  onValue(ref(db, 'customers'), (snap)=>{
+    customers = toArray(snap.val());
     if (role) renderAll();
   });
-  onSnapshot(collection(db, 'zones'), (snap)=>{
-    zones = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+  onValue(ref(db, 'zones'), (snap)=>{
+    zones = toArray(snap.val());
     if (role) renderAll();
   });
 }
@@ -738,7 +744,7 @@ document.getElementById('parseLinkBtn').onclick = ()=>{
   showToast("Location found — pin dropped on map");
 };
 
-/* ================= ACTIONS ================= */
+/* ================= ACTIONS (all writes go straight to Firebase Realtime Database) ================= */
 document.getElementById('saveCustBtn').onclick = async ()=>{
   const name = document.getElementById('custName').value.trim();
   const phone = document.getElementById('custPhone').value.trim();
@@ -747,7 +753,8 @@ document.getElementById('saveCustBtn').onclick = async ()=>{
   const zone = document.getElementById('custZone').value;
   if (!name || !pendingPinLatLng) return showToast("Name and a location are required!");
 
-  await addDoc(collection(db,'customers'), {
+  const newRef = push(ref(db, 'customers'));
+  await set(newRef, {
     name, phone, address: addr,
     lat: pendingPinLatLng.lat, lng: pendingPinLatLng.lng,
     assignedTo: assign || null,
@@ -771,7 +778,8 @@ document.getElementById('addBoyBtn').onclick = async ()=>{
   const zone = document.getElementById('boyZone').value;
   if (!name) return;
   const color = COLORS[deliveryBoys.length % COLORS.length];
-  await addDoc(collection(db,'deliveryBoys'), { name, zone: zone || null, color, lat:null, lng:null, lastUpdate:null });
+  const newRef = push(ref(db, 'deliveryBoys'));
+  await set(newRef, { name, zone: zone || null, color, lat:null, lng:null, lastUpdate:null });
   document.getElementById('boyName').value = '';
   showToast("Delivery boy added!");
 };
@@ -780,19 +788,20 @@ document.getElementById('addZoneBtn').onclick = async ()=>{
   const name = document.getElementById('zoneName').value.trim();
   const color = document.getElementById('zoneColor').value;
   if (!name) return;
-  await addDoc(collection(db,'zones'), { name, color });
+  const newRef = push(ref(db, 'zones'));
+  await set(newRef, { name, color });
   document.getElementById('zoneName').value = '';
   showToast("Zone added!");
 };
 
 window.markComplete = async (id) => {
-    await updateDoc(doc(db, 'customers', id), { status: 'completed', completedAt: serverTimestamp() });
+    await update(ref(db, 'customers/' + id), { status: 'completed', completedAt: serverTimestamp() });
     showToast("Marked as delivered!");
 };
-window.reassignCustomer = async (id, bId) => { await updateDoc(doc(db, 'customers', id), { assignedTo: bId || null }); };
-window.deleteCustomer = (id) => confirmAction("Delete customer?", async () => await deleteDoc(doc(db, 'customers', id)));
-window.removeBoy = (id) => confirmAction("Remove delivery boy?", async () => await deleteDoc(doc(db, 'deliveryBoys', id)));
-window.deleteZone = (id) => confirmAction("Delete zone?", async () => await deleteDoc(doc(db, 'zones', id)));
+window.reassignCustomer = async (id, bId) => { await update(ref(db, 'customers/' + id), { assignedTo: bId || null }); };
+window.deleteCustomer = (id) => confirmAction("Delete customer?", async () => await remove(ref(db, 'customers/' + id)));
+window.removeBoy = (id) => confirmAction("Remove delivery boy?", async () => await remove(ref(db, 'deliveryBoys/' + id)));
+window.deleteZone = (id) => confirmAction("Delete zone?", async () => await remove(ref(db, 'zones/' + id)));
 window.panToBoy = (id) => { const b = deliveryBoys.find(x=>x.id===id); if(b && b.lat!=null){ map.setView([b.lat,b.lng], 15); } showBoyRoute(id); };
 window.panToCust = (lat,lng) => map.setView([lat,lng], 16);
 
@@ -928,7 +937,7 @@ function startTracking(){
   tracking = true;
   renderTrackBanner();
   geoWatch = navigator.geolocation.watchPosition(pos => {
-      updateDoc(doc(db, 'deliveryBoys', myBoyId), {
+      update(ref(db, 'deliveryBoys/' + myBoyId), {
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
           lastUpdate: Date.now()
