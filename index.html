@@ -11,6 +11,7 @@
     --navy:#10192E; --navy-2:#16223D; --paper:#F5F4EF; --orange:#F2653A;
     --mint:#2AC2A6; --slate:#8A93A6; --line:#28324A; --white:#FFFFFF;
     --danger:#E85B5B; --radius:10px;
+    --morning:#F2A93A; --evening:#6C63E0;
   }
   *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
   html,body{height:100%;}
@@ -85,6 +86,12 @@
   .loc-mode-tabs button{flex:1; border:1px solid #DEDBCF; background:#FBFAF6; color:var(--slate); font-weight:600; font-size:11.5px; padding:8px 6px; border-radius:8px; cursor:pointer;}
   .loc-mode-tabs button.active{background:var(--navy); color:white; border-color:var(--navy);}
 
+  .shift-tabs{display:flex; gap:6px; margin-bottom:14px;}
+  .shift-tabs button{flex:1; border:2px solid #EEECE2; background:#FBFAF6; color:var(--slate); font-weight:700; font-size:12.5px; padding:10px 6px; border-radius:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;}
+  .shift-tabs button .sw{width:8px; height:8px; border-radius:50%;}
+  .shift-tabs button.active.morning{background:#FEF3E2; border-color:var(--morning); color:#8A5A0E;}
+  .shift-tabs button.active.evening{background:#ECEBFB; border-color:var(--evening); color:#3F3AA3;}
+
   .stats-row{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px;}
   .stat-card{background:var(--navy); color:white; border-radius:var(--radius); padding:12px;}
   .stat-card .num{font-family:'JetBrains Mono'; font-size:20px; font-weight:600;}
@@ -100,11 +107,19 @@
   .online-pill.off{background:#F0EEE4; color:var(--slate);}
   .boy-mini-stats{display:flex; gap:12px; font-size:11px; color:var(--slate); flex-wrap:wrap; margin-bottom:6px;}
   .boy-mini-stats b{color:var(--navy); font-family:'JetBrains Mono';}
+  .shift-mini-row{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px;}
+  .shift-mini{font-size:10px; font-weight:700; padding:3px 8px; border-radius:999px; font-family:'JetBrains Mono';}
+  .shift-mini.morning{background:#FEF3E2; color:#8A5A0E;}
+  .shift-mini.evening{background:#ECEBFB; color:#3F3AA3;}
   .heading-to{font-size:11.5px; background:#FDECE5; color:var(--orange); padding:5px 9px; border-radius:7px; font-weight:600; margin-top:6px;}
-  .boy-card-actions{display:flex; gap:6px; margin-top:9px;}
+  .boy-card-actions{display:flex; gap:6px; margin-top:9px; flex-wrap:wrap;}
 
   .zone-tag{display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600; padding:3px 9px; border-radius:999px; background:#EFEFF5; color:#5B6178;}
   .zone-tag .sw{width:7px; height:7px; border-radius:50%;}
+
+  .shift-badge{display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:999px; font-family:'JetBrains Mono';}
+  .shift-badge.morning{background:#FEF3E2; color:#8A5A0E;}
+  .shift-badge.evening{background:#ECEBFB; color:#3F3AA3;}
 
   .stop{display:flex; gap:10px; padding:11px 0; border-bottom:1px solid #F0EEE4; position:relative;}
   .stop:last-child{border-bottom:none;}
@@ -125,13 +140,14 @@
   .stop-actions{display:flex; gap:6px; margin-top:9px; flex-wrap:wrap;}
   .empty-state{text-align:center; color:var(--slate); font-size:12.5px; padding:34px 14px; line-height:1.6;}
 
-  .filter-row{display:flex; gap:6px; margin-bottom:12px;}
-  .filter-row select{flex:1; border:1px solid #DEDBCF; border-radius:8px; padding:8px 8px; font-size:12px; background:#FBFAF6; min-width:0;}
+  .filter-row{display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap;}
+  .filter-row select{flex:1; border:1px solid #DEDBCF; border-radius:8px; padding:8px 8px; font-size:12px; background:#FBFAF6; min-width:90px;}
 
   .track-banner{display:flex; align-items:center; gap:10px; background:#0F2A24; color:white; border-radius:10px; padding:12px 13px; margin-bottom:14px;}
   .track-banner.off{background:#F0EEE4; color:var(--navy);}
   .track-banner .txt{font-size:12.5px; font-weight:700;}
   .track-banner .sub{font-size:11px; opacity:.75; margin-top:1px;}
+  .track-banner.warn{background:#4A2A12;}
 
   .all-done-card{background:linear-gradient(135deg,var(--mint),#1D9E86); color:white; border-radius:14px; padding:22px 18px; text-align:center; margin-bottom:16px;}
   .all-done-card .big{font-size:34px; margin-bottom:6px;}
@@ -156,8 +172,8 @@
   .boy-modal-stats .mstat{background:#FBFAF6; border:1px solid #EEECE2; border-radius:9px; padding:10px 6px; text-align:center;}
   .boy-modal-stats .mstat .n{font-family:'JetBrains Mono'; font-size:18px; font-weight:700;}
   .boy-modal-stats .mstat .l{font-size:9px; color:var(--slate); text-transform:uppercase; letter-spacing:.04em; margin-top:2px;}
-  .boy-modal-actions{display:flex; gap:8px; margin-bottom:6px;}
-  .boy-modal-actions .btn{flex:1;}
+  .boy-modal-actions{display:flex; gap:8px; margin-bottom:6px; flex-wrap:wrap;}
+  .boy-modal-actions .btn{flex:1; min-width:100px;}
   .boy-modal-list-title{font-size:11px; font-weight:700; color:var(--slate); text-transform:uppercase; letter-spacing:.05em; margin:14px 0 6px;}
   .boy-modal-list{max-height:190px; overflow-y:auto;}
   .mini-stop{display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid #F0EEE4; font-size:12.5px;}
@@ -248,7 +264,7 @@
       </div>
       <div class="hint" id="noBoysHint" style="display:none; color:var(--orange); font-weight:600;">No delivery boys added yet. Ask your admin to add you first, then refresh.</div>
       <button class="btn btn-primary" id="deliveryNameBtn">Login &amp; start GPS</button>
-      <div class="hint">Signing in will turn on your live location so admin and customers' deliveries can be tracked in real time.</div>
+      <div class="hint">Signing in will turn on your live location so admin and customers' deliveries can be tracked in real time. Keep this app open in the foreground/background (don't fully close it) so your location keeps updating.</div>
     </div>
   </div>
 </div>
@@ -296,6 +312,15 @@
           <div class="field"><label>Address / note</label><input id="custAddr" type="text" placeholder="e.g. B-12, Lajpat Nagar"></div>
           <div class="field"><label>Zone</label><select id="custZone"><option value="">No zone</option></select></div>
         </div>
+        <div class="field-row">
+          <div class="field">
+            <label>Delivery shift</label>
+            <select id="custShift">
+              <option value="morning">🌅 Morning</option>
+              <option value="evening">🌆 Evening</option>
+            </select>
+          </div>
+        </div>
 
         <div class="loc-mode-tabs">
           <button type="button" class="locmode-btn active" data-mode="map">Pick on map</button>
@@ -321,6 +346,11 @@
         <div class="filter-row">
           <select id="filterBoy"><option value="all">All delivery boys</option></select>
           <select id="filterZone"><option value="all">All zones</option></select>
+          <select id="filterShift">
+            <option value="all">Morning + Evening</option>
+            <option value="morning">🌅 Morning only</option>
+            <option value="evening">🌆 Evening only</option>
+          </select>
           <select id="filterStatus">
             <option value="all">All status</option>
             <option value="pending">Pending</option>
@@ -368,11 +398,17 @@
           <div><div class="txt" id="trackTxt">Live location sharing</div><div class="sub" id="trackSubtext">Starting GPS…</div></div>
         </div>
         <div id="allDoneWrap"></div>
+
+        <div class="shift-tabs" id="shiftTabs">
+          <button type="button" class="shift-tab-btn morning" data-shift="morning"><span class="sw" style="background:var(--morning)"></span> 🌅 Morning</button>
+          <button type="button" class="shift-tab-btn evening" data-shift="evening"><span class="sw" style="background:var(--evening)"></span> 🌆 Evening</button>
+        </div>
+
         <div class="stats-row">
           <div class="stat-card"><div class="num" id="dbStatDone">0</div><div class="label">Delivered</div></div>
           <div class="stat-card"><div class="num" id="dbStatPending">0</div><div class="label">Remaining</div></div>
         </div>
-        <div class="section-title">Your stops — nearest first</div>
+        <div class="section-title" id="deliveryListTitle">Your stops — nearest first</div>
         <div id="deliveryCustList"></div>
       </div>
     </div>
@@ -430,6 +466,7 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 const COLORS = ['#F2653A','#2AC2A6','#5B7FE0','#E0B23A','#B25BE0','#E0475B','#3AA0E0','#8FA33A'];
+const SHIFT_COLORS = { morning: '#F2A93A', evening: '#6C63E0' };
 const AVG_SPEED_KMH = 25;
 const ADMIN_PASSWORD = 'admin123';
 const DELIVERY_PASSWORD = '123';
@@ -456,6 +493,8 @@ function isOnline(ts){
   const ms = typeof ts === 'number' ? ts : Date.now();
   return (Date.now()-ms) < 120000; // 2 minute window
 }
+function custShift(c){ return c.shift === 'evening' ? 'evening' : 'morning'; }
+function defaultShiftNow(){ return new Date().getHours() < 16 ? 'morning' : 'evening'; }
 function showToast(msg){
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
@@ -520,6 +559,7 @@ let myBoyId = null;
 let currentAdminTab = 'overview';
 let locMode = 'map';
 let routedBoyId = null;
+let activeShift = defaultShiftNow(); // used by delivery boy view (and reused for map filtering)
 
 /* ---------------- session (device-local login only — all app data lives in Firebase) ---------------- */
 function loadSession(){
@@ -568,35 +608,50 @@ function initMap(){
     if (role !== 'admin' || currentAdminTab !== 'customers' || locMode !== 'map') return;
     pendingPinLatLng = { lat: e.latLng.lat(), lng: e.latLng.lng() };
     if (pendingPinMarker) pendingPinMarker.setMap(null);
-    pendingPinMarker = new google.maps.Marker({ position: pendingPinLatLng, map, icon: makeCustIcon('#10192E','+',false) });
+    pendingPinMarker = new google.maps.Marker({ position: pendingPinLatLng, map, icon: makeCustIcon('#10192E','+',false,null) });
     document.getElementById('pendingPinNote').style.display = 'block';
   });
 
   document.getElementById('mapLoading').style.display = 'none';
 }
 
-function makeCustIcon(color, label, done){
+function makeCustIcon(color, label, done, shift){
   const fill = done ? '#2AC2A6' : color;
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="38" viewBox="0 0 30 38">
-    <path d="M15 0C6.7 0 0 6.7 0 15c0 10.7 15 23 15 23s15-12.3 15-23C30 6.7 23.3 0 15 0z" fill="${fill}" stroke="white" stroke-width="2"/>
-    <circle cx="15" cy="15" r="10.5" fill="${fill}" stroke="white" stroke-width="1.2"/>
-    <text x="15" y="19" font-family="monospace" font-size="11" font-weight="700" fill="white" text-anchor="middle">${done?'✓':label}</text>
+  const shiftColor = shift ? (SHIFT_COLORS[shift] || null) : null;
+  const shiftDot = shiftColor ? `<circle cx="24" cy="7" r="6.5" fill="${shiftColor}" stroke="white" stroke-width="1.6"/>` : '';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40">
+    <path d="M15 2C6.7 2 0 8.7 0 17c0 10.7 15 23 15 23s15-12.3 15-23C30 8.7 23.3 2 15 2z" fill="${fill}" stroke="white" stroke-width="2"/>
+    <circle cx="15" cy="17" r="10.5" fill="${fill}" stroke="white" stroke-width="1.2"/>
+    <text x="15" y="21" font-family="monospace" font-size="11" font-weight="700" fill="white" text-anchor="middle">${done?'✓':label}</text>
+    ${shiftDot}
   </svg>`;
   return {
     url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
-    scaledSize: new google.maps.Size(30,38),
+    scaledSize: new google.maps.Size(32,40),
     anchor: new google.maps.Point(15,38)
   };
 }
-function makeBoyIcon(color, initialsTxt){
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
-    <circle cx="20" cy="20" r="17" fill="${color}" stroke="white" stroke-width="3"/>
-    <text x="20" y="25" font-family="sans-serif" font-size="13" font-weight="700" fill="white" text-anchor="middle">${initialsTxt}</text>
+
+// Bike-rider marker: colored per delivery boy, turns grayscale + gets an "OFFLINE" tag
+// the moment their last GPS update is older than the online window.
+function makeBoyIcon(color, initialsTxt, online){
+  const bodyColor = online ? color : '#9AA0AC';
+  const ringColor = online ? '#FFFFFF' : '#D8DBE0';
+  const badgeColor = online ? '#2AC2A6' : '#6B7280';
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="46" height="46" viewBox="0 0 46 46">
+    <circle cx="23" cy="23" r="19" fill="${bodyColor}" stroke="${ringColor}" stroke-width="3"/>
+    <g transform="translate(9,13)" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="4.5" cy="15.5" r="4" fill="white" fill-opacity="0.18"/>
+      <circle cx="23.5" cy="15.5" r="4" fill="white" fill-opacity="0.18"/>
+      <path d="M4.5 15.5 L11 9 H17 M11 9 L14 15.5 H23.5 M14 15.5 L17.5 6.5 H21.5 M9.5 5 H15" />
+      <circle cx="17.5" cy="6.5" r="1.4" fill="white" stroke="none"/>
+    </g>
+    ${online ? `<circle cx="38" cy="8" r="6" fill="${badgeColor}" stroke="white" stroke-width="1.6"/>` : `<circle cx="38" cy="8" r="6" fill="${badgeColor}" stroke="white" stroke-width="1.6"/><text x="38" y="11" font-family="monospace" font-size="8" font-weight="700" fill="white" text-anchor="middle">×</text>`}
   </svg>`;
   return {
     url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
-    scaledSize: new google.maps.Size(40,40),
-    anchor: new google.maps.Point(20,20)
+    scaledSize: new google.maps.Size(46,46),
+    anchor: new google.maps.Point(23,23)
   };
 }
 function initials(name){ return (name||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
@@ -609,18 +664,21 @@ function renderMapMarkers(){
   const boyColorMap = {}; deliveryBoys.forEach(b=> boyColorMap[b.id]=b.color);
 
   let visibleCustomers = customers;
-  if (role === 'delivery' && myBoyId) visibleCustomers = customers.filter(c=>c.assignedTo === myBoyId);
+  if (role === 'delivery' && myBoyId){
+    visibleCustomers = customers.filter(c=>c.assignedTo === myBoyId && custShift(c) === activeShift);
+  }
 
   visibleCustomers.forEach((c,i)=>{
     const color = c.assignedTo ? (boyColorMap[c.assignedTo] || '#8A93A6') : '#8A93A6';
     const marker = new google.maps.Marker({
       position: { lat:c.lat, lng:c.lng },
       map,
-      icon: makeCustIcon(color, i+1, c.status==='completed'),
+      icon: makeCustIcon(color, i+1, c.status==='completed', custShift(c)),
       title: c.name
     });
     marker.addListener('click', ()=>{
-      infoWindow.setContent(`<div style="font-family:Inter,sans-serif;"><b>${escapeHtml(c.name)}</b><br>${escapeHtml(c.address||'')}${c.phone?`<br>${escapeHtml(c.phone)}`:''}</div>`);
+      const shiftLbl = custShift(c)==='evening' ? '🌆 Evening' : '🌅 Morning';
+      infoWindow.setContent(`<div style="font-family:Inter,sans-serif;"><b>${escapeHtml(c.name)}</b><br>${escapeHtml(c.address||'')}${c.phone?`<br>${escapeHtml(c.phone)}`:''}<br><span style="font-size:11px;color:#8A93A6;">${shiftLbl}</span></div>`);
       infoWindow.open(map, marker);
     });
     custMarkers.push(marker);
@@ -634,31 +692,35 @@ function renderMapMarkers(){
 
   visibleBoys.forEach(b=>{
     if (b.lat == null) return;
+    const online = isOnline(b.lastUpdate);
     if (!boyMarkers[b.id]) {
       boyMarkers[b.id] = new google.maps.Marker({
         position: { lat:b.lat, lng:b.lng },
         map,
-        icon: makeBoyIcon(b.color, initials(b.name)),
-        zIndex: 1000
+        icon: makeBoyIcon(b.color, initials(b.name), online),
+        zIndex: online ? 1000 : 500,
+        opacity: online ? 1 : 0.7
       });
       boyMarkers[b.id].addListener('click', ()=>{
-        infoWindow.setContent(`<div style="font-family:Inter,sans-serif;"><b>${escapeHtml(b.name)}</b></div>`);
+        infoWindow.setContent(`<div style="font-family:Inter,sans-serif;"><b>${escapeHtml(b.name)}</b><br><span style="font-size:11px;color:${online?'#1D9E86':'#8A93A6'};">${online?'🟢 Online now':'⚫ Offline · last seen ' + timeAgo(b.lastUpdate)}</span></div>`);
         infoWindow.open(map, boyMarkers[b.id]);
       });
     } else {
       boyMarkers[b.id].setPosition({ lat:b.lat, lng:b.lng });
-      boyMarkers[b.id].setIcon(makeBoyIcon(b.color, initials(b.name)));
+      boyMarkers[b.id].setIcon(makeBoyIcon(b.color, initials(b.name), online));
+      boyMarkers[b.id].setOpacity(online ? 1 : 0.7);
+      boyMarkers[b.id].setZIndex(online ? 1000 : 500);
     }
   });
 }
 
 /* ---------------- live route (road-based, OSRM) ---------------- */
-async function showBoyRoute(boyId){
+async function showBoyRoute(boyId, shiftFilter){
   const b = deliveryBoys.find(x=>x.id===boyId);
   if (!b) return;
   if (b.lat == null) { showToast(b.name + " has no live location yet"); return; }
-  let stops = customers.filter(c=>c.assignedTo===boyId && c.status!=='completed');
-  if (!stops.length){ showToast("No pending stops for " + b.name); clearRoute(); return; }
+  let stops = customers.filter(c=>c.assignedTo===boyId && c.status!=='completed' && (!shiftFilter || shiftFilter==='all' || custShift(c)===shiftFilter));
+  if (!stops.length){ showToast("No pending stops for " + b.name + (shiftFilter && shiftFilter!=='all' ? ' in this shift' : '')); clearRoute(); return; }
 
   let remaining = [...stops];
   let route = [{lat:b.lat, lng:b.lng}];
@@ -766,7 +828,7 @@ function enterApp(r, boyId){
   document.body.classList.add('show-list-mobile');
   document.body.classList.remove('show-map-mobile');
   updateWhoami();
-  if (role === 'delivery') startTracking();
+  if (role === 'delivery') { updateShiftTabsUI(); startTracking(); }
   renderAll();
   setTimeout(()=>{ if (map) google.maps.event.trigger(map, 'resize'); }, 250);
 }
@@ -839,12 +901,28 @@ document.querySelectorAll('.locmode-btn').forEach(btn=>{
   };
 });
 
+/* ---- Delivery boy shift tabs (Morning / Evening) ---- */
+function updateShiftTabsUI(){
+  document.querySelectorAll('.shift-tab-btn').forEach(btn=>{
+    btn.classList.toggle('active', btn.dataset.shift === activeShift);
+  });
+  const titleEl = document.getElementById('deliveryListTitle');
+  if (titleEl) titleEl.textContent = (activeShift==='evening' ? '🌆 Evening' : '🌅 Morning') + ' stops — nearest first';
+}
+document.querySelectorAll('.shift-tab-btn').forEach(btn=>{
+  btn.onclick = ()=>{
+    activeShift = btn.dataset.shift;
+    updateShiftTabsUI();
+    renderAll();
+  };
+});
+
 document.getElementById('useMyLocBtn').onclick = ()=>{
   if (!navigator.geolocation) return showToast("Geolocation not supported on this device");
   navigator.geolocation.getCurrentPosition(pos=>{
     pendingPinLatLng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
     if (pendingPinMarker) pendingPinMarker.setMap(null);
-    pendingPinMarker = new google.maps.Marker({ position: pendingPinLatLng, map, icon: makeCustIcon('#10192E','+',false) });
+    pendingPinMarker = new google.maps.Marker({ position: pendingPinLatLng, map, icon: makeCustIcon('#10192E','+',false,null) });
     map.panTo(pendingPinLatLng);
     document.getElementById('pendingPinNote').style.display = 'block';
   }, ()=> showToast("Couldn't get your location — allow location access"));
@@ -865,7 +943,7 @@ document.getElementById('parseLinkBtn').onclick = async ()=>{
     }
     pendingPinLatLng = coords;
     if (pendingPinMarker) pendingPinMarker.setMap(null);
-    pendingPinMarker = new google.maps.Marker({ position: coords, map, icon: makeCustIcon('#10192E','+',false) });
+    pendingPinMarker = new google.maps.Marker({ position: coords, map, icon: makeCustIcon('#10192E','+',false,null) });
     map.panTo(coords);
     map.setZoom(16);
     document.getElementById('pendingPinNote').style.display = 'block';
@@ -883,6 +961,7 @@ document.getElementById('saveCustBtn').onclick = async ()=>{
   const addr = document.getElementById('custAddr').value.trim();
   const assign = document.getElementById('custAssign').value;
   const zone = document.getElementById('custZone').value;
+  const shift = document.getElementById('custShift').value === 'evening' ? 'evening' : 'morning';
   if (!name || !pendingPinLatLng) return showToast("Name and a location are required!");
 
   const newRef = push(ref(db, 'customers'));
@@ -891,6 +970,7 @@ document.getElementById('saveCustBtn').onclick = async ()=>{
     lat: pendingPinLatLng.lat, lng: pendingPinLatLng.lng,
     assignedTo: assign || null,
     zone: zone || null,
+    shift,
     status: 'pending',
     createdAt: serverTimestamp()
   });
@@ -899,6 +979,7 @@ document.getElementById('saveCustBtn').onclick = async ()=>{
   document.getElementById('custPhone').value = '';
   document.getElementById('custAddr').value = '';
   document.getElementById('custMapLink').value = '';
+  document.getElementById('custShift').value = 'morning';
   if (pendingPinMarker) pendingPinMarker.setMap(null);
   pendingPinLatLng = null;
   document.getElementById('pendingPinNote').style.display = 'none';
@@ -931,10 +1012,11 @@ window.markComplete = async (id) => {
     showToast("Marked as delivered!");
 };
 window.reassignCustomer = async (id, bId) => { await update(ref(db, 'customers/' + id), { assignedTo: bId || null }); };
+window.setCustomerShift = async (id, shift) => { await update(ref(db, 'customers/' + id), { shift: shift==='evening'?'evening':'morning' }); };
 window.deleteCustomer = (id) => confirmAction("Delete customer?", async () => await remove(ref(db, 'customers/' + id)));
 window.removeBoy = (id) => confirmAction("Remove delivery boy?", async () => await remove(ref(db, 'deliveryBoys/' + id)));
 window.deleteZone = (id) => confirmAction("Delete zone?", async () => await remove(ref(db, 'zones/' + id)));
-window.panToBoy = (id) => { const b = deliveryBoys.find(x=>x.id===id); if(b && b.lat!=null){ map.panTo({lat:b.lat,lng:b.lng}); map.setZoom(15); } showBoyRoute(id); };
+window.panToBoy = (id, shift) => { const b = deliveryBoys.find(x=>x.id===id); if(b && b.lat!=null){ map.panTo({lat:b.lat,lng:b.lng}); map.setZoom(15); } showBoyRoute(id, shift||'all'); };
 window.panToCust = (lat,lng) => { map.panTo({lat,lng}); map.setZoom(16); };
 
 /* ---- Delivery boy full-status modal ---- */
@@ -944,6 +1026,8 @@ window.openBoyModal = (boyId) => {
   const mine = customers.filter(c=>c.assignedTo===boyId);
   const pending = mine.filter(c=>c.status!=='completed');
   const done = mine.filter(c=>c.status==='completed');
+  const pendingMorning = pending.filter(c=>custShift(c)==='morning').length;
+  const pendingEvening = pending.filter(c=>custShift(c)==='evening').length;
   if (b.lat!=null){
     pending.forEach(c=> c._d = distanceKm(b.lat,b.lng,c.lat,c.lng));
     pending.sort((a,z)=>a._d-z._d);
@@ -961,13 +1045,18 @@ window.openBoyModal = (boyId) => {
       <div class="mstat"><div class="n">${done.length}</div><div class="l">Delivered</div></div>
       <div class="mstat"><div class="n">${pending.length}</div><div class="l">Pending</div></div>
     </div>
+    <div class="shift-mini-row">
+      <span class="shift-mini morning">🌅 Morning pending: ${pendingMorning}</span>
+      <span class="shift-mini evening">🌆 Evening pending: ${pendingEvening}</span>
+    </div>
     <div class="boy-modal-actions">
-      <button class="btn btn-ghost btn-sm" onclick="closeBoyModal(); panToBoy('${b.id}')">🗺️ Show route</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeBoyModal(); panToBoy('${b.id}','morning')">🌅 Route (Morning)</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeBoyModal(); panToBoy('${b.id}','evening')">🌆 Route (Evening)</button>
       <button class="btn btn-danger btn-sm" ${!done.length?'disabled style="opacity:.4;cursor:not-allowed;"':''} onclick="resetBoyDeliveries('${b.id}')">🔄 Reset for tomorrow</button>
     </div>
     ${pending.length ? `<div class="boy-modal-list-title">Pending (${pending.length})</div>
     <div class="boy-modal-list">${pending.map(c=>`
-      <div class="mini-stop"><div><div class="mn">${escapeHtml(c.name)}</div><div class="md">${escapeHtml(c.address||'')}</div></div><div class="md">${c._d!=null?fmtDist(c._d):''}</div></div>
+      <div class="mini-stop"><div><div class="mn">${escapeHtml(c.name)} <span class="shift-badge ${custShift(c)}" style="padding:1px 6px; font-size:9px;">${custShift(c)==='evening'?'🌆':'🌅'}</span></div><div class="md">${escapeHtml(c.address||'')}</div></div><div class="md">${c._d!=null?fmtDist(c._d):''}</div></div>
     `).join('')}</div>` : ''}
     ${done.length ? `<div class="boy-modal-list-title">Delivered today (${done.length})</div>
     <div class="boy-modal-list">${done.map(c=>`
@@ -1035,6 +1124,8 @@ function renderAdminOverview(){
         const doneCount = mine.filter(c=>c.status==='completed').length;
         let pendingList = mine.filter(c=>c.status!=='completed');
         const pendingCount = pendingList.length;
+        const pendingMorning = pendingList.filter(c=>custShift(c)==='morning').length;
+        const pendingEvening = pendingList.filter(c=>custShift(c)==='evening').length;
         let headingTo = null;
         if (pendingCount && b.lat!=null){
           pendingList = [...pendingList].map(c=>({...c, _d: distanceKm(b.lat,b.lng,c.lat,c.lng)})).sort((a,z)=>a._d-z._d);
@@ -1052,9 +1143,13 @@ function renderAdminOverview(){
               <span><b>${pendingCount}</b> pending</span>
               <span>Updated ${timeAgo(b.lastUpdate)}</span>
             </div>
+            <div class="shift-mini-row">
+              <span class="shift-mini morning">🌅 ${pendingMorning}</span>
+              <span class="shift-mini evening">🌆 ${pendingEvening}</span>
+            </div>
             ${headingTo ? `<div class="heading-to">🛵 Heading to: ${escapeHtml(headingTo)}</div>` : (mine.length ? '<div class="heading-to" style="background:#E4F8F3;color:#1D9E86;">✓ All deliveries complete</div>' : '')}
             <div class="boy-card-actions">
-              <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); panToBoy('${b.id}')">🗺️ Route</button>
+              <button class="btn btn-ghost btn-sm" onclick="event.stopPropagation(); panToBoy('${b.id}','all')">🗺️ Route</button>
               ${doneCount ? `<button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); resetBoyDeliveries('${b.id}')">🔄 Reset (${doneCount})</button>` : ''}
             </div>
         </div>`;
@@ -1065,16 +1160,19 @@ function renderAdminCustList(){
     const bFilter = document.getElementById('filterBoy').value;
     const zFilter = document.getElementById('filterZone').value;
     const sFilter = document.getElementById('filterStatus').value;
+    const shiftFilter = document.getElementById('filterShift').value;
 
     let filtered = customers.filter(c => {
         if(bFilter !== 'all' && c.assignedTo !== bFilter) return false;
         if(zFilter !== 'all' && c.zone !== zFilter) return false;
         if(sFilter !== 'all' && c.status !== sFilter) return false;
+        if(shiftFilter !== 'all' && custShift(c) !== shiftFilter) return false;
         return true;
     });
 
     document.getElementById('adminCustList').innerHTML = filtered.length ? filtered.map(c => {
       const z = zones.find(zz=>zz.id===c.zone);
+      const sh = custShift(c);
       return `
         <div class="stop ${c.status==='completed'?'done':''}">
             <div class="idx">${c.status==='completed'?'✓':'•'}</div>
@@ -1084,6 +1182,7 @@ function renderAdminCustList(){
                 ${c.phone ? `<div class="phn">📞 ${escapeHtml(c.phone)}</div>` : ''}
                 <div class="stop-meta">
                   <span class="badge ${c.status==='completed'?'done':'pending'}">${c.status==='completed'?'DELIVERED':'PENDING'}</span>
+                  <span class="shift-badge ${sh}">${sh==='evening'?'🌆 Evening':'🌅 Morning'}</span>
                   ${z ? `<span class="zone-tag"><span class="sw" style="background:${z.color}"></span>${escapeHtml(z.name)}</span>` : ''}
                   ${!c.assignedTo ? `<span class="badge unassigned">UNASSIGNED</span>` : ''}
                 </div>
@@ -1091,6 +1190,10 @@ function renderAdminCustList(){
                     <select onchange="reassignCustomer('${c.id}', this.value)" style="font-size:11px; padding:5px; border-radius:6px; border:1px solid #DEDBCF;">
                         <option value="">Unassigned</option>
                         ${deliveryBoys.map(b=>`<option value="${b.id}" ${c.assignedTo===b.id?'selected':''}>${escapeHtml(b.name)}</option>`).join('')}
+                    </select>
+                    <select onchange="setCustomerShift('${c.id}', this.value)" style="font-size:11px; padding:5px; border-radius:6px; border:1px solid #DEDBCF;">
+                        <option value="morning" ${sh==='morning'?'selected':''}>🌅 Morning</option>
+                        <option value="evening" ${sh==='evening'?'selected':''}>🌆 Evening</option>
                     </select>
                     <button class="btn btn-danger btn-sm" onclick="deleteCustomer('${c.id}')">Delete</button>
                 </div>
@@ -1126,11 +1229,47 @@ function renderZonesList(){
 /* ================= DELIVERY BOY GPS TRACKING ================= */
 let tracking = false;
 let geoWatch = null;
+let wakeLockRef = null;
+let bgWarnShown = false;
+
+// Wake Lock keeps the screen awake (best-effort) so mobile OSes don't suspend
+// GPS updates while the delivery boy has the app open — this does NOT survive
+// the tab/app being fully closed; browsers deliberately kill all JS then.
+async function requestWakeLock(){
+  try{
+    if ('wakeLock' in navigator){
+      wakeLockRef = await navigator.wakeLock.request('screen');
+      wakeLockRef.addEventListener('release', ()=>{ wakeLockRef = null; });
+    }
+  }catch(e){ /* wake lock not available/allowed — ignore silently */ }
+}
+function releaseWakeLock(){
+  if (wakeLockRef){ try{ wakeLockRef.release(); }catch(e){} wakeLockRef = null; }
+}
+document.addEventListener('visibilitychange', ()=>{
+  if (document.visibilityState === 'visible' && tracking && !wakeLockRef){
+    requestWakeLock();
+  }
+  if (document.visibilityState === 'hidden' && tracking && role==='delivery' && !bgWarnShown){
+    bgWarnShown = true;
+    showToast("App minimized — keep RouteBoy open (don't swipe it closed) to keep sharing your location");
+  }
+  if (document.visibilityState === 'visible') bgWarnShown = false;
+});
+window.addEventListener('beforeunload', (e)=>{
+  if (tracking && role==='delivery'){
+    // Best-effort nudge only — browsers cannot be forced to keep a tab open,
+    // and once it's actually closed, location sharing stops immediately.
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
 
 function startTracking(){
   if (!myBoyId) return;
   if (!navigator.geolocation){ showToast("GPS not supported on this device"); return; }
   tracking = true;
+  requestWakeLock();
   renderTrackBanner();
   geoWatch = navigator.geolocation.watchPosition(pos => {
       update(ref(db, 'deliveryBoys/' + myBoyId), {
@@ -1147,6 +1286,7 @@ function startTracking(){
 function stopTracking(){
   tracking = false;
   if (geoWatch != null){ navigator.geolocation.clearWatch(geoWatch); geoWatch = null; }
+  releaseWakeLock();
   renderTrackBanner();
 }
 function renderTrackBanner(){
@@ -1154,15 +1294,26 @@ function renderTrackBanner(){
   if (!el) return;
   el.classList.toggle('off', !tracking);
   document.getElementById('trackTxt').textContent = tracking ? 'Live location sharing — ON' : 'Live location sharing — OFF';
-  document.getElementById('trackSubtext').textContent = tracking ? 'Admin can see your position in real time' : 'All deliveries complete for today';
+  document.getElementById('trackSubtext').textContent = tracking
+    ? 'Admin can see your position in real time · keep app open to stay live'
+    : 'All deliveries complete for today';
 }
 
 function renderDeliveryList(){
     if(!myBoyId) return;
+    updateShiftTabsUI();
     const me = deliveryBoys.find(b=>b.id===myBoyId);
-    let myStops = customers.filter(c => c.assignedTo === myBoyId);
+    let myStops = customers.filter(c => c.assignedTo === myBoyId && custShift(c) === activeShift);
     let pending = myStops.filter(c => c.status !== 'completed');
     let done = myStops.filter(c => c.status === 'completed');
+
+    // shift tab badge counts (pending only), shown regardless of which tab is active
+    document.querySelectorAll('.shift-tab-btn').forEach(btn=>{
+      const sh = btn.dataset.shift;
+      const cnt = customers.filter(c=>c.assignedTo===myBoyId && custShift(c)===sh && c.status!=='completed').length;
+      const base = sh==='evening' ? '🌆 Evening' : '🌅 Morning';
+      btn.innerHTML = `<span class="sw" style="background:var(--${sh})"></span> ${base}${cnt?` (${cnt})`:''}`;
+    });
 
     document.getElementById('dbStatPending').innerText = pending.length;
     document.getElementById('dbStatDone').innerText = done.length;
@@ -1172,21 +1323,22 @@ function renderDeliveryList(){
         pending.sort((a,b) => a._dist - b._dist);
     }
 
+    const totalPendingAllShifts = customers.filter(c=>c.assignedTo===myBoyId && c.status!=='completed').length;
     const allDoneWrap = document.getElementById('allDoneWrap');
-    if (myStops.length > 0 && pending.length === 0){
+    if (totalPendingAllShifts === 0 && customers.some(c=>c.assignedTo===myBoyId)){
       allDoneWrap.innerHTML = `<div class="all-done-card"><div class="big">🎉</div><div class="t1">All deliveries done for today!</div><div class="t2">Your live location has been turned off.</div></div>`;
       if (tracking) stopTracking();
     } else {
       allDoneWrap.innerHTML = '';
       // admin may have just reset completed orders back to pending — resume GPS sharing automatically
-      if (pending.length > 0 && !tracking) startTracking();
+      if (totalPendingAllShifts > 0 && !tracking) startTracking();
     }
 
     let html = pending.map((c, i) => `
         <div class="stop ${i===0?'nearest':''}">
             <div class="idx">${i+1}</div>
             <div class="stop-body">
-                <div class="name">${escapeHtml(c.name)}${i===0?' · Next stop':''}</div>
+                <div class="name">${escapeHtml(c.name)}${i===0?' · Next stop':''} <span class="shift-badge ${activeShift}" style="padding:1px 7px; font-size:9.5px;">${activeShift==='evening'?'🌆':'🌅'}</span></div>
                 <div class="addr">${escapeHtml(c.address || '')}</div>
                 ${c.phone ? `<div class="phn">📞 ${escapeHtml(c.phone)}</div>` : ''}
                 <div class="stop-meta">
@@ -1206,7 +1358,7 @@ function renderDeliveryList(){
         <div class="stop done"><div class="idx">✓</div><div class="stop-body"><div class="name">${escapeHtml(c.name)}</div><div class="addr">${escapeHtml(c.address||'')}</div></div></div>
     `).join('');
 
-    document.getElementById('deliveryCustList').innerHTML = html || '<div class="empty-state">No tasks assigned yet. Check back soon.</div>';
+    document.getElementById('deliveryCustList').innerHTML = html || `<div class="empty-state">No ${activeShift} tasks assigned yet. Check back soon.</div>`;
 }
 
 /* ================= MOBILE TOGGLE ================= */
@@ -1221,7 +1373,7 @@ document.getElementById('mobShowMap').onclick = ()=>{
   setTimeout(()=>{ if (map) google.maps.event.trigger(map, 'resize'); }, 150);
 };
 
-['filterBoy','filterZone','filterStatus'].forEach(id=>{
+['filterBoy','filterZone','filterStatus','filterShift'].forEach(id=>{
   document.addEventListener('change', (e)=>{ if(e.target && e.target.id===id) renderAdminCustList(); });
 });
 
