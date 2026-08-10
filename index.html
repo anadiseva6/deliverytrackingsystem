@@ -421,6 +421,9 @@
     <div class="map-toolbar" id="mapToolbar" style="display:none;">
       <button id="clearRouteBtn">✕ Clear route</button>
     </div>
+    <div class="map-toolbar" id="deliveryMapToolbar" style="display:none; top:auto; bottom:12px;">
+      <button id="recenterBtn">📍 Recenter on me</button>
+    </div>
   </div>
 </div>
 
@@ -448,7 +451,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getDatabase, ref, push, set, update, remove, onValue, serverTimestamp
+  getDatabase, ref, push, set, update, remove, onValue, onDisconnect, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
@@ -488,13 +491,34 @@ function timeAgo(ts){
   if (s<5) return 'just now'; if (s<60) return s+'s ago';
   if (s<3600) return Math.floor(s/60)+'m ago'; return Math.floor(s/3600)+'h ago';
 }
-function isOnline(ts){
-  if(!ts) return false;
-  const ms = typeof ts === 'number' ? ts : Date.now();
-  return (Date.now()-ms) < 120000; // 2 minute window
+// Online status now has TWO signals: an explicit `online` flag (set true when GPS
+// tracking starts, set false the instant a boy logs out or disconnects via Firebase's
+// onDisconnect hook) PLUS a freshness fallback (in case the flag is stale/missing on
+// old records). Explicit "false" always wins immediately — no more waiting for a timeout.
+function isOnline(b){
+  if(!b) return false;
+  if (b.online === false) return false;
+  if(!b.lastUpdate) return false;
+  const ms = typeof b.lastUpdate === 'number' ? b.lastUpdate : Date.now();
+  return (Date.now()-ms) < 120000; // 2 minute freshness window (fallback only)
 }
 function custShift(c){ return c.shift === 'evening' ? 'evening' : 'morning'; }
 function defaultShiftNow(){ return new Date().getHours() < 16 ? 'morning' : 'evening'; }
+// Greedy nearest-neighbor stop ordering — shared by the admin "show route" button
+// and the delivery boy's own auto-route, so numbering on the map and the route line
+// always agree with each other.
+function nearestNeighborOrder(startLat, startLng, stops){
+  let remaining = [...stops];
+  let order = [];
+  let cur = { lat:startLat, lng:startLng };
+  while (remaining.length){
+    remaining.sort((a,z)=> distanceKm(cur.lat,cur.lng,a.lat,a.lng) - distanceKm(cur.lat,cur.lng,z.lat,z.lng));
+    const next = remaining.shift();
+    order.push(next);
+    cur = next;
+  }
+  return order;
+}
 function showToast(msg){
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.add('show');
@@ -592,6 +616,57 @@ let boyMarkers = {};
 let pendingPinLatLng = null;
 let pendingPinMarker = null;
 let routePolyline = null;
+let segmentLabels = [];
+let lastRoutedKey = null;
+let lastRouteFetchTime = 0;
+let deliveryMapCenteredOnce = false;
+let FloatingLabel = null; // defined once google.maps is available, inside initMap()
+
+// Small floating pill (distance · ETA) anchored to a lat/lng, used between
+// consecutive stops on a route. Defined lazily because it extends
+// google.maps.OverlayView, which only exists once the Maps script has loaded.
+function defineFloatingLabelClass(){
+  FloatingLabel = class extends google.maps.OverlayView {
+    constructor(position, text, color){
+      super();
+      this.position = position;
+      this.text = text;
+      this.color = color;
+      this.div = null;
+    }
+    onAdd(){
+      this.div = document.createElement('div');
+      this.div.style.cssText = `position:absolute; transform:translate(-50%,-50%); background:${this.color}; color:white; font-family:'JetBrains Mono',monospace; font-size:10.5px; font-weight:700; padding:4px 9px; border-radius:999px; box-shadow:0 3px 10px rgba(0,0,0,.28); white-space:nowrap; pointer-events:none; border:1.5px solid white; letter-spacing:.02em;`;
+      this.div.textContent = this.text;
+      this.getPanes().overlayMouseTarget.appendChild(this.div);
+    }
+    draw(){
+      const proj = this.getProjection();
+      if (!proj || !this.div) return;
+      const pos = proj.fromLatLngToDivPixel(this.position);
+      if (pos){ this.div.style.left = pos.x + 'px'; this.div.style.top = pos.y + 'px'; }
+    }
+    onRemove(){
+      if (this.div && this.div.parentNode){ this.div.parentNode.removeChild(this.div); }
+      this.div = null;
+    }
+  };
+}
+function clearSegmentLabels(){
+  segmentLabels.forEach(l=>l.setMap(null));
+  segmentLabels = [];
+}
+function drawSegmentLabels(routePoints, color){
+  clearSegmentLabels();
+  for (let i=0; i<routePoints.length-1; i++){
+    const a = routePoints[i], z = routePoints[i+1];
+    const d = distanceKm(a.lat,a.lng,z.lat,z.lng);
+    const mid = { lat:(a.lat+z.lat)/2, lng:(a.lng+z.lng)/2 };
+    const label = new FloatingLabel(new google.maps.LatLng(mid.lat, mid.lng), `${fmtDist(d)} · ${fmtEtaMinutes(d)}`, color);
+    label.setMap(map);
+    segmentLabels.push(label);
+  }
+}
 
 function initMap(){
   map = new google.maps.Map(document.getElementById('map'), {
@@ -612,6 +687,7 @@ function initMap(){
     document.getElementById('pendingPinNote').style.display = 'block';
   });
 
+  defineFloatingLabelClass();
   document.getElementById('mapLoading').style.display = 'none';
 }
 
@@ -664,21 +740,51 @@ function renderMapMarkers(){
   const boyColorMap = {}; deliveryBoys.forEach(b=> boyColorMap[b.id]=b.color);
 
   let visibleCustomers = customers;
+  let myBoy = null;
+  let routeOrderMap = null; // customerId -> visiting order number, delivery role only
+
   if (role === 'delivery' && myBoyId){
     visibleCustomers = customers.filter(c=>c.assignedTo === myBoyId && custShift(c) === activeShift);
+    myBoy = deliveryBoys.find(b=>b.id===myBoyId);
+    if (myBoy && myBoy.lat != null){
+      const pendingForOrder = visibleCustomers.filter(c=>c.status!=='completed');
+      const ordered = nearestNeighborOrder(myBoy.lat, myBoy.lng, pendingForOrder);
+      routeOrderMap = {};
+      ordered.forEach((c,idx)=>{ routeOrderMap[c.id] = idx+1; });
+    }
   }
 
   visibleCustomers.forEach((c,i)=>{
     const color = c.assignedTo ? (boyColorMap[c.assignedTo] || '#8A93A6') : '#8A93A6';
+    const label = routeOrderMap ? (routeOrderMap[c.id] || i+1) : (i+1);
     const marker = new google.maps.Marker({
       position: { lat:c.lat, lng:c.lng },
       map,
-      icon: makeCustIcon(color, i+1, c.status==='completed', custShift(c)),
-      title: c.name
+      icon: makeCustIcon(color, label, c.status==='completed', custShift(c)),
+      title: c.name,
+      zIndex: c.status==='completed' ? 50 : 300 - label
     });
+
     marker.addListener('click', ()=>{
       const shiftLbl = custShift(c)==='evening' ? '🌆 Evening' : '🌅 Morning';
-      infoWindow.setContent(`<div style="font-family:Inter,sans-serif;"><b>${escapeHtml(c.name)}</b><br>${escapeHtml(c.address||'')}${c.phone?`<br>${escapeHtml(c.phone)}`:''}<br><span style="font-size:11px;color:#8A93A6;">${shiftLbl}</span></div>`);
+      let extra = '';
+      if (role === 'delivery' && c.assignedTo === myBoyId){
+        let distLine = '';
+        if (myBoy && myBoy.lat != null){
+          const d = distanceKm(myBoy.lat, myBoy.lng, c.lat, c.lng);
+          distLine = `<div style="font-size:11px; color:#5B6178; margin:4px 0 8px;">📍 ${fmtDist(d)} away · ~${fmtEtaMinutes(d)}</div>`;
+        }
+        if (c.status !== 'completed'){
+          extra = `${distLine}<div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">
+            <button onclick="deliverFromMap('${c.id}')" style="background:#2AC2A6;color:white;border:none;border-radius:7px;padding:7px 10px;font-size:11.5px;font-weight:700;cursor:pointer;">✓ Delivered</button>
+            ${c.phone ? `<a href="tel:${escapeHtml(c.phone)}" style="background:#F5F4EF;color:#10192E;border:1px solid #DEDBCF;border-radius:7px;padding:7px 10px;font-size:11.5px;font-weight:700;text-decoration:none;">📞 Call</a>` : ''}
+            <a href="https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}" target="_blank" style="background:#F5F4EF;color:#10192E;border:1px solid #DEDBCF;border-radius:7px;padding:7px 10px;font-size:11.5px;font-weight:700;text-decoration:none;">🧭 Navigate</a>
+          </div>`;
+        } else {
+          extra = `<div style="font-size:11px; color:#1D9E86; font-weight:700; margin-top:4px;">✓ Delivered</div>`;
+        }
+      }
+      infoWindow.setContent(`<div style="font-family:Inter,sans-serif; min-width:170px;"><b>${escapeHtml(c.name)}</b><br>${escapeHtml(c.address||'')}${c.phone && role!=='delivery'?`<br>${escapeHtml(c.phone)}`:''}<br><span style="font-size:11px;color:#8A93A6;">${shiftLbl}</span>${extra}</div>`);
       infoWindow.open(map, marker);
     });
     custMarkers.push(marker);
@@ -692,7 +798,7 @@ function renderMapMarkers(){
 
   visibleBoys.forEach(b=>{
     if (b.lat == null) return;
-    const online = isOnline(b.lastUpdate);
+    const online = isOnline(b);
     if (!boyMarkers[b.id]) {
       boyMarkers[b.id] = new google.maps.Marker({
         position: { lat:b.lat, lng:b.lng },
@@ -714,42 +820,64 @@ function renderMapMarkers(){
   });
 }
 
-/* ---------------- live route (road-based, OSRM) ---------------- */
-async function showBoyRoute(boyId, shiftFilter){
+/* ---------------- live route (road-based, OSRM) ----------------
+   Two callers share this:
+   1. Admin clicking "Route" on a boy's card (manual, opts.auto = false)
+   2. The delivery boy's own map, which keeps its route + floating
+      distance/ETA labels up to date automatically (opts.auto = true).
+   Auto mode is throttled — it only re-hits OSRM when the stop sequence
+   actually changes or ~20s have passed, so it doesn't hammer the free
+   routing service on every 10s refresh. */
+async function showBoyRoute(boyId, shiftFilter, opts){
+  opts = opts || {};
+  const auto = !!opts.auto;
   const b = deliveryBoys.find(x=>x.id===boyId);
   if (!b) return;
-  if (b.lat == null) { showToast(b.name + " has no live location yet"); return; }
-  let stops = customers.filter(c=>c.assignedTo===boyId && c.status!=='completed' && (!shiftFilter || shiftFilter==='all' || custShift(c)===shiftFilter));
-  if (!stops.length){ showToast("No pending stops for " + b.name + (shiftFilter && shiftFilter!=='all' ? ' in this shift' : '')); clearRoute(); return; }
+  if (b.lat == null) { if(!auto) showToast(b.name + " has no live location yet"); return; }
 
-  let remaining = [...stops];
-  let route = [{lat:b.lat, lng:b.lng}];
-  let cur = {lat:b.lat, lng:b.lng};
-  while (remaining.length){
-    remaining.sort((a,z)=> distanceKm(cur.lat,cur.lng,a.lat,a.lng) - distanceKm(cur.lat,cur.lng,z.lat,z.lng));
-    const next = remaining.shift();
-    route.push({lat:next.lat, lng:next.lng});
-    cur = next;
+  let stops = customers.filter(c=>c.assignedTo===boyId && c.status!=='completed' && (!shiftFilter || shiftFilter==='all' || custShift(c)===shiftFilter));
+  if (!stops.length){
+    if(!auto) showToast("No pending stops for " + b.name + (shiftFilter && shiftFilter!=='all' ? ' in this shift' : ''));
+    clearRoute(); clearSegmentLabels();
+    if (auto && !deliveryMapCenteredOnce){
+      map.panTo({lat:b.lat,lng:b.lng}); map.setZoom(15); deliveryMapCenteredOnce = true;
+    }
+    return;
   }
 
-  routedBoyId = boyId;
-  document.getElementById('mapToolbar').style.display = 'flex';
-  const coordStr = route.map(p=>p.lng+','+p.lat).join(';');
+  const ordered = nearestNeighborOrder(b.lat, b.lng, stops);
+  const routeKey = boyId + '|' + (shiftFilter||'all') + '|' + ordered.map(s=>s.id).join(',');
+  const now = Date.now();
+  if (auto && routeKey === lastRoutedKey && (now - lastRouteFetchTime) < 20000){
+    return; // nothing meaningfully changed yet — skip the extra network call
+  }
+  const isNewStopSet = routeKey !== lastRoutedKey;
 
+  routedBoyId = boyId;
+  if (!auto) document.getElementById('mapToolbar').style.display = 'flex';
+
+  const routePoints = [{lat:b.lat, lng:b.lng}, ...ordered.map(s=>({lat:s.lat, lng:s.lng}))];
+  const coordStr = routePoints.map(p=>p.lng+','+p.lat).join(';');
+
+  let latlngs, dashed = false;
   try{
     const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${coordStr}?overview=full&geometries=geojson`);
     const data = await res.json();
     if (data.routes && data.routes[0]){
-      const latlngs = data.routes[0].geometry.coordinates.map(c=>[c[1],c[0]]);
-      drawRoute(latlngs, b.color, false);
-      return;
-    }
-    throw new Error('no route');
+      latlngs = data.routes[0].geometry.coordinates.map(c=>[c[1],c[0]]);
+    } else throw new Error('no route');
   }catch(e){
-    drawRoute(route.map(p=>[p.lat,p.lng]), b.color, true);
+    latlngs = routePoints.map(p=>[p.lat,p.lng]);
+    dashed = true;
   }
+
+  drawRoute(latlngs, b.color, dashed, !auto || isNewStopSet);
+  drawSegmentLabels(routePoints, b.color);
+  lastRoutedKey = routeKey;
+  lastRouteFetchTime = now;
+  if (dashed && !auto) showToast("Live road routing unavailable — showing straight-line path");
 }
-function drawRoute(latlngs, color, dashed){
+function drawRoute(latlngs, color, dashed, fitBounds){
   if (routePolyline) routePolyline.setMap(null);
   const path = latlngs.map(p=>({ lat:p[0], lng:p[1] }));
   routePolyline = new google.maps.Polyline({
@@ -760,17 +888,24 @@ function drawRoute(latlngs, color, dashed){
     strokeWeight: dashed ? 0 : 4.5,
     icons: dashed ? [{ icon: { path:'M 0,-1 0,1', strokeOpacity:1, scale:3 }, offset:'0', repeat:'12px' }] : undefined
   });
-  const bounds = new google.maps.LatLngBounds();
-  path.forEach(p=>bounds.extend(p));
-  map.fitBounds(bounds, 60);
-  if (dashed) showToast("Live road routing unavailable — showing straight-line path");
+  if (fitBounds !== false){
+    const bounds = new google.maps.LatLngBounds();
+    path.forEach(p=>bounds.extend(p));
+    map.fitBounds(bounds, 60);
+  }
 }
 function clearRoute(){
   if (routePolyline){ routePolyline.setMap(null); routePolyline = null; }
   routedBoyId = null;
+  lastRoutedKey = null;
   document.getElementById('mapToolbar').style.display = 'none';
 }
 document.getElementById('clearRouteBtn').onclick = clearRoute;
+document.getElementById('recenterBtn').onclick = ()=>{
+  const b = deliveryBoys.find(x=>x.id===myBoyId);
+  if (b && b.lat!=null){ map.panTo({lat:b.lat,lng:b.lng}); map.setZoom(15); }
+  else showToast("Waiting for your GPS location…");
+};
 
 /* ================= LOGIN FLOW ================= */
 function showLoginStep(id){
@@ -827,6 +962,8 @@ function enterApp(r, boyId){
   document.getElementById('deliveryView').style.display = role==='delivery' ? 'flex' : 'none';
   document.body.classList.add('show-list-mobile');
   document.body.classList.remove('show-map-mobile');
+  document.getElementById('deliveryMapToolbar').style.display = role==='delivery' ? 'flex' : 'none';
+  deliveryMapCenteredOnce = false;
   updateWhoami();
   if (role === 'delivery') { updateShiftTabsUI(); startTracking(); }
   renderAll();
@@ -837,6 +974,8 @@ function logout(){
   stopTracking();
   clearSession();
   clearRoute();
+  clearSegmentLabels();
+  document.getElementById('deliveryMapToolbar').style.display = 'none';
   role = null; myBoyId = null;
   document.getElementById('adminPass').value = '';
   document.getElementById('deliveryPass').value = '';
@@ -1011,6 +1150,7 @@ window.markComplete = async (id) => {
     await update(ref(db, 'customers/' + id), { status: 'completed', completedAt: serverTimestamp() });
     showToast("Marked as delivered!");
 };
+window.deliverFromMap = (id) => { infoWindow.close(); markComplete(id); };
 window.reassignCustomer = async (id, bId) => { await update(ref(db, 'customers/' + id), { assignedTo: bId || null }); };
 window.setCustomerShift = async (id, shift) => { await update(ref(db, 'customers/' + id), { shift: shift==='evening'?'evening':'morning' }); };
 window.deleteCustomer = (id) => confirmAction("Delete customer?", async () => await remove(ref(db, 'customers/' + id)));
@@ -1032,7 +1172,7 @@ window.openBoyModal = (boyId) => {
     pending.forEach(c=> c._d = distanceKm(b.lat,b.lng,c.lat,c.lng));
     pending.sort((a,z)=>a._d-z._d);
   }
-  const on = isOnline(b.lastUpdate);
+  const on = isOnline(b);
   document.getElementById('boyModalContent').innerHTML = `
     <div class="boy-modal-header">
       <span class="swatch-lg" style="background:${b.color}"></span>
@@ -1098,6 +1238,7 @@ function renderAll(){
     if (routedBoyId) showBoyRoute(routedBoyId);
   } else if (role === 'delivery') {
     renderDeliveryList();
+    if (myBoyId) showBoyRoute(myBoyId, activeShift, { auto: true });
   }
 }
 
@@ -1115,11 +1256,11 @@ function populateDropdowns(){
 function renderAdminOverview(){
     document.getElementById('ovDone').textContent = customers.filter(c=>c.status==='completed').length;
     document.getElementById('ovPending').textContent = customers.filter(c=>c.status!=='completed').length;
-    document.getElementById('ovOnline').textContent = `${deliveryBoys.filter(b=>isOnline(b.lastUpdate)).length}/${deliveryBoys.length}`;
+    document.getElementById('ovOnline').textContent = `${deliveryBoys.filter(b=>isOnline(b)).length}/${deliveryBoys.length}`;
     document.getElementById('ovUnassigned').textContent = customers.filter(c=>!c.assignedTo).length;
 
     document.getElementById('overviewBoyList').innerHTML = deliveryBoys.length ? deliveryBoys.map(b => {
-        const on = isOnline(b.lastUpdate);
+        const on = isOnline(b);
         const mine = customers.filter(c=>c.assignedTo===b.id);
         const doneCount = mine.filter(c=>c.status==='completed').length;
         let pendingList = mine.filter(c=>c.status!=='completed');
@@ -1271,11 +1412,19 @@ function startTracking(){
   tracking = true;
   requestWakeLock();
   renderTrackBanner();
+
+  const boyRef = ref(db, 'deliveryBoys/' + myBoyId);
+  // Firebase watches this device's connection itself: if the app is killed, loses
+  // network, or the OS force-closes it, Firebase flips this boy to offline
+  // server-side within seconds — no reliance on the client running any code.
+  onDisconnect(boyRef).update({ online: false });
+
   geoWatch = navigator.geolocation.watchPosition(pos => {
-      update(ref(db, 'deliveryBoys/' + myBoyId), {
+      update(boyRef, {
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
-          lastUpdate: Date.now()
+          lastUpdate: Date.now(),
+          online: true
       });
       renderTrackBanner();
       renderMapMarkers();
@@ -1287,6 +1436,11 @@ function stopTracking(){
   tracking = false;
   if (geoWatch != null){ navigator.geolocation.clearWatch(geoWatch); geoWatch = null; }
   releaseWakeLock();
+  // Explicit, immediate offline write — this is what makes logout show offline
+  // everywhere (sidebar + map) right away, instead of waiting on a timeout.
+  if (myBoyId){
+    update(ref(db, 'deliveryBoys/' + myBoyId), { online: false }).catch(()=>{});
+  }
   renderTrackBanner();
 }
 function renderTrackBanner(){
