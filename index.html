@@ -3,196 +3,261 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0E1526">
 <title>RouteBoy — Delivery Tracking</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --navy:#10192E; --navy-2:#16223D; --paper:#F5F4EF; --orange:#F2653A;
-    --mint:#2AC2A6; --slate:#8A93A6; --line:#28324A; --white:#FFFFFF;
-    --danger:#E85B5B; --radius:10px;
-    --morning:#F2A93A; --evening:#6C63E0;
+    --navy:#0E1526; --navy-2:#141D33; --paper:#F6F5F0; --card:#FFFFFF;
+    --orange:#FF5A36; --orange-dark:#E64A28;
+    --mint:#00C896; --mint-dark:#00A67D;
+    --slate:#8891A3; --slate-light:#B9BFCB; --line:#EAE7DC; --line-dark:#26314E;
+    --danger:#FF4D5E;
+    --morning:#FFAB2E; --evening:#7C6FF0;
+    --radius-sm:8px; --radius:14px; --radius-lg:20px;
+    --shadow-sm:0 2px 8px rgba(16,25,46,.07);
+    --shadow-md:0 8px 22px rgba(16,25,46,.10);
+    --shadow-lg:0 20px 50px rgba(16,25,46,.24);
+    --safe-b:env(safe-area-inset-bottom,0px);
+    --safe-t:env(safe-area-inset-top,0px);
+    --toggle-h:66px;
   }
   *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
   html,body{height:100%;}
-  body{font-family:'Inter', sans-serif; background:var(--paper); color:var(--navy); height:100vh; overflow:hidden;}
+  body{font-family:'Inter', sans-serif; background:var(--paper); color:var(--navy); height:100vh; overflow:hidden; display:flex; flex-direction:column; font-size:14.5px; -webkit-font-smoothing:antialiased;}
   h1,h2,h3,.display{font-family:'Space Grotesk', sans-serif;}
   .mono{font-family:'JetBrains Mono', monospace;}
   button{font-family:inherit;}
+  a{color:inherit;}
   ::-webkit-scrollbar{width:6px;} ::-webkit-scrollbar-thumb{background:#DEDBCF; border-radius:4px;}
+  :focus-visible{outline:2px solid var(--orange); outline-offset:2px; border-radius:4px;}
+  @media (hover:hover){
+    .btn:hover{filter:brightness(1.04);}
+    .boy-card:hover, .stop:hover{background:#FBFAF6;}
+  }
 
   /* ================= LOGIN SCREEN ================= */
-  #loginScreen{position:fixed; inset:0; background:radial-gradient(circle at 20% 20%, #1a2745 0%, var(--navy) 55%, #0b1120 100%); z-index:2000; display:flex; align-items:center; justify-content:center; padding:20px;}
-  .login-card{background:var(--white); width:100%; max-width:380px; border-radius:16px; padding:28px 26px 26px; box-shadow:0 24px 60px rgba(0,0,0,.4);}
-  .login-brand{display:flex; align-items:center; gap:10px; font-family:'Space Grotesk'; font-weight:700; font-size:19px; margin-bottom:4px;}
-  .login-brand .dot{width:11px; height:11px; border-radius:50%; background:var(--orange); box-shadow:0 0 0 5px rgba(242,101,58,.18);}
-  .login-sub{font-size:12.5px; color:var(--slate); margin-bottom:22px;}
-  .role-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:20px;}
-  .role-opt{border:2px solid #EEECE2; background:#FBFAF6; border-radius:12px; padding:16px 10px; text-align:center; cursor:pointer; transition:border-color .12s ease, background .12s ease;}
+  #loginScreen{position:fixed; inset:0; background:radial-gradient(circle at 20% 15%, #1A2745 0%, var(--navy) 55%, #070B14 100%); z-index:2000; display:flex; align-items:center; justify-content:center; padding:20px; padding-top:calc(20px + var(--safe-t)); padding-bottom:calc(20px + var(--safe-b));}
+  .login-card{background:var(--card); width:100%; max-width:400px; border-radius:22px; padding:30px 26px 28px; box-shadow:0 30px 70px rgba(0,0,0,.45);}
+  .login-brand{display:flex; align-items:center; gap:10px; font-family:'Space Grotesk'; font-weight:700; font-size:21px; margin-bottom:5px;}
+  .login-brand .dot{width:11px; height:11px; border-radius:50%; background:var(--orange); box-shadow:0 0 0 5px rgba(255,90,54,.18);}
+  .login-sub{font-size:13px; color:var(--slate); margin-bottom:24px;}
+  .role-grid{display:grid; grid-template-columns:1fr 1fr; gap:11px; margin-bottom:20px;}
+  .role-opt{border:2px solid #EEECE2; background:#FBFAF6; border-radius:16px; padding:20px 12px; text-align:center; cursor:pointer; transition:border-color .12s ease, background .12s ease, transform .1s ease;}
+  .role-opt:active{transform:scale(.97);}
   .role-opt:hover{border-color:#DEDBCF;}
   .role-opt.selected{border-color:var(--orange); background:#FDECE5;}
-  .role-opt .ic{font-size:26px; display:block; margin-bottom:8px;}
-  .role-opt .lbl{font-weight:700; font-size:13px;}
-  .role-opt .sub2{font-size:10.5px; color:var(--slate); margin-top:2px;}
+  .role-opt .ic{font-size:30px; display:block; margin-bottom:9px;}
+  .role-opt .lbl{font-weight:700; font-size:14px;}
+  .role-opt .sub2{font-size:11px; color:var(--slate); margin-top:3px; line-height:1.4;}
   .login-step{display:none;}
   .login-step.show{display:block;}
-  .field{margin-bottom:13px;}
-  .field label{display:block; font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--slate); margin-bottom:6px;}
-  .field input, .field select{width:100%; border:1px solid #DEDBCF; border-radius:9px; padding:11px 12px; font-size:14px; background:#FBFAF6; font-family:'Inter';}
-  .field input:focus, .field select:focus{outline:2px solid var(--orange); outline-offset:1px;}
-  .login-err{font-size:12px; color:var(--danger); font-weight:600; margin:-6px 0 12px; display:none;}
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--slate); margin-bottom:7px;}
+  .field input, .field select{width:100%; border:1.5px solid #DEDBCF; border-radius:11px; padding:13px 14px; font-size:16px; background:#FBFAF6; font-family:'Inter'; -webkit-appearance:none;}
+  .field input:focus, .field select:focus{outline:2px solid var(--orange); outline-offset:1px; border-color:var(--orange);}
+  .login-err{font-size:12.5px; color:var(--danger); font-weight:600; margin:-6px 0 12px; display:none;}
   .login-err.show{display:block;}
-  .btn{border:none; border-radius:9px; padding:12px 14px; font-weight:700; font-size:14px; cursor:pointer; transition:transform .1s ease, opacity .15s ease;}
+  .btn{border:none; border-radius:11px; padding:14px 16px; font-weight:700; font-size:14.5px; cursor:pointer; transition:transform .1s ease, opacity .15s ease, filter .12s ease; min-height:46px;}
   .btn:active{transform:scale(.97);}
-  .btn-primary{background:var(--orange); color:white; width:100%;}
-  .btn-primary:hover{opacity:.92;}
-  .btn-ghost{background:transparent; color:var(--navy); border:1px solid #DEDBCF;}
+  .btn-primary{background:var(--orange); color:white; width:100%; box-shadow:0 8px 20px rgba(255,90,54,.28);}
+  .btn-ghost{background:transparent; color:var(--navy); border:1.5px solid #DEDBCF;}
   .btn-mint{background:var(--mint); color:white;}
-  .btn-danger{background:transparent; color:var(--danger); border:1px solid #F3D3D3;}
-  .btn-sm{padding:7px 11px; font-size:12px;}
-  .back-link{font-size:12px; color:var(--slate); font-weight:600; cursor:pointer; margin-bottom:14px; display:inline-block;}
+  .btn-danger{background:transparent; color:var(--danger); border:1.5px solid #F3D3D3;}
+  .btn-sm{padding:9px 13px; font-size:12.5px; min-height:38px;}
+  .back-link{font-size:12.5px; color:var(--slate); font-weight:600; cursor:pointer; margin-bottom:16px; display:inline-block; padding:4px 0;}
   .back-link:hover{color:var(--navy);}
-  .hint{font-size:11.5px; color:var(--slate); margin-top:6px; line-height:1.45;}
+  .hint{font-size:12px; color:var(--slate); margin-top:8px; line-height:1.5;}
 
   /* ---------------- TOPBAR ---------------- */
-  #topbar{height:56px; background:var(--navy); display:flex; align-items:center; justify-content:space-between; padding:0 14px; color:white; gap:12px; flex-shrink:0;}
+  #topbar{min-height:56px; background:var(--navy); display:flex; align-items:center; justify-content:space-between; padding:10px 14px; padding-top:calc(10px + var(--safe-t)); color:white; gap:12px; flex-shrink:0;}
   #topbar .brand{display:flex; align-items:center; gap:9px; font-family:'Space Grotesk'; font-weight:700; font-size:16px; flex-shrink:0;}
-  #topbar .brand .dot{width:9px; height:9px; border-radius:50%; background:var(--orange); box-shadow:0 0 0 4px rgba(242,101,58,.2);}
+  #topbar .brand .dot{width:9px; height:9px; border-radius:50%; background:var(--orange); box-shadow:0 0 0 4px rgba(255,90,54,.2);}
   #whoami{display:flex; align-items:center; gap:9px; font-size:12.5px; color:var(--slate); margin-left:auto;}
   #whoami .badge-color{width:9px; height:9px; border-radius:50%; flex-shrink:0;}
   #whoami b{color:white; font-weight:600;}
-  #whoami button{background:transparent; border:1px solid var(--line); color:var(--slate); font-size:11px; padding:6px 10px; border-radius:7px; cursor:pointer; font-weight:600; white-space:nowrap;}
+  #whoami button{background:transparent; border:1px solid var(--line-dark); color:var(--slate); font-size:11.5px; padding:8px 12px; border-radius:9px; cursor:pointer; font-weight:600; white-space:nowrap; min-height:36px;}
   #whoami button:hover{color:white; border-color:var(--slate);}
   .live-dot{width:8px; height:8px; border-radius:50%; background:var(--mint); flex-shrink:0; animation:pulse 1.6s infinite;}
-  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(42,194,166,.5);} 70%{box-shadow:0 0 0 6px rgba(42,194,166,0);} 100%{box-shadow:0 0 0 0 rgba(42,194,166,0);}}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(0,200,150,.5);} 70%{box-shadow:0 0 0 7px rgba(0,200,150,0);} 100%{box-shadow:0 0 0 0 rgba(0,200,150,0);}}
 
   /* ---------------- LAYOUT ---------------- */
-  #app{display:flex; height:calc(100vh - 56px); overflow:hidden;}
-  #sidebar{width:400px; min-width:400px; background:var(--white); border-right:1px solid #E4E1D6; display:flex; flex-direction:column; overflow:hidden;}
-  #mapWrap{flex:1; position:relative;}
+  #app{display:flex; flex:1; min-height:0; overflow:hidden;}
+  #sidebar{width:400px; min-width:400px; background:var(--card); border-right:1px solid #E4E1D6; display:flex; flex-direction:column; overflow:hidden;}
+  #mapWrap{flex:1; position:relative; min-width:0;}
   #map{width:100%; height:100%;}
+  @media(min-width:1200px){ #sidebar{width:440px; min-width:440px;} }
 
-  .tabbar{display:flex; gap:4px; padding:12px 14px 0 14px; border-bottom:1px solid #EEECE2; overflow-x:auto;}
-  .tabbar button{flex:1; border:none; background:transparent; color:var(--slate); font-weight:600; font-size:12px; padding:9px 4px; border-radius:7px 7px 0 0; cursor:pointer; white-space:nowrap;}
-  .tabbar button.active{color:var(--navy); box-shadow:0 -2px 0 var(--orange) inset;}
-  .scroll-area{flex:1; overflow-y:auto; padding:16px 18px; -webkit-overflow-scrolling:touch;}
+  .tabbar{display:flex; gap:4px; padding:10px 12px 0 12px; border-bottom:1px solid #EEECE2; overflow-x:auto; flex-shrink:0;}
+  .tabbar button{flex:1; border:none; background:transparent; color:var(--slate); font-weight:700; font-size:12px; padding:11px 4px; border-radius:9px 9px 0 0; cursor:pointer; white-space:nowrap; min-height:42px;}
+  .tabbar button.active{color:var(--navy); box-shadow:0 -2.5px 0 var(--orange) inset;}
+  .scroll-area{flex:1; overflow-y:auto; padding:16px 16px calc(16px + var(--safe-b)); -webkit-overflow-scrolling:touch;}
 
-  .section-title{font-size:12px; font-weight:700; color:var(--slate); text-transform:uppercase; letter-spacing:.05em; margin:4px 0 10px;}
+  .section-title{font-size:11.5px; font-weight:700; color:var(--slate); text-transform:uppercase; letter-spacing:.06em; margin:4px 0 10px;}
 
   .field-row{display:flex; gap:8px;}
-  .field-row .field{flex:1;}
+  .field-row .field{flex:1; min-width:0;}
 
   .loc-mode-tabs{display:flex; gap:6px; margin-bottom:10px;}
-  .loc-mode-tabs button{flex:1; border:1px solid #DEDBCF; background:#FBFAF6; color:var(--slate); font-weight:600; font-size:11.5px; padding:8px 6px; border-radius:8px; cursor:pointer;}
+  .loc-mode-tabs button{flex:1; border:1.5px solid #DEDBCF; background:#FBFAF6; color:var(--slate); font-weight:700; font-size:11.5px; padding:10px 6px; border-radius:10px; cursor:pointer; min-height:40px;}
   .loc-mode-tabs button.active{background:var(--navy); color:white; border-color:var(--navy);}
 
-  .shift-tabs{display:flex; gap:6px; margin-bottom:14px;}
-  .shift-tabs button{flex:1; border:2px solid #EEECE2; background:#FBFAF6; color:var(--slate); font-weight:700; font-size:12.5px; padding:10px 6px; border-radius:10px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;}
+  .shift-tabs{display:flex; gap:8px; margin-bottom:14px;}
+  .shift-tabs button{flex:1; border:2px solid #EEECE2; background:#FBFAF6; color:var(--slate); font-weight:700; font-size:13px; padding:12px 6px; border-radius:12px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; min-height:46px;}
   .shift-tabs button .sw{width:8px; height:8px; border-radius:50%;}
   .shift-tabs button.active.morning{background:#FEF3E2; border-color:var(--morning); color:#8A5A0E;}
   .shift-tabs button.active.evening{background:#ECEBFB; border-color:var(--evening); color:#3F3AA3;}
 
-  .stats-row{display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px;}
-  .stat-card{background:var(--navy); color:white; border-radius:var(--radius); padding:12px;}
-  .stat-card .num{font-family:'JetBrains Mono'; font-size:20px; font-weight:600;}
-  .stat-card .label{font-size:10.5px; color:var(--slate); text-transform:uppercase; letter-spacing:.05em; margin-top:2px;}
+  .stats-row{display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-bottom:14px;}
+  .stat-card{background:var(--navy); color:white; border-radius:var(--radius); padding:13px 14px;}
+  .stat-card .num{font-family:'JetBrains Mono'; font-size:22px; font-weight:600;}
+  .stat-card .label{font-size:10.5px; color:var(--slate); text-transform:uppercase; letter-spacing:.05em; margin-top:3px;}
 
-  .boy-card{background:#FBFAF6; border:1px solid #EEECE2; border-radius:10px; padding:12px; margin-bottom:9px; cursor:pointer; transition:border-color .12s ease;}
+  /* --- Start Route CTA (delivery boy signature action) --- */
+  .start-route-btn{display:flex; align-items:center; justify-content:center; gap:9px; width:100%; background:linear-gradient(135deg,var(--orange),#FF7D53); color:white; border:none; border-radius:16px; padding:17px; font-size:15px; font-weight:700; cursor:pointer; box-shadow:0 10px 26px rgba(255,90,54,.35); margin-bottom:16px; min-height:56px;}
+  .start-route-btn:active{transform:scale(.97);}
+  .start-route-btn .pulse-ic{width:9px; height:9px; border-radius:50%; background:white; animation:pulse 1.4s infinite; box-shadow:0 0 0 0 rgba(255,255,255,.6);}
+
+  .boy-card{background:#FBFAF6; border:1px solid #EEECE2; border-radius:14px; padding:14px; margin-bottom:10px; cursor:pointer; transition:border-color .12s ease, background .12s ease;}
+  .boy-card:active{transform:scale(.99);}
   .boy-card:hover{border-color:var(--orange);}
-  .boy-card .top{display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; gap:6px;}
-  .boy-name{display:flex; align-items:center; gap:8px; font-weight:600; font-size:13.5px;}
+  .boy-card .top{display:flex; align-items:center; justify-content:space-between; margin-bottom:9px; gap:6px;}
+  .boy-name{display:flex; align-items:center; gap:8px; font-weight:700; font-size:14px;}
   .boy-swatch{width:11px; height:11px; border-radius:50%; flex-shrink:0;}
-  .online-pill{font-size:10px; font-weight:700; padding:2px 8px; border-radius:999px; font-family:'JetBrains Mono'; white-space:nowrap;}
+  .online-pill{font-size:10px; font-weight:700; padding:4px 9px; border-radius:999px; font-family:'JetBrains Mono'; white-space:nowrap;}
   .online-pill.on{background:#E4F8F3; color:#1D9E86;}
   .online-pill.off{background:#F0EEE4; color:var(--slate);}
-  .boy-mini-stats{display:flex; gap:12px; font-size:11px; color:var(--slate); flex-wrap:wrap; margin-bottom:6px;}
+  .boy-mini-stats{display:flex; gap:13px; font-size:11.5px; color:var(--slate); flex-wrap:wrap; margin-bottom:7px;}
   .boy-mini-stats b{color:var(--navy); font-family:'JetBrains Mono';}
-  .shift-mini-row{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px;}
-  .shift-mini{font-size:10px; font-weight:700; padding:3px 8px; border-radius:999px; font-family:'JetBrains Mono';}
+  .shift-mini-row{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:7px;}
+  .shift-mini{font-size:10.5px; font-weight:700; padding:4px 9px; border-radius:999px; font-family:'JetBrains Mono';}
   .shift-mini.morning{background:#FEF3E2; color:#8A5A0E;}
   .shift-mini.evening{background:#ECEBFB; color:#3F3AA3;}
-  .heading-to{font-size:11.5px; background:#FDECE5; color:var(--orange); padding:5px 9px; border-radius:7px; font-weight:600; margin-top:6px;}
-  .boy-card-actions{display:flex; gap:6px; margin-top:9px; flex-wrap:wrap;}
+  .heading-to{font-size:11.5px; background:#FDECE5; color:var(--orange-dark); padding:6px 10px; border-radius:9px; font-weight:700; margin-top:7px;}
+  .boy-card-actions{display:flex; gap:7px; margin-top:10px; flex-wrap:wrap;}
+  .boy-card-actions .btn{flex:1 1 auto; min-width:100px;}
 
-  .zone-tag{display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600; padding:3px 9px; border-radius:999px; background:#EFEFF5; color:#5B6178;}
+  .zone-tag{display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; padding:4px 10px; border-radius:999px; background:#EFEFF5; color:#5B6178;}
   .zone-tag .sw{width:7px; height:7px; border-radius:50%;}
 
-  .shift-badge{display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:700; padding:3px 9px; border-radius:999px; font-family:'JetBrains Mono';}
+  .shift-badge{display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:700; padding:4px 10px; border-radius:999px; font-family:'JetBrains Mono';}
   .shift-badge.morning{background:#FEF3E2; color:#8A5A0E;}
   .shift-badge.evening{background:#ECEBFB; color:#3F3AA3;}
 
-  .stop{display:flex; gap:10px; padding:11px 0; border-bottom:1px solid #F0EEE4; position:relative;}
+  .stop{display:flex; gap:11px; padding:13px 0; border-bottom:1px solid #F0EEE4; position:relative; border-radius:10px;}
   .stop:last-child{border-bottom:none;}
-  .stop .idx{width:28px; height:28px; border-radius:50%; background:#F0EEE4; color:var(--navy); font-family:'JetBrains Mono'; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;}
+  .stop.nearest{border-left:3px solid var(--orange); padding-left:9px; margin-left:-3px;}
+  .stop .idx{width:30px; height:30px; border-radius:50%; background:#F0EEE4; color:var(--navy); font-family:'JetBrains Mono'; font-size:11.5px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:2px;}
   .stop.done .idx{background:var(--mint); color:white;}
   .stop.nearest .idx{background:var(--orange); color:white;}
   .stop-body{flex:1; min-width:0;}
-  .stop-body .name{font-size:13.5px; font-weight:700;}
-  .stop-body .addr{font-size:12px; color:var(--slate); margin-top:1px;}
-  .stop-body .phn{font-size:11.5px; color:var(--navy); margin-top:3px; font-family:'JetBrains Mono';}
-  .stop-meta{display:flex; align-items:center; gap:6px; margin-top:7px; flex-wrap:wrap;}
-  .badge{font-size:10.5px; font-family:'JetBrains Mono'; padding:3px 8px; border-radius:5px; font-weight:600;}
-  .badge.pending{background:#FDECE5; color:var(--orange);}
+  .stop-body .name{font-size:14.5px; font-weight:700;}
+  .stop-body .addr{font-size:12.5px; color:var(--slate); margin-top:2px; line-height:1.4;}
+  .stop-body .phn{font-size:12px; color:var(--navy); margin-top:4px; font-family:'JetBrains Mono';}
+  .stop-meta{display:flex; align-items:center; gap:6px; margin-top:8px; flex-wrap:wrap;}
+  .badge{font-size:10.5px; font-family:'JetBrains Mono'; padding:4px 9px; border-radius:6px; font-weight:600;}
+  .badge.pending{background:#FDECE5; color:var(--orange-dark);}
   .badge.done{background:#E4F8F3; color:#1D9E86;}
   .badge.dist{background:#EFEFF5; color:#5B6178;}
   .badge.eta{background:#FBF3E0; color:#A8791E;}
   .badge.unassigned{background:#FBEFEF; color:var(--danger);}
-  .stop-actions{display:flex; gap:6px; margin-top:9px; flex-wrap:wrap;}
-  .empty-state{text-align:center; color:var(--slate); font-size:12.5px; padding:34px 14px; line-height:1.6;}
+  .stop-actions{display:flex; gap:7px; margin-top:10px; flex-wrap:wrap;}
+  .stop-actions .btn{flex:1 1 auto; min-width:88px; text-align:center;}
+  .empty-state{text-align:center; color:var(--slate); font-size:13px; padding:38px 14px; line-height:1.7;}
 
-  .filter-row{display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap;}
-  .filter-row select{flex:1; border:1px solid #DEDBCF; border-radius:8px; padding:8px 8px; font-size:12px; background:#FBFAF6; min-width:90px;}
+  .filter-row{display:flex; gap:7px; margin-bottom:13px; flex-wrap:wrap;}
+  .filter-row select{flex:1; border:1.5px solid #DEDBCF; border-radius:10px; padding:9px 8px; font-size:12.5px; background:#FBFAF6; min-width:110px; min-height:40px;}
 
-  .track-banner{display:flex; align-items:center; gap:10px; background:#0F2A24; color:white; border-radius:10px; padding:12px 13px; margin-bottom:14px;}
+  .track-banner{display:flex; align-items:center; gap:10px; background:#0F2A24; color:white; border-radius:14px; padding:14px 15px; margin-bottom:14px;}
   .track-banner.off{background:#F0EEE4; color:var(--navy);}
-  .track-banner .txt{font-size:12.5px; font-weight:700;}
-  .track-banner .sub{font-size:11px; opacity:.75; margin-top:1px;}
+  .track-banner .txt{font-size:13px; font-weight:700;}
+  .track-banner .sub{font-size:11.5px; opacity:.75; margin-top:2px;}
   .track-banner.warn{background:#4A2A12;}
 
-  .all-done-card{background:linear-gradient(135deg,var(--mint),#1D9E86); color:white; border-radius:14px; padding:22px 18px; text-align:center; margin-bottom:16px;}
-  .all-done-card .big{font-size:34px; margin-bottom:6px;}
-  .all-done-card .t1{font-family:'Space Grotesk'; font-weight:700; font-size:16px;}
-  .all-done-card .t2{font-size:12px; opacity:.9; margin-top:4px;}
+  .all-done-card{background:linear-gradient(135deg,var(--mint),#00A67D); color:white; border-radius:18px; padding:26px 20px; text-align:center; margin-bottom:16px;}
+  .all-done-card .big{font-size:38px; margin-bottom:7px;}
+  .all-done-card .t1{font-family:'Space Grotesk'; font-weight:700; font-size:17px;}
+  .all-done-card .t2{font-size:12.5px; opacity:.9; margin-top:5px;}
 
-  .modal-backdrop{position:fixed; inset:0; background:rgba(16,25,46,.55); z-index:900; display:none; align-items:center; justify-content:center; padding:16px;}
+  .modal-backdrop{position:fixed; inset:0; background:rgba(14,21,38,.55); z-index:2100; display:none; align-items:center; justify-content:center; padding:16px;}
   .modal-backdrop.show{display:flex;}
-  .modal{background:white; border-radius:14px; padding:22px; width:340px; max-width:100%; box-shadow:0 20px 50px rgba(0,0,0,.3); max-height:88vh; overflow-y:auto;}
-  .modal.wide{width:430px;}
-  .modal h3{font-size:15px; margin-bottom:14px;}
-  .modal .btn-row{display:flex; gap:8px; margin-top:16px;}
+  .modal{background:white; border-radius:18px; padding:24px; width:360px; max-width:100%; box-shadow:var(--shadow-lg); max-height:88vh; overflow-y:auto;}
+  .modal.wide{width:440px;}
+  .modal h3{font-size:16px; margin-bottom:15px;}
+  .modal .btn-row{display:flex; gap:9px; margin-top:18px;}
   .modal .btn-row .btn{flex:1;}
   .modal p.sub{font-size:12.5px; color:var(--slate); margin-bottom:14px; margin-top:-8px;}
 
   /* boy detail modal */
-  .boy-modal-header{display:flex; align-items:center; gap:10px; margin-bottom:4px;}
+  .boy-modal-header{display:flex; align-items:center; gap:11px; margin-bottom:5px;}
   .boy-modal-header .swatch-lg{width:16px; height:16px; border-radius:50%; flex-shrink:0;}
-  .boy-modal-header .nm{font-family:'Space Grotesk'; font-weight:700; font-size:17px; flex:1;}
-  .boy-modal-sub{font-size:11.5px; color:var(--slate); margin-bottom:14px;}
-  .boy-modal-stats{display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:14px;}
-  .boy-modal-stats .mstat{background:#FBFAF6; border:1px solid #EEECE2; border-radius:9px; padding:10px 6px; text-align:center;}
-  .boy-modal-stats .mstat .n{font-family:'JetBrains Mono'; font-size:18px; font-weight:700;}
-  .boy-modal-stats .mstat .l{font-size:9px; color:var(--slate); text-transform:uppercase; letter-spacing:.04em; margin-top:2px;}
+  .boy-modal-header .nm{font-family:'Space Grotesk'; font-weight:700; font-size:18px; flex:1;}
+  .boy-modal-sub{font-size:12px; color:var(--slate); margin-bottom:15px;}
+  .boy-modal-stats{display:grid; grid-template-columns:1fr 1fr 1fr; gap:9px; margin-bottom:15px;}
+  .boy-modal-stats .mstat{background:#FBFAF6; border:1px solid #EEECE2; border-radius:11px; padding:11px 6px; text-align:center;}
+  .boy-modal-stats .mstat .n{font-family:'JetBrains Mono'; font-size:19px; font-weight:700;}
+  .boy-modal-stats .mstat .l{font-size:9px; color:var(--slate); text-transform:uppercase; letter-spacing:.04em; margin-top:3px;}
   .boy-modal-actions{display:flex; gap:8px; margin-bottom:6px; flex-wrap:wrap;}
-  .boy-modal-actions .btn{flex:1; min-width:100px;}
-  .boy-modal-list-title{font-size:11px; font-weight:700; color:var(--slate); text-transform:uppercase; letter-spacing:.05em; margin:14px 0 6px;}
+  .boy-modal-actions .btn{flex:1; min-width:130px;}
+  .boy-modal-list-title{font-size:11px; font-weight:700; color:var(--slate); text-transform:uppercase; letter-spacing:.05em; margin:15px 0 7px;}
   .boy-modal-list{max-height:190px; overflow-y:auto;}
-  .mini-stop{display:flex; justify-content:space-between; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid #F0EEE4; font-size:12.5px;}
+  .mini-stop{display:flex; justify-content:space-between; align-items:center; gap:8px; padding:9px 0; border-bottom:1px solid #F0EEE4; font-size:12.5px;}
   .mini-stop:last-child{border-bottom:none;}
   .mini-stop .mn{font-weight:600;}
   .mini-stop .md{color:var(--slate); font-size:11px; white-space:nowrap; flex-shrink:0;}
 
-  .toast{position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--navy); color:white; padding:11px 18px; border-radius:9px; font-size:13px; font-weight:600; z-index:1100; box-shadow:0 8px 24px rgba(0,0,0,.3); display:none; max-width:88vw; text-align:center;}
+  .toast{position:fixed; bottom:calc(24px + var(--safe-b)); left:50%; transform:translateX(-50%); background:var(--navy); color:white; padding:12px 20px; border-radius:11px; font-size:13.5px; font-weight:600; z-index:2200; box-shadow:var(--shadow-lg); display:none; max-width:88vw; text-align:center;}
   .toast.show{display:block;}
 
-  .zone-row{display:flex; align-items:center; justify-content:space-between; background:#FBFAF6; border:1px solid #EEECE2; border-radius:10px; padding:10px 12px; margin-bottom:8px;}
-  .zone-row .left{display:flex; align-items:center; gap:9px; font-size:13px; font-weight:600;}
+  .zone-row{display:flex; align-items:center; justify-content:space-between; background:#FBFAF6; border:1px solid #EEECE2; border-radius:12px; padding:11px 13px; margin-bottom:9px;}
+  .zone-row .left{display:flex; align-items:center; gap:9px; font-size:13.5px; font-weight:600;}
   .zone-row .sw{width:12px; height:12px; border-radius:50%;}
   .zone-row .count{font-size:11px; color:var(--slate); font-family:'JetBrains Mono';}
 
-  .map-toolbar{position:absolute; top:12px; right:12px; z-index:500; display:flex; flex-direction:column; gap:6px;}
-  .map-toolbar button{background:white; border:1px solid #E4E1D6; box-shadow:0 4px 12px rgba(0,0,0,.12); border-radius:9px; padding:9px 12px; font-size:11.5px; font-weight:700; cursor:pointer; color:var(--navy);}
+  .map-toolbar{position:absolute; top:12px; right:12px; z-index:500; display:flex; flex-direction:column; gap:7px;}
+  .map-toolbar button{background:white; border:1px solid #E4E1D6; box-shadow:var(--shadow-md); border-radius:11px; padding:10px 13px; font-size:12px; font-weight:700; cursor:pointer; color:var(--navy); min-height:40px;}
   .map-toolbar button.active{background:var(--navy); color:white; border-color:var(--navy);}
-  .map-loading{position:absolute; inset:0; background:var(--paper); display:flex; align-items:center; justify-content:center; font-size:13px; color:var(--slate); font-weight:600; z-index:400;}
+  .map-loading{position:absolute; inset:0; background:var(--paper); display:flex; align-items:center; justify-content:center; font-size:13.5px; color:var(--slate); font-weight:600; z-index:400;}
+
+  /* ---------------- NAVIGATION MODE (delivery boy "start route") ---------------- */
+  body.nav-mode #sidebar{display:none !important;}
+  body.nav-mode #mobileToggle{display:none !important;}
+  body.nav-mode #mapWrap{flex:1;}
+
+  .nav-sheet{position:absolute; left:0; right:0; bottom:0; background:var(--card); z-index:600; box-shadow:var(--shadow-lg); border-radius:22px 22px 0 0; padding:10px 20px calc(18px + var(--safe-b)); animation:navSlideUp .25s ease;}
+  @keyframes navSlideUp{from{transform:translateY(40px); opacity:0;} to{transform:translateY(0); opacity:1;}}
+  .nav-sheet-handle{width:38px; height:4px; background:#E4E1D6; border-radius:99px; margin:0 auto 12px;}
+  .nav-sheet-top{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px;}
+  .nav-progress{flex:1; min-width:0;}
+  .nav-progress-bar{height:6px; background:#EEECE2; border-radius:99px; overflow:hidden; margin-bottom:6px;}
+  .nav-progress-fill{height:100%; background:linear-gradient(90deg,var(--orange),var(--mint)); border-radius:99px; transition:width .4s ease;}
+  .nav-progress-txt{font-size:11.5px; font-weight:700; color:var(--slate); font-family:'JetBrains Mono';}
+  .nav-exit-btn{border:1.5px solid #EEECE2; background:#FBFAF6; color:var(--navy); font-weight:700; font-size:12.5px; padding:9px 13px; border-radius:11px; cursor:pointer; white-space:nowrap; min-height:38px; flex-shrink:0;}
+  .nav-stop-info{margin-bottom:16px;}
+  .nav-stop-eyebrow{font-size:11px; font-weight:700; color:var(--orange-dark); text-transform:uppercase; letter-spacing:.06em; margin-bottom:5px;}
+  .nav-stop-name{font-family:'Space Grotesk'; font-weight:700; font-size:22px; line-height:1.22;}
+  .nav-stop-addr{font-size:13.5px; color:var(--slate); margin-top:5px; line-height:1.5;}
+  .nav-stat-row{display:flex; gap:10px; margin-top:14px;}
+  .nav-stat{flex:1; background:var(--paper); border-radius:13px; padding:11px 12px; text-align:center;}
+  .nav-stat-num{font-family:'JetBrains Mono'; font-size:21px; font-weight:700; color:var(--navy);}
+  .nav-stat-lbl{font-size:10px; color:var(--slate); text-transform:uppercase; letter-spacing:.05em; margin-top:3px;}
+  .nav-actions{display:flex; flex-direction:column; gap:9px;}
+  .nav-btn-primary{background:var(--mint); color:white; border:none; border-radius:15px; padding:17px; font-size:16px; font-weight:700; cursor:pointer; box-shadow:0 10px 24px rgba(0,200,150,.35); min-height:56px;}
+  .nav-btn-primary:active{transform:scale(.97);}
+  .nav-actions-row{display:flex; gap:9px;}
+  .nav-btn-secondary{flex:1; background:var(--navy); color:white; text-align:center; border-radius:13px; padding:13px; font-size:13.5px; font-weight:700; text-decoration:none; display:flex; align-items:center; justify-content:center; gap:6px; min-height:48px;}
+  .nav-btn-secondary:active{transform:scale(.96);}
+
+  .nav-complete{position:absolute; inset:0; background:rgba(14,21,38,.55); display:flex; align-items:center; justify-content:center; z-index:650; padding:22px;}
+  .nav-complete-card{background:white; border-radius:22px; padding:34px 28px; text-align:center; max-width:320px; box-shadow:var(--shadow-lg);}
+  .nc-emoji{font-size:46px; margin-bottom:10px;}
+  .nc-title{font-family:'Space Grotesk'; font-weight:700; font-size:19px;}
+  .nc-sub{font-size:13px; color:var(--slate); margin:7px 0 20px; line-height:1.5;}
+
+  @media(min-width:641px){
+    .nav-sheet{left:50%; right:auto; transform:translateX(-50%); bottom:22px; max-width:400px; width:calc(100% - 40px); border-radius:20px;}
+  }
 
   /* mobile toggle for sidebar / map */
   #mobileToggle{display:none;}
@@ -200,17 +265,28 @@
   @media (max-width:860px){
     #app{flex-direction:column;}
     #sidebar{width:100%; min-width:0; flex:1; order:2; height:auto;}
-    #mapWrap{flex:1; order:1; min-height:38vh;}
-    #mobileToggle{display:flex; position:fixed; bottom:14px; left:50%; transform:translateX(-50%); z-index:950; background:var(--navy); border-radius:999px; padding:4px; gap:2px; box-shadow:0 8px 24px rgba(0,0,0,.3);}
-    #mobileToggle button{border:none; background:transparent; color:var(--slate); font-weight:700; font-size:12px; padding:9px 18px; border-radius:999px; cursor:pointer;}
+    #mapWrap{flex:1; order:1; min-height:36vh;}
+    #mobileToggle{display:flex; position:fixed; bottom:calc(14px + var(--safe-b)); left:50%; transform:translateX(-50%); z-index:950; background:var(--navy); border-radius:999px; padding:5px; gap:3px; box-shadow:var(--shadow-lg);}
+    #mobileToggle button{border:none; background:transparent; color:var(--slate); font-weight:700; font-size:12.5px; padding:11px 20px; border-radius:999px; cursor:pointer; min-height:42px;}
     #mobileToggle button.active{background:var(--orange); color:white;}
     body.show-map-mobile #sidebar{display:none;}
     body.show-map-mobile #mapWrap{flex:1;}
     body.show-list-mobile #mapWrap{display:none;}
     body.show-list-mobile #sidebar{flex:1;}
+    /* Reserve room at the bottom of every scroll list so the floating pill
+       toggle never overlaps the last card's content/action buttons. */
+    body.show-list-mobile .scroll-area{padding-bottom:calc(var(--toggle-h) + 24px + var(--safe-b)) !important;}
+    /* Hide the floating toggle while any modal is open so it never sits on
+       top of a modal's own bottom buttons. */
+    body.modal-open #mobileToggle{display:none !important;}
     #whoami span.hide-mobile{display:none;}
-    .login-card{max-width:340px;}
-    .modal.wide{width:100%;}
+    .login-card{max-width:360px;}
+    .modal-backdrop{align-items:flex-end; padding:0;}
+    .modal{width:100%; max-width:100%; border-radius:20px 20px 0 0; padding-bottom:calc(22px + var(--safe-b));}
+  }
+  @media (max-width:640px){
+    input, select{font-size:16px !important;}
+    .stat-card .num{font-size:20px;}
   }
 </style>
 </head>
@@ -280,10 +356,10 @@
     <!-- ---------- ADMIN VIEW ---------- -->
     <div id="adminView" style="display:none; flex-direction:column; height:100%;">
       <div class="tabbar">
-        <button class="tabbtn active" data-tab="overview">Overview</button>
-        <button class="tabbtn" data-tab="customers">Customers</button>
-        <button class="tabbtn" data-tab="boys">Team</button>
-        <button class="tabbtn" data-tab="zones">Zones</button>
+        <button class="tabbtn active" data-tab="overview">📊 Overview</button>
+        <button class="tabbtn" data-tab="customers">👥 Customers</button>
+        <button class="tabbtn" data-tab="boys">🛵 Team</button>
+        <button class="tabbtn" data-tab="zones">📍 Zones</button>
       </div>
 
       <!-- OVERVIEW -->
@@ -328,8 +404,8 @@
         </div>
 
         <div id="locModeMap">
-          <div class="hint">Click anywhere on the map to drop this customer's exact location.</div>
-          <button class="btn btn-ghost btn-sm" id="useMyLocBtn" style="width:100%; margin-top:8px;">Use my current location</button>
+          <div class="hint">Tap anywhere on the map to drop this customer's exact location.</div>
+          <button class="btn btn-ghost btn-sm" id="useMyLocBtn" style="width:100%; margin-top:9px;">📍 Use my current location</button>
         </div>
         <div id="locModeLink" style="display:none;">
           <div class="field"><label>Google Maps link</label><input id="custMapLink" type="text" placeholder="Paste full Google Maps link here"></div>
@@ -337,10 +413,10 @@
           <div class="hint">Open Google Maps → find the spot → Share → Copy link, then paste it here.</div>
         </div>
 
-        <div id="pendingPinNote" class="hint" style="display:none; color:var(--orange); font-weight:600; margin-top:8px;">📍 Location set — click "Save customer" to confirm.</div>
-        <button class="btn btn-primary btn-sm" id="saveCustBtn" style="width:100%; margin-top:10px;">Save customer</button>
+        <div id="pendingPinNote" class="hint" style="display:none; color:var(--orange-dark); font-weight:700; margin-top:9px;">📍 Location set — tap "Save customer" to confirm.</div>
+        <button class="btn btn-primary btn-sm" id="saveCustBtn" style="width:100%; margin-top:11px;">Save customer</button>
 
-        <div style="height:1px; background:#EEECE2; margin:18px 0;"></div>
+        <div style="height:1px; background:#EEECE2; margin:20px 0;"></div>
 
         <div class="section-title">All customers</div>
         <div class="filter-row">
@@ -370,7 +446,7 @@
         <button class="btn btn-primary btn-sm" id="addBoyBtn" style="width:100%;">Add to team</button>
         <div class="hint">They'll log in with password <b>123</b> and pick their name from the login screen.</div>
 
-        <div style="height:1px; background:#EEECE2; margin:18px 0;"></div>
+        <div style="height:1px; background:#EEECE2; margin:20px 0;"></div>
         <div class="section-title">Your team (<span id="boyCount">0</span>)</div>
         <div id="teamList"></div>
       </div>
@@ -380,11 +456,11 @@
         <div class="section-title">Add area / zone</div>
         <div class="field-row">
           <div class="field"><label>Zone name</label><input id="zoneName" type="text" placeholder="e.g. Lajpat Nagar"></div>
-          <div class="field" style="max-width:90px;"><label>Color</label><input id="zoneColor" type="color" value="#F2653A" style="padding:2px; height:41px;"></div>
+          <div class="field" style="max-width:96px;"><label>Color</label><input id="zoneColor" type="color" value="#FF5A36" style="padding:2px; height:46px;"></div>
         </div>
         <button class="btn btn-primary btn-sm" id="addZoneBtn" style="width:100%;">Add zone</button>
 
-        <div style="height:1px; background:#EEECE2; margin:18px 0;"></div>
+        <div style="height:1px; background:#EEECE2; margin:20px 0;"></div>
         <div class="section-title">All zones (<span id="zoneCount">0</span>)</div>
         <div id="zonesList"></div>
       </div>
@@ -408,6 +484,11 @@
           <div class="stat-card"><div class="num" id="dbStatDone">0</div><div class="label">Delivered</div></div>
           <div class="stat-card"><div class="num" id="dbStatPending">0</div><div class="label">Remaining</div></div>
         </div>
+
+        <button type="button" class="start-route-btn" id="startRouteBtn" style="display:none;">
+          <span class="pulse-ic"></span> Start Route
+        </button>
+
         <div class="section-title" id="deliveryListTitle">Your stops — nearest first</div>
         <div id="deliveryCustList"></div>
       </div>
@@ -424,12 +505,50 @@
     <div class="map-toolbar" id="deliveryMapToolbar" style="display:none; top:auto; bottom:12px;">
       <button id="recenterBtn">📍 Recenter on me</button>
     </div>
+
+    <!-- Navigation-mode bottom sheet: shown while a delivery boy has an active route -->
+    <div class="nav-sheet" id="navSheet" style="display:none;">
+      <div class="nav-sheet-handle"></div>
+      <div class="nav-sheet-top">
+        <div class="nav-progress">
+          <div class="nav-progress-bar"><div class="nav-progress-fill" id="navProgressFill" style="width:0%;"></div></div>
+          <div class="nav-progress-txt" id="navProgressTxt">Stop 1 of 1</div>
+        </div>
+        <button class="nav-exit-btn" id="navExitBtn">✕ End route</button>
+      </div>
+      <div class="nav-stop-info">
+        <div class="nav-stop-eyebrow">Next stop</div>
+        <div class="nav-stop-name" id="navStopName">—</div>
+        <div class="nav-stop-addr" id="navStopAddr">—</div>
+        <div class="nav-stat-row">
+          <div class="nav-stat"><div class="nav-stat-num" id="navStatDist">—</div><div class="nav-stat-lbl">Away</div></div>
+          <div class="nav-stat"><div class="nav-stat-num" id="navStatEta">—</div><div class="nav-stat-lbl">ETA</div></div>
+        </div>
+      </div>
+      <div class="nav-actions">
+        <button class="nav-btn-primary" id="navDeliveredBtn">✓ Mark Delivered</button>
+        <div class="nav-actions-row">
+          <a class="nav-btn-secondary" id="navCallBtn" href="#">📞 Call</a>
+          <a class="nav-btn-secondary" id="navGmapsBtn" href="#" target="_blank" rel="noopener">🧭 Open in Maps</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Shown when every stop on the active route is delivered -->
+    <div class="nav-complete" id="navComplete" style="display:none;">
+      <div class="nav-complete-card">
+        <div class="nc-emoji">🎉</div>
+        <div class="nc-title">Route complete!</div>
+        <div class="nc-sub" id="navCompleteSub">All stops for this shift are delivered.</div>
+        <button class="btn btn-primary" id="navCompleteCloseBtn">Back to list</button>
+      </div>
+    </div>
   </div>
 </div>
 
 <div id="mobileToggle">
-  <button class="active" id="mobShowList">List</button>
-  <button id="mobShowMap">Map</button>
+  <button class="active" id="mobShowList">📋 List</button>
+  <button id="mobShowMap">🗺️ Map</button>
 </div>
 
 <div class="modal-backdrop" id="boyModal">
@@ -504,9 +623,9 @@ function isOnline(b){
 }
 function custShift(c){ return c.shift === 'evening' ? 'evening' : 'morning'; }
 function defaultShiftNow(){ return new Date().getHours() < 16 ? 'morning' : 'evening'; }
-// Greedy nearest-neighbor stop ordering — shared by the admin "show route" button
-// and the delivery boy's own auto-route, so numbering on the map and the route line
-// always agree with each other.
+// Greedy nearest-neighbor stop ordering — shared by the admin "show route" button,
+// the delivery boy's own auto-route, and Navigation Mode, so numbering on the map
+// and the route line always agree with each other.
 function nearestNeighborOrder(startLat, startLng, stops){
   let remaining = [...stops];
   let order = [];
@@ -526,12 +645,26 @@ function showToast(msg){
 }
 function confirmAction(text, onOk){
   document.getElementById('confirmText').textContent = text;
-  document.getElementById('confirmModal').classList.add('show');
+  openModal('confirmModal');
   const okBtn = document.getElementById('confirmOk');
   const cancelBtn = document.getElementById('confirmCancel');
-  const cleanup = ()=>{ document.getElementById('confirmModal').classList.remove('show'); okBtn.onclick=null; cancelBtn.onclick=null; };
+  const cleanup = ()=>{ closeModal('confirmModal'); okBtn.onclick=null; cancelBtn.onclick=null; };
   okBtn.onclick = ()=>{ cleanup(); onOk(); };
   cancelBtn.onclick = cleanup;
+}
+// Any number of modals can be "open" at once (in practice just one), so we
+// track a count and only drop the modal-open body class (which hides the
+// floating mobile List/Map toggle) once nothing is left open.
+let openModalCount = 0;
+function openModal(id){
+  document.getElementById(id).classList.add('show');
+  openModalCount++;
+  document.body.classList.add('modal-open');
+}
+function closeModal(id){
+  document.getElementById(id).classList.remove('show');
+  openModalCount = Math.max(0, openModalCount - 1);
+  if (openModalCount === 0) document.body.classList.remove('modal-open');
 }
 function parseGoogleMapsLink(text){
   if(!text) return null;
@@ -584,6 +717,7 @@ let currentAdminTab = 'overview';
 let locMode = 'map';
 let routedBoyId = null;
 let activeShift = defaultShiftNow(); // used by delivery boy view (and reused for map filtering)
+let navMode = false; // true while a delivery boy is in the full-screen "Start Route" experience
 
 /* ---------------- session (device-local login only — all app data lives in Firebase) ---------------- */
 function loadSession(){
@@ -608,6 +742,22 @@ function loadGoogleMaps(apiKey){
     document.head.appendChild(s);
   });
 }
+
+/* ---------------- mobile List/Map toggle helpers ---------------- */
+// Centralised so every caller (manual tab clicks, "Route" buttons, pin taps,
+// Start Route, etc.) stays perfectly in sync with the actual view + button state.
+function setMobileView(mode){ // 'list' | 'map'
+  const isMap = mode === 'map';
+  document.body.classList.toggle('show-map-mobile', isMap);
+  document.body.classList.toggle('show-list-mobile', !isMap);
+  document.getElementById('mobShowMap').classList.toggle('active', isMap);
+  document.getElementById('mobShowList').classList.toggle('active', !isMap);
+  setTimeout(()=>{ if (map) google.maps.event.trigger(map, 'resize'); }, 150);
+}
+// Only relevant below the 860px breakpoint where list/map are stacked and only
+// one is visible at a time — on desktop both are always visible side-by-side.
+function isMobileLayout(){ return window.matchMedia('(max-width:860px)').matches; }
+function ensureMapVisible(){ if (isMobileLayout()) setMobileView('map'); }
 
 /* ---------------- map ---------------- */
 let map, infoWindow;
@@ -821,10 +971,12 @@ function renderMapMarkers(){
 }
 
 /* ---------------- live route (road-based, OSRM) ----------------
-   Two callers share this:
+   Three callers share this:
    1. Admin clicking "Route" on a boy's card (manual, opts.auto = false)
    2. The delivery boy's own map, which keeps its route + floating
       distance/ETA labels up to date automatically (opts.auto = true).
+   3. Navigation Mode ("Start Route"), which reuses the exact same auto
+      path so the line on the map always matches the next-stop card.
    Auto mode is throttled — it only re-hits OSRM when the stop sequence
    actually changes or ~20s have passed, so it doesn't hammer the free
    routing service on every 10s refresh. */
@@ -833,7 +985,7 @@ async function showBoyRoute(boyId, shiftFilter, opts){
   const auto = !!opts.auto;
   const b = deliveryBoys.find(x=>x.id===boyId);
   if (!b) return;
-  if (b.lat == null) { if(!auto) showToast(b.name + " has no live location yet"); return; }
+  if (b.lat == null) { if(!auto) showToast(b.name + " has no live location yet — ask them to log in and enable GPS"); return; }
 
   let stops = customers.filter(c=>c.assignedTo===boyId && c.status!=='completed' && (!shiftFilter || shiftFilter==='all' || custShift(c)===shiftFilter));
   if (!stops.length){
@@ -841,6 +993,8 @@ async function showBoyRoute(boyId, shiftFilter, opts){
     clearRoute(); clearSegmentLabels();
     if (auto && !deliveryMapCenteredOnce){
       map.panTo({lat:b.lat,lng:b.lng}); map.setZoom(15); deliveryMapCenteredOnce = true;
+    } else if (!auto && b.lat != null){
+      map.panTo({lat:b.lat,lng:b.lng}); map.setZoom(14);
     }
     return;
   }
@@ -903,9 +1057,82 @@ function clearRoute(){
 document.getElementById('clearRouteBtn').onclick = clearRoute;
 document.getElementById('recenterBtn').onclick = ()=>{
   const b = deliveryBoys.find(x=>x.id===myBoyId);
-  if (b && b.lat!=null){ map.panTo({lat:b.lat,lng:b.lng}); map.setZoom(15); }
+  if (b && b.lat!=null){ map.panTo({lat:b.lat,lng:b.lng}); map.setZoom(15); ensureMapVisible(); }
   else showToast("Waiting for your GPS location…");
 };
+
+/* ================= NAVIGATION MODE ("Start Route") =================
+   A focused, full-screen, one-thing-at-a-time experience for delivery
+   boys — tap Start Route and the map takes over the whole screen with
+   a bottom card showing only the next stop, its distance/ETA, and three
+   big buttons (Delivered / Call / Open in Maps). No lists, no tabs, no
+   extra decisions — closest thing to how a maps app "starts navigation". */
+function getNavPendingStops(){
+  if (!myBoyId) return [];
+  const me = deliveryBoys.find(b=>b.id===myBoyId);
+  let pending = customers.filter(c=>c.assignedTo===myBoyId && custShift(c)===activeShift && c.status!=='completed');
+  if (me && me.lat!=null){
+    pending.forEach(c=> c._d = distanceKm(me.lat, me.lng, c.lat, c.lng));
+    pending.sort((a,z)=>a._d-z._d);
+  }
+  return pending;
+}
+function enterNavMode(){
+  if (role!=='delivery' || !myBoyId) return;
+  const pending = getNavPendingStops();
+  if (!pending.length){ showToast("No pending stops in this shift"); return; }
+  navMode = true;
+  document.body.classList.add('nav-mode');
+  document.getElementById('navComplete').style.display = 'none';
+  updateNavSheet();
+  setTimeout(()=>{ if(map) google.maps.event.trigger(map,'resize'); }, 200);
+}
+function exitNavMode(){
+  navMode = false;
+  document.body.classList.remove('nav-mode');
+  document.getElementById('navComplete').style.display = 'none';
+  document.getElementById('navSheet').style.display = 'none';
+  clearRoute(); clearSegmentLabels();
+  renderAll();
+  setTimeout(()=>{ if(map) google.maps.event.trigger(map,'resize'); }, 200);
+}
+function updateNavSheet(){
+  if (!navMode) return;
+  const pending = getNavPendingStops();
+  const totalForShift = customers.filter(c=>c.assignedTo===myBoyId && custShift(c)===activeShift).length;
+  const doneForShift = totalForShift - pending.length;
+
+  if (!pending.length){
+    document.getElementById('navSheet').style.display = 'none';
+    document.getElementById('navCompleteSub').textContent = `All ${activeShift} stops are delivered. Nice work!`;
+    document.getElementById('navComplete').style.display = 'flex';
+    clearRoute(); clearSegmentLabels();
+    return;
+  }
+
+  document.getElementById('navSheet').style.display = 'block';
+  document.getElementById('navComplete').style.display = 'none';
+
+  const next = pending[0];
+  document.getElementById('navStopName').textContent = next.name;
+  document.getElementById('navStopAddr').textContent = next.address || 'No address noted';
+  document.getElementById('navStatDist').textContent = next._d!=null ? fmtDist(next._d) : '—';
+  document.getElementById('navStatEta').textContent = next._d!=null ? fmtEtaMinutes(next._d) : '—';
+  document.getElementById('navProgressTxt').textContent = `Stop ${doneForShift+1} of ${totalForShift}`;
+  document.getElementById('navProgressFill').style.width = totalForShift ? Math.round(doneForShift/totalForShift*100)+'%' : '0%';
+
+  const callBtn = document.getElementById('navCallBtn');
+  if (next.phone){ callBtn.href = 'tel:'+next.phone; callBtn.style.display = 'flex'; }
+  else { callBtn.style.display = 'none'; }
+  document.getElementById('navGmapsBtn').href = `https://www.google.com/maps/dir/?api=1&destination=${next.lat},${next.lng}`;
+  document.getElementById('navDeliveredBtn').onclick = ()=> markComplete(next.id);
+
+  // Keep the route line + segment labels on-screen and up to date while
+  // navigating — this is what makes "Start Route" actually show a live route.
+  showBoyRoute(myBoyId, activeShift, { auto: true });
+}
+document.getElementById('navExitBtn').onclick = exitNavMode;
+document.getElementById('navCompleteCloseBtn').onclick = exitNavMode;
 
 /* ================= LOGIN FLOW ================= */
 function showLoginStep(id){
@@ -957,11 +1184,12 @@ document.getElementById('deliveryNameBtn').onclick = ()=>{
 
 function enterApp(r, boyId){
   role = r; myBoyId = boyId;
+  navMode = false;
+  document.body.classList.remove('nav-mode');
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('adminView').style.display = role==='admin' ? 'flex' : 'none';
   document.getElementById('deliveryView').style.display = role==='delivery' ? 'flex' : 'none';
-  document.body.classList.add('show-list-mobile');
-  document.body.classList.remove('show-map-mobile');
+  setMobileView('list');
   document.getElementById('deliveryMapToolbar').style.display = role==='delivery' ? 'flex' : 'none';
   deliveryMapCenteredOnce = false;
   updateWhoami();
@@ -975,6 +1203,10 @@ function logout(){
   clearSession();
   clearRoute();
   clearSegmentLabels();
+  navMode = false;
+  document.body.classList.remove('nav-mode');
+  document.getElementById('navSheet').style.display = 'none';
+  document.getElementById('navComplete').style.display = 'none';
   document.getElementById('deliveryMapToolbar').style.display = 'none';
   role = null; myBoyId = null;
   document.getElementById('adminPass').value = '';
@@ -1051,10 +1283,13 @@ function updateShiftTabsUI(){
 document.querySelectorAll('.shift-tab-btn').forEach(btn=>{
   btn.onclick = ()=>{
     activeShift = btn.dataset.shift;
+    if (navMode) exitNavMode();
     updateShiftTabsUI();
     renderAll();
   };
 });
+
+document.getElementById('startRouteBtn').onclick = enterNavMode;
 
 document.getElementById('useMyLocBtn').onclick = ()=>{
   if (!navigator.geolocation) return showToast("Geolocation not supported on this device");
@@ -1063,6 +1298,7 @@ document.getElementById('useMyLocBtn').onclick = ()=>{
     if (pendingPinMarker) pendingPinMarker.setMap(null);
     pendingPinMarker = new google.maps.Marker({ position: pendingPinLatLng, map, icon: makeCustIcon('#10192E','+',false,null) });
     map.panTo(pendingPinLatLng);
+    ensureMapVisible();
     document.getElementById('pendingPinNote').style.display = 'block';
   }, ()=> showToast("Couldn't get your location — allow location access"));
 };
@@ -1085,6 +1321,7 @@ document.getElementById('parseLinkBtn').onclick = async ()=>{
     pendingPinMarker = new google.maps.Marker({ position: coords, map, icon: makeCustIcon('#10192E','+',false,null) });
     map.panTo(coords);
     map.setZoom(16);
+    ensureMapVisible();
     document.getElementById('pendingPinNote').style.display = 'block';
     showToast("Location found — pin dropped on map");
   } finally {
@@ -1156,8 +1393,15 @@ window.setCustomerShift = async (id, shift) => { await update(ref(db, 'customers
 window.deleteCustomer = (id) => confirmAction("Delete customer?", async () => await remove(ref(db, 'customers/' + id)));
 window.removeBoy = (id) => confirmAction("Remove delivery boy?", async () => await remove(ref(db, 'deliveryBoys/' + id)));
 window.deleteZone = (id) => confirmAction("Delete zone?", async () => await remove(ref(db, 'zones/' + id)));
-window.panToBoy = (id, shift) => { const b = deliveryBoys.find(x=>x.id===id); if(b && b.lat!=null){ map.panTo({lat:b.lat,lng:b.lng}); map.setZoom(15); } showBoyRoute(id, shift||'all'); };
-window.panToCust = (lat,lng) => { map.panTo({lat,lng}); map.setZoom(16); };
+// Panning to a boy's route or a customer pin is only useful if the map is
+// actually on screen — on mobile that means switching out of list view too.
+window.panToBoy = (id, shift) => {
+  const b = deliveryBoys.find(x=>x.id===id);
+  ensureMapVisible();
+  if(b && b.lat!=null){ map.panTo({lat:b.lat,lng:b.lng}); map.setZoom(15); }
+  showBoyRoute(id, shift||'all');
+};
+window.panToCust = (lat,lng) => { ensureMapVisible(); map.panTo({lat,lng}); map.setZoom(16); };
 
 /* ---- Delivery boy full-status modal ---- */
 window.openBoyModal = (boyId) => {
@@ -1205,9 +1449,9 @@ window.openBoyModal = (boyId) => {
     ${!mine.length ? `<div class="empty-state">Is delivery boy ko abhi koi customer assign nahi hai.</div>` : ''}
     <div class="btn-row"><button class="btn btn-ghost" onclick="closeBoyModal()" style="width:100%;">Close</button></div>
   `;
-  document.getElementById('boyModal').classList.add('show');
+  openModal('boyModal');
 };
-window.closeBoyModal = () => document.getElementById('boyModal').classList.remove('show');
+window.closeBoyModal = () => closeModal('boyModal');
 
 window.resetBoyDeliveries = (boyId) => {
   const b = deliveryBoys.find(x=>x.id===boyId);
@@ -1239,6 +1483,7 @@ function renderAll(){
   } else if (role === 'delivery') {
     renderDeliveryList();
     if (myBoyId) showBoyRoute(myBoyId, activeShift, { auto: true });
+    if (navMode) updateNavSheet();
   }
 }
 
@@ -1328,11 +1573,11 @@ function renderAdminCustList(){
                   ${!c.assignedTo ? `<span class="badge unassigned">UNASSIGNED</span>` : ''}
                 </div>
                 <div class="stop-actions">
-                    <select onchange="reassignCustomer('${c.id}', this.value)" style="font-size:11px; padding:5px; border-radius:6px; border:1px solid #DEDBCF;">
+                    <select onchange="reassignCustomer('${c.id}', this.value)" style="font-size:11.5px; padding:8px; border-radius:8px; border:1.5px solid #DEDBCF; min-height:38px;">
                         <option value="">Unassigned</option>
                         ${deliveryBoys.map(b=>`<option value="${b.id}" ${c.assignedTo===b.id?'selected':''}>${escapeHtml(b.name)}</option>`).join('')}
                     </select>
-                    <select onchange="setCustomerShift('${c.id}', this.value)" style="font-size:11px; padding:5px; border-radius:6px; border:1px solid #DEDBCF;">
+                    <select onchange="setCustomerShift('${c.id}', this.value)" style="font-size:11.5px; padding:8px; border-radius:8px; border:1.5px solid #DEDBCF; min-height:38px;">
                         <option value="morning" ${sh==='morning'?'selected':''}>🌅 Morning</option>
                         <option value="evening" ${sh==='evening'?'selected':''}>🌆 Evening</option>
                     </select>
@@ -1482,10 +1727,21 @@ function renderDeliveryList(){
     if (totalPendingAllShifts === 0 && customers.some(c=>c.assignedTo===myBoyId)){
       allDoneWrap.innerHTML = `<div class="all-done-card"><div class="big">🎉</div><div class="t1">All deliveries done for today!</div><div class="t2">Your live location has been turned off.</div></div>`;
       if (tracking) stopTracking();
+      if (navMode) exitNavMode();
     } else {
       allDoneWrap.innerHTML = '';
       // admin may have just reset completed orders back to pending — resume GPS sharing automatically
       if (totalPendingAllShifts > 0 && !tracking) startTracking();
+    }
+
+    const startBtn = document.getElementById('startRouteBtn');
+    if (startBtn){
+      if (pending.length && !navMode){
+        startBtn.style.display = 'flex';
+        startBtn.innerHTML = `<span class="pulse-ic"></span> Start Route · ${pending.length} stop${pending.length>1?'s':''}`;
+      } else {
+        startBtn.style.display = 'none';
+      }
     }
 
     let html = pending.map((c, i) => `
@@ -1516,16 +1772,8 @@ function renderDeliveryList(){
 }
 
 /* ================= MOBILE TOGGLE ================= */
-document.getElementById('mobShowList').onclick = ()=>{
-  document.body.classList.add('show-list-mobile'); document.body.classList.remove('show-map-mobile');
-  document.getElementById('mobShowList').classList.add('active'); document.getElementById('mobShowMap').classList.remove('active');
-  setTimeout(()=>{ if (map) google.maps.event.trigger(map, 'resize'); }, 150);
-};
-document.getElementById('mobShowMap').onclick = ()=>{
-  document.body.classList.add('show-map-mobile'); document.body.classList.remove('show-list-mobile');
-  document.getElementById('mobShowMap').classList.add('active'); document.getElementById('mobShowList').classList.remove('active');
-  setTimeout(()=>{ if (map) google.maps.event.trigger(map, 'resize'); }, 150);
-};
+document.getElementById('mobShowList').onclick = ()=> setMobileView('list');
+document.getElementById('mobShowMap').onclick = ()=> setMobileView('map');
 
 ['filterBoy','filterZone','filterStatus','filterShift'].forEach(id=>{
   document.addEventListener('change', (e)=>{ if(e.target && e.target.id===id) renderAdminCustList(); });
