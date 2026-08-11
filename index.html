@@ -223,25 +223,37 @@
   /* ---------------- NAVIGATION MODE (delivery boy "start route") ---------------- */
   body.nav-mode #sidebar{display:none !important;}
   body.nav-mode #mobileToggle{display:none !important;}
-  body.nav-mode #mapWrap{flex:1;}
+  body.nav-mode #mapWrap{display:flex !important; flex:1;}
+
+  /* Top turn-by-turn instruction banner, shown only in Navigation Mode */
+  .nav-turn-banner{position:absolute; top:calc(14px + var(--safe-t)); left:14px; right:14px; z-index:610; background:var(--navy); color:white; border-radius:16px; padding:13px 15px; display:none; align-items:center; gap:13px; box-shadow:var(--shadow-lg);}
+  .nav-turn-arrow{width:42px; height:42px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,.14); border-radius:12px;}
+  .nav-turn-arrow svg{width:24px; height:24px;}
+  .nav-turn-text{min-width:0; flex:1;}
+  .nav-turn-dist{font-family:'JetBrains Mono'; font-size:12.5px; font-weight:700; color:var(--mint); margin-bottom:2px;}
+  .nav-turn-instr{font-size:15px; font-weight:700; line-height:1.25; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;}
+
+  /* Floating re-centre button, sits above the bottom sheet */
+  .nav-recenter-btn{position:absolute; z-index:610; right:14px; bottom:264px; background:white; color:var(--navy); border:none; border-radius:999px; width:46px; height:46px; box-shadow:var(--shadow-md); display:none; align-items:center; justify-content:center; cursor:pointer; font-size:19px;}
+  .nav-recenter-btn.following{background:var(--navy); color:white;}
+  @media(min-width:641px){ .nav-recenter-btn{bottom:238px; right:calc(50% - 200px + 14px);} }
 
   .nav-sheet{position:absolute; left:0; right:0; bottom:0; background:var(--card); z-index:600; box-shadow:var(--shadow-lg); border-radius:22px 22px 0 0; padding:10px 20px calc(18px + var(--safe-b)); animation:navSlideUp .25s ease;}
   @keyframes navSlideUp{from{transform:translateY(40px); opacity:0;} to{transform:translateY(0); opacity:1;}}
   .nav-sheet-handle{width:38px; height:4px; background:#E4E1D6; border-radius:99px; margin:0 auto 12px;}
-  .nav-sheet-top{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px;}
+  .nav-sheet-top{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px;}
   .nav-progress{flex:1; min-width:0;}
   .nav-progress-bar{height:6px; background:#EEECE2; border-radius:99px; overflow:hidden; margin-bottom:6px;}
   .nav-progress-fill{height:100%; background:linear-gradient(90deg,var(--orange),var(--mint)); border-radius:99px; transition:width .4s ease;}
   .nav-progress-txt{font-size:11.5px; font-weight:700; color:var(--slate); font-family:'JetBrains Mono';}
   .nav-exit-btn{border:1.5px solid #EEECE2; background:#FBFAF6; color:var(--navy); font-weight:700; font-size:12.5px; padding:9px 13px; border-radius:11px; cursor:pointer; white-space:nowrap; min-height:38px; flex-shrink:0;}
-  .nav-stop-info{margin-bottom:16px;}
+  .nav-eta-row{display:flex; align-items:baseline; gap:9px; margin-bottom:12px; flex-wrap:wrap;}
+  .nav-eta-big{font-family:'Space Grotesk'; font-weight:700; font-size:27px; color:var(--mint-dark);}
+  .nav-eta-sub{font-size:12.5px; color:var(--slate); font-weight:600;}
+  .nav-stop-info{margin-bottom:14px;}
   .nav-stop-eyebrow{font-size:11px; font-weight:700; color:var(--orange-dark); text-transform:uppercase; letter-spacing:.06em; margin-bottom:5px;}
-  .nav-stop-name{font-family:'Space Grotesk'; font-weight:700; font-size:22px; line-height:1.22;}
-  .nav-stop-addr{font-size:13.5px; color:var(--slate); margin-top:5px; line-height:1.5;}
-  .nav-stat-row{display:flex; gap:10px; margin-top:14px;}
-  .nav-stat{flex:1; background:var(--paper); border-radius:13px; padding:11px 12px; text-align:center;}
-  .nav-stat-num{font-family:'JetBrains Mono'; font-size:21px; font-weight:700; color:var(--navy);}
-  .nav-stat-lbl{font-size:10px; color:var(--slate); text-transform:uppercase; letter-spacing:.05em; margin-top:3px;}
+  .nav-stop-name{font-family:'Space Grotesk'; font-weight:700; font-size:20px; line-height:1.22;}
+  .nav-stop-addr{font-size:13px; color:var(--slate); margin-top:5px; line-height:1.5;}
   .nav-actions{display:flex; flex-direction:column; gap:9px;}
   .nav-btn-primary{background:var(--mint); color:white; border:none; border-radius:15px; padding:17px; font-size:16px; font-weight:700; cursor:pointer; box-shadow:0 10px 24px rgba(0,200,150,.35); min-height:56px;}
   .nav-btn-primary:active{transform:scale(.97);}
@@ -506,6 +518,18 @@
       <button id="recenterBtn">📍 Recenter on me</button>
     </div>
 
+    <!-- Turn-by-turn instruction banner shown during Navigation Mode -->
+    <div class="nav-turn-banner" id="navTurnBanner">
+      <div class="nav-turn-arrow" id="navTurnArrowIcon"></div>
+      <div class="nav-turn-text">
+        <div class="nav-turn-dist" id="navTurnDist">—</div>
+        <div class="nav-turn-instr" id="navTurnInstr">Head towards your first stop</div>
+      </div>
+    </div>
+
+    <!-- Follow-me re-centre button, shown during Navigation Mode -->
+    <button type="button" class="nav-recenter-btn following" id="navRecenterBtn" title="Re-centre on me">🧭</button>
+
     <!-- Navigation-mode bottom sheet: shown while a delivery boy has an active route -->
     <div class="nav-sheet" id="navSheet" style="display:none;">
       <div class="nav-sheet-handle"></div>
@@ -516,14 +540,14 @@
         </div>
         <button class="nav-exit-btn" id="navExitBtn">✕ End route</button>
       </div>
+      <div class="nav-eta-row">
+        <div class="nav-eta-big" id="navEtaBig">— min</div>
+        <div class="nav-eta-sub" id="navEtaSub">—</div>
+      </div>
       <div class="nav-stop-info">
         <div class="nav-stop-eyebrow">Next stop</div>
         <div class="nav-stop-name" id="navStopName">—</div>
         <div class="nav-stop-addr" id="navStopAddr">—</div>
-        <div class="nav-stat-row">
-          <div class="nav-stat"><div class="nav-stat-num" id="navStatDist">—</div><div class="nav-stat-lbl">Away</div></div>
-          <div class="nav-stat"><div class="nav-stat-num" id="navStatEta">—</div><div class="nav-stat-lbl">ETA</div></div>
-        </div>
       </div>
       <div class="nav-actions">
         <button class="nav-btn-primary" id="navDeliveredBtn">✓ Mark Delivered</button>
@@ -735,7 +759,7 @@ function loadGoogleMaps(apiKey){
   return new Promise((resolve, reject)=>{
     if (window.google && window.google.maps){ resolve(); return; }
     const s = document.createElement('script');
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+    s.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,geometry`;
     s.async = true;
     s.onload = ()=> resolve();
     s.onerror = ()=> reject(new Error('Google Maps script failed to load'));
@@ -771,6 +795,14 @@ let lastRoutedKey = null;
 let lastRouteFetchTime = 0;
 let deliveryMapCenteredOnce = false;
 let FloatingLabel = null; // defined once google.maps is available, inside initMap()
+
+// Navigation Mode (turn-by-turn) state — populated by showBoyRoute() when
+// called with { nav:true }, consumed by updateTurnBanner()/updateEtaSummary().
+let directionsService = null;
+let activeDirectionsResult = null;
+let activeLegSteps = [];
+let currentStepIdx = 0;
+let navFollow = true; // true = map auto-pans to the rider's live position
 
 // Small floating pill (distance · ETA) anchored to a lat/lng, used between
 // consecutive stops on a route. Defined lazily because it extends
@@ -835,6 +867,12 @@ function initMap(){
     if (pendingPinMarker) pendingPinMarker.setMap(null);
     pendingPinMarker = new google.maps.Marker({ position: pendingPinLatLng, map, icon: makeCustIcon('#10192E','+',false,null) });
     document.getElementById('pendingPinNote').style.display = 'block';
+  });
+
+  // In Navigation Mode we auto-follow the rider's live position. The moment they
+  // drag the map themselves we stop following until they tap the re-centre button.
+  map.addListener('dragstart', ()=>{
+    if (navMode && navFollow){ navFollow = false; updateRecenterBtnUI(); }
   });
 
   defineFloatingLabelClass();
@@ -970,19 +1008,101 @@ function renderMapMarkers(){
   });
 }
 
-/* ---------------- live route (road-based, OSRM) ----------------
-   Three callers share this:
-   1. Admin clicking "Route" on a boy's card (manual, opts.auto = false)
-   2. The delivery boy's own map, which keeps its route + floating
-      distance/ETA labels up to date automatically (opts.auto = true).
-   3. Navigation Mode ("Start Route"), which reuses the exact same auto
-      path so the line on the map always matches the next-stop card.
-   Auto mode is throttled — it only re-hits OSRM when the stop sequence
-   actually changes or ~20s have passed, so it doesn't hammer the free
-   routing service on every 10s refresh. */
+/* ---------------- Google Directions (turn-by-turn, Navigation Mode only) ---------------- */
+function getDirectionsService(){
+  if (!directionsService) directionsService = new google.maps.DirectionsService();
+  return directionsService;
+}
+// origin: {lat,lng}. orderedStops: array already sorted nearest-first (from
+// nearestNeighborOrder) — last stop becomes the Directions "destination",
+// everything before it becomes waypoints, so the road route visits every
+// house in the exact order the rider sees in their stop list.
+function computeDirections(origin, orderedStops){
+  return new Promise((resolve, reject)=>{
+    if (!orderedStops.length) { reject(new Error('no stops')); return; }
+    const destination = orderedStops[orderedStops.length - 1];
+    const waypoints = orderedStops.slice(0, -1).map(s => ({ location:{lat:s.lat,lng:s.lng}, stopover:true }));
+    getDirectionsService().route({
+      origin,
+      destination: { lat:destination.lat, lng:destination.lng },
+      waypoints,
+      optimizeWaypoints:false,
+      travelMode: google.maps.TravelMode.DRIVING
+    }, (result, status)=>{
+      if (status === 'OK' && result) resolve(result);
+      else reject(new Error(status || 'DIRECTIONS_FAILED'));
+    });
+  });
+}
+// Arrow icon rotated to match the upcoming maneuver, shown in the top nav banner.
+function maneuverArrowSvg(maneuver){
+  const rot = {
+    'turn-left':-90,'turn-right':90,'turn-slight-left':-30,'turn-slight-right':30,
+    'turn-sharp-left':-120,'turn-sharp-right':120,'uturn-left':180,'uturn-right':180,
+    'ramp-left':-40,'ramp-right':40,'fork-left':-25,'fork-right':25,
+    'merge':20,'roundabout-left':-60,'roundabout-right':60,'straight':0
+  }[maneuver] || 0;
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(${rot}deg)"><path d="M12 19V5"/><path d="M6 11l6-6 6 6"/></svg>`;
+}
+// Updates the top turn-by-turn banner using the currently cached Directions
+// steps + the rider's live position — cheap (no network call), so this can
+// run on every GPS ping without hitting the Directions API repeatedly.
+function updateTurnBanner(boyPos){
+  const banner = document.getElementById('navTurnBanner');
+  if (!navMode || !activeLegSteps.length || !boyPos || boyPos.lat == null){
+    if (banner) banner.style.display = 'none';
+    return;
+  }
+  const pos = new google.maps.LatLng(boyPos.lat, boyPos.lng);
+  let idx = currentStepIdx;
+  for (let i = currentStepIdx; i < activeLegSteps.length; i++){
+    const d = google.maps.geometry.spherical.computeDistanceBetween(pos, activeLegSteps[i].end_location);
+    if (d < 35 && i < activeLegSteps.length - 1){ idx = i + 1; continue; }
+    idx = i; break;
+  }
+  currentStepIdx = idx;
+  const step = activeLegSteps[idx];
+  if (!step){ banner.style.display = 'none'; return; }
+  const distToManeuver = google.maps.geometry.spherical.computeDistanceBetween(pos, step.end_location);
+  document.getElementById('navTurnInstr').textContent = (step.instructions || '').replace(/<[^>]*>/g, '').trim();
+  document.getElementById('navTurnDist').textContent = fmtDist(distToManeuver / 1000);
+  document.getElementById('navTurnArrowIcon').innerHTML = maneuverArrowSvg(step.maneuver);
+  banner.style.display = 'flex';
+}
+// Big "X min / Y km · arriving H:MM" line in the bottom sheet, summed across
+// every remaining leg of the Directions result (i.e. to the LAST stop).
+function updateEtaSummary(result){
+  if (!result || !result.routes || !result.routes[0]) return;
+  const legs = result.routes[0].legs;
+  let totalSec = 0, totalMeters = 0;
+  legs.forEach(l => { totalSec += l.duration.value; totalMeters += l.distance.value; });
+  const mins = Math.max(1, Math.round(totalSec / 60));
+  const arrival = new Date(Date.now() + totalSec * 1000);
+  const h12 = ((arrival.getHours() + 11) % 12) + 1;
+  const ampm = arrival.getHours() >= 12 ? 'PM' : 'AM';
+  const mm = String(arrival.getMinutes()).padStart(2, '0');
+  document.getElementById('navEtaBig').textContent = mins + ' min';
+  document.getElementById('navEtaSub').textContent = `${fmtDist(totalMeters/1000)} · arriving ${h12}:${mm} ${ampm}`;
+}
+function updateRecenterBtnUI(){
+  document.getElementById('navRecenterBtn').classList.toggle('following', navFollow);
+}
+
+/* ---------------- live route ----------------
+   Two routing engines are used on purpose:
+   - OSRM (free, no key) draws the quick preview line for the admin's
+     "Route" button and the delivery boy's normal (non-navigating) map.
+   - Google Directions (opts.nav = true) is used only inside Navigation
+     Mode, because it's the one that gives real turn-by-turn steps for
+     the top instruction banner + accurate multi-stop ETA.
+   Auto mode is throttled — it only re-fetches when the stop sequence
+   actually changes or ~20s have passed, so it doesn't hammer either
+   routing service on every periodic refresh. When throttled, Navigation
+   Mode still refreshes the turn banner from the already-cached steps. */
 async function showBoyRoute(boyId, shiftFilter, opts){
   opts = opts || {};
   const auto = !!opts.auto;
+  const useNav = !!opts.nav;
   const b = deliveryBoys.find(x=>x.id===boyId);
   if (!b) return;
   if (b.lat == null) { if(!auto) showToast(b.name + " has no live location yet — ask them to log in and enable GPS"); return; }
@@ -991,6 +1111,8 @@ async function showBoyRoute(boyId, shiftFilter, opts){
   if (!stops.length){
     if(!auto) showToast("No pending stops for " + b.name + (shiftFilter && shiftFilter!=='all' ? ' in this shift' : ''));
     clearRoute(); clearSegmentLabels();
+    activeDirectionsResult = null; activeLegSteps = []; currentStepIdx = 0;
+    if (useNav) updateTurnBanner(null);
     if (auto && !deliveryMapCenteredOnce){
       map.panTo({lat:b.lat,lng:b.lng}); map.setZoom(15); deliveryMapCenteredOnce = true;
     } else if (!auto && b.lat != null){
@@ -1000,10 +1122,11 @@ async function showBoyRoute(boyId, shiftFilter, opts){
   }
 
   const ordered = nearestNeighborOrder(b.lat, b.lng, stops);
-  const routeKey = boyId + '|' + (shiftFilter||'all') + '|' + ordered.map(s=>s.id).join(',');
+  const routeKey = boyId + '|' + (shiftFilter||'all') + '|' + (useNav?'nav':'std') + '|' + ordered.map(s=>s.id).join(',');
   const now = Date.now();
   if (auto && routeKey === lastRoutedKey && (now - lastRouteFetchTime) < 20000){
-    return; // nothing meaningfully changed yet — skip the extra network call
+    if (useNav) updateTurnBanner(b); // cheap, geometry-only refresh — no network call
+    return;
   }
   const isNewStopSet = routeKey !== lastRoutedKey;
 
@@ -1011,8 +1134,36 @@ async function showBoyRoute(boyId, shiftFilter, opts){
   if (!auto) document.getElementById('mapToolbar').style.display = 'flex';
 
   const routePoints = [{lat:b.lat, lng:b.lng}, ...ordered.map(s=>({lat:s.lat, lng:s.lng}))];
-  const coordStr = routePoints.map(p=>p.lng+','+p.lat).join(';');
 
+  if (useNav){
+    try{
+      const result = await computeDirections({lat:b.lat, lng:b.lng}, ordered);
+      const route = result.routes[0];
+      const overviewPath = route.overview_path.map(p=>[p.lat(), p.lng()]);
+      drawRoute(overviewPath, b.color, false, !auto || isNewStopSet);
+      drawSegmentLabels(routePoints, b.color);
+      activeDirectionsResult = result;
+      activeLegSteps = route.legs[0] ? route.legs[0].steps : [];
+      currentStepIdx = 0;
+      updateTurnBanner(b);
+      updateEtaSummary(result);
+      lastRoutedKey = routeKey;
+      lastRouteFetchTime = now;
+      return;
+    }catch(e){
+      if(!auto) showToast("Live turn-by-turn unavailable — showing straight-line path (check Directions API is enabled)");
+      // fall through to straight-line fallback below
+    }
+    drawRoute(routePoints.map(p=>[p.lat,p.lng]), b.color, true, !auto || isNewStopSet);
+    drawSegmentLabels(routePoints, b.color);
+    activeDirectionsResult = null; activeLegSteps = []; currentStepIdx = 0;
+    updateTurnBanner(null);
+    lastRoutedKey = routeKey;
+    lastRouteFetchTime = now;
+    return;
+  }
+
+  const coordStr = routePoints.map(p=>p.lng+','+p.lat).join(';');
   let latlngs, dashed = false;
   try{
     const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${coordStr}?overview=full&geometries=geojson`);
@@ -1038,11 +1189,11 @@ function drawRoute(latlngs, color, dashed, fitBounds){
     path,
     map,
     strokeColor: color,
-    strokeOpacity: dashed ? 0 : 0.85,
-    strokeWeight: dashed ? 0 : 4.5,
+    strokeOpacity: dashed ? 0 : 0.9,
+    strokeWeight: dashed ? 0 : (navMode ? 7 : 4.5),
     icons: dashed ? [{ icon: { path:'M 0,-1 0,1', strokeOpacity:1, scale:3 }, offset:'0', repeat:'12px' }] : undefined
   });
-  if (fitBounds !== false){
+  if (fitBounds !== false && !navMode){
     const bounds = new google.maps.LatLngBounds();
     path.forEach(p=>bounds.extend(p));
     map.fitBounds(bounds, 60);
@@ -1060,13 +1211,18 @@ document.getElementById('recenterBtn').onclick = ()=>{
   if (b && b.lat!=null){ map.panTo({lat:b.lat,lng:b.lng}); map.setZoom(15); ensureMapVisible(); }
   else showToast("Waiting for your GPS location…");
 };
+document.getElementById('navRecenterBtn').onclick = ()=>{
+  navFollow = true; updateRecenterBtnUI();
+  const b = deliveryBoys.find(x=>x.id===myBoyId);
+  if (b && b.lat!=null){ map.panTo({lat:b.lat,lng:b.lng}); map.setZoom(17); }
+};
 
 /* ================= NAVIGATION MODE ("Start Route") =================
    A focused, full-screen, one-thing-at-a-time experience for delivery
    boys — tap Start Route and the map takes over the whole screen with
-   a bottom card showing only the next stop, its distance/ETA, and three
-   big buttons (Delivered / Call / Open in Maps). No lists, no tabs, no
-   extra decisions — closest thing to how a maps app "starts navigation". */
+   a top turn-by-turn instruction banner, a live road route to every
+   remaining house this shift, and a bottom card with next-stop details
+   plus three big buttons (Delivered / Call / Open in Maps). */
 function getNavPendingStops(){
   if (!myBoyId) return [];
   const me = deliveryBoys.find(b=>b.id===myBoyId);
@@ -1082,8 +1238,19 @@ function enterNavMode(){
   const pending = getNavPendingStops();
   if (!pending.length){ showToast("No pending stops in this shift"); return; }
   navMode = true;
+  navFollow = true;
+  lastRoutedKey = null; // force a fresh (nav-mode) route fetch immediately
+  // On mobile, list/map are toggled via body.show-list-mobile / show-map-mobile,
+  // and that rule can otherwise leave #mapWrap stuck at display:none underneath
+  // nav-mode (blank white/paper screen). Force it to the map view explicitly.
+  setMobileView('map');
   document.body.classList.add('nav-mode');
   document.getElementById('navComplete').style.display = 'none';
+  document.getElementById('navRecenterBtn').style.display = 'flex';
+  updateRecenterBtnUI();
+  renderMapMarkers(); // make sure every house pin for this shift is visible right away
+  const me = deliveryBoys.find(b=>b.id===myBoyId);
+  if (me && me.lat!=null){ map.panTo({lat:me.lat,lng:me.lng}); map.setZoom(17); }
   updateNavSheet();
   setTimeout(()=>{ if(map) google.maps.event.trigger(map,'resize'); }, 200);
 }
@@ -1092,7 +1259,11 @@ function exitNavMode(){
   document.body.classList.remove('nav-mode');
   document.getElementById('navComplete').style.display = 'none';
   document.getElementById('navSheet').style.display = 'none';
+  document.getElementById('navTurnBanner').style.display = 'none';
+  document.getElementById('navRecenterBtn').style.display = 'none';
+  activeDirectionsResult = null; activeLegSteps = []; currentStepIdx = 0;
   clearRoute(); clearSegmentLabels();
+  setMobileView('list');
   renderAll();
   setTimeout(()=>{ if(map) google.maps.event.trigger(map,'resize'); }, 200);
 }
@@ -1104,6 +1275,7 @@ function updateNavSheet(){
 
   if (!pending.length){
     document.getElementById('navSheet').style.display = 'none';
+    document.getElementById('navTurnBanner').style.display = 'none';
     document.getElementById('navCompleteSub').textContent = `All ${activeShift} stops are delivered. Nice work!`;
     document.getElementById('navComplete').style.display = 'flex';
     clearRoute(); clearSegmentLabels();
@@ -1116,10 +1288,17 @@ function updateNavSheet(){
   const next = pending[0];
   document.getElementById('navStopName').textContent = next.name;
   document.getElementById('navStopAddr').textContent = next.address || 'No address noted';
-  document.getElementById('navStatDist').textContent = next._d!=null ? fmtDist(next._d) : '—';
-  document.getElementById('navStatEta').textContent = next._d!=null ? fmtEtaMinutes(next._d) : '—';
   document.getElementById('navProgressTxt').textContent = `Stop ${doneForShift+1} of ${totalForShift}`;
   document.getElementById('navProgressFill').style.width = totalForShift ? Math.round(doneForShift/totalForShift*100)+'%' : '0%';
+
+  // ETA row: prefer the real Directions summary; fall back to straight-line estimate
+  // (e.g. while the Directions fetch is still in flight, or if it failed).
+  if (activeDirectionsResult){
+    updateEtaSummary(activeDirectionsResult);
+  } else if (next._d != null){
+    document.getElementById('navEtaBig').textContent = fmtEtaMinutes(next._d);
+    document.getElementById('navEtaSub').textContent = fmtDist(next._d) + ' to next stop';
+  }
 
   const callBtn = document.getElementById('navCallBtn');
   if (next.phone){ callBtn.href = 'tel:'+next.phone; callBtn.style.display = 'flex'; }
@@ -1127,9 +1306,11 @@ function updateNavSheet(){
   document.getElementById('navGmapsBtn').href = `https://www.google.com/maps/dir/?api=1&destination=${next.lat},${next.lng}`;
   document.getElementById('navDeliveredBtn').onclick = ()=> markComplete(next.id);
 
-  // Keep the route line + segment labels on-screen and up to date while
-  // navigating — this is what makes "Start Route" actually show a live route.
-  showBoyRoute(myBoyId, activeShift, { auto: true });
+  // Keep the route line, segment labels, and turn banner up to date while
+  // navigating — this is what makes "Start Route" show a live route + guidance.
+  const me = deliveryBoys.find(b=>b.id===myBoyId);
+  showBoyRoute(myBoyId, activeShift, { auto: true, nav: true });
+  if (me && me.lat != null) updateTurnBanner(me);
 }
 document.getElementById('navExitBtn').onclick = exitNavMode;
 document.getElementById('navCompleteCloseBtn').onclick = exitNavMode;
@@ -1207,6 +1388,8 @@ function logout(){
   document.body.classList.remove('nav-mode');
   document.getElementById('navSheet').style.display = 'none';
   document.getElementById('navComplete').style.display = 'none';
+  document.getElementById('navTurnBanner').style.display = 'none';
+  document.getElementById('navRecenterBtn').style.display = 'none';
   document.getElementById('deliveryMapToolbar').style.display = 'none';
   role = null; myBoyId = null;
   document.getElementById('adminPass').value = '';
@@ -1482,7 +1665,7 @@ function renderAll(){
     if (routedBoyId) showBoyRoute(routedBoyId);
   } else if (role === 'delivery') {
     renderDeliveryList();
-    if (myBoyId) showBoyRoute(myBoyId, activeShift, { auto: true });
+    if (myBoyId) showBoyRoute(myBoyId, activeShift, { auto: true, nav: navMode });
     if (navMode) updateNavSheet();
   }
 }
@@ -1673,6 +1856,13 @@ function startTracking(){
       });
       renderTrackBanner();
       renderMapMarkers();
+      // Navigation Mode: follow the rider (unless they've manually panned away)
+      // and refresh the turn banner / route on every fresh GPS fix.
+      if (navMode){
+        if (navFollow && map){ map.panTo({ lat: pos.coords.latitude, lng: pos.coords.longitude }); }
+        updateTurnBanner({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        updateNavSheet();
+      }
   }, (err) => {
       document.getElementById('trackSubtext').textContent = 'Location access denied — enable GPS to be tracked';
   }, { enableHighAccuracy: true, maximumAge: 5000 });
