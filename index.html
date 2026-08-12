@@ -252,7 +252,7 @@
   .nav-recenter-btn.following{background:var(--navy); color:white;}
   @media(min-width:641px){ .nav-recenter-btn{bottom:238px; right:calc(50% - 200px + 14px);} }
 
-  .nav-sheet{position:absolute; left:0; right:0; bottom:36px; background:var(--card); z-index:600; box-shadow:var(--shadow-lg); border-radius:22px 22px 0 0; padding:10px 20px calc(18px + var(--safe-b)); animation:navSlideUp .25s ease;}
+  .nav-sheet{position:absolute; left:0; right:0; bottom:2px; background:var(--card); z-index:600; box-shadow:var(--shadow-lg); border-radius:22px 22px 0 0; padding:10px 20px calc(18px + var(--safe-b)); animation:navSlideUp .25s ease;}
   @keyframes navSlideUp{from{transform:translateY(40px); opacity:0;} to{transform:translateY(0); opacity:1;}}
   .nav-sheet-handle{width:38px; height:4px; background:#E4E1D6; border-radius:99px; margin:0 auto 12px;}
   .nav-sheet-top{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:0px;}
@@ -645,12 +645,42 @@ const GOOGLE_MAPS_API_KEY = 'AIzaSyCdJWu6gsjXhC1qmz9O6y6U5f7pC3ucC6E';
 /* ---------------- helpers ---------------- */
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 function distanceKm(lat1, lon1, lat2, lon2){
+  // NOTE: this is a straight-line ("as the crow flies") Haversine distance.
+  // It ignores actual roads/turns, so it will always be <= the real driving
+  // distance. Use it only for quick relative sorting/estimates, never as the
+  // "real" distance shown next to an actual routed path — for that, use the
+  // live road distance returned by OSRM / Google Directions (see
+  // estimatedRoadKm() below for the best-effort display value).
   const R = 6371, dLat=(lat2-lat1)*Math.PI/180, dLon=(lon2-lon1)*Math.PI/180;
   const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 function fmtDist(km){ if(km==null) return '—'; return km<1 ? Math.round(km*1000)+' m' : km.toFixed(1)+' km'; }
-function fmtEtaMinutes(km){ if(km==null) return '—'; const m=Math.round((km/AVG_SPEED_KMH)*60); return m<60 ? m+' min' : (m/60).toFixed(1)+' hr'; }
+function fmtMinutes(mins){ if(mins==null) return '—'; const m=Math.round(mins); return m<60 ? m+' min' : (m/60).toFixed(1)+' hr'; }
+function fmtEtaMinutes(km){ if(km==null) return '—'; return fmtMinutes((km/AVG_SPEED_KMH)*60); }
+
+/* ---------------- road-distance calibration ----------------
+   Every place that previously called distanceKm() straight to the UI was
+   showing straight-line distance, which is always shorter than the real
+   road distance (and different every time it's re-derived from a slightly
+   different GPS fix). Whenever we DO get a real routed distance back from
+   OSRM or Google Directions (see showBoyRoute()), we compare it against the
+   straight-line distance for the same two points and use that ratio to keep
+   a running "road factor". Quick/live estimates elsewhere (delivery boy's
+   stop list, marker popups, nav mini-list) then multiply by this factor
+   instead of showing raw straight-line distance, so they track real road
+   distance much more closely — without firing extra paid API calls on
+   every single GPS tick. */
+let roadFactor = 1.3; // sane default for dense Indian city road networks until we learn a better one
+function updateRoadFactor(straightKm, roadKm){
+  if (!straightKm || straightKm < 0.15 || !roadKm) return; // ignore tiny legs — GPS jitter dominates below ~150m
+  const sample = roadKm / straightKm;
+  if (sample < 1 || sample > 3) return; // ignore bad/outlier samples
+  roadFactor = roadFactor * 0.7 + sample * 0.3; // smooth exponential moving average
+}
+function estimatedRoadKm(lat1, lon1, lat2, lon2){
+  return distanceKm(lat1, lon1, lat2, lon2) * roadFactor;
+}
 function timeAgo(ts){
   if(!ts) return '—';
   const ms = typeof ts === 'number' ? ts : Date.now();
@@ -841,13 +871,28 @@ function clearSegmentLabels(){
   segmentLabels.forEach(l=>l.setMap(null));
   segmentLabels = [];
 }
-function drawSegmentLabels(routePoints, color){
+function drawSegmentLabels(routePoints, color, legInfo){
+  // legInfo (optional): array aligned with routePoints, one entry per
+  // segment — [{km, min}, ...] — real road distance/time for that leg, as
+  // returned by OSRM or Google Directions in showBoyRoute(). When present we
+  // use it (and feed it back into the road-factor calibration) instead of
+  // falling back to straight-line distance, so the label matches the actual
+  // routed line drawn on the map.
   clearSegmentLabels();
   for (let i=0; i<routePoints.length-1; i++){
     const a = routePoints[i], z = routePoints[i+1];
-    const d = distanceKm(a.lat,a.lng,z.lat,z.lng);
+    const straightKm = distanceKm(a.lat,a.lng,z.lat,z.lng);
+    let km, etaTxt;
+    if (legInfo && legInfo[i] && legInfo[i].km != null){
+      km = legInfo[i].km;
+      etaTxt = fmtMinutes(legInfo[i].min);
+      updateRoadFactor(straightKm, km);
+    } else {
+      km = straightKm;
+      etaTxt = fmtEtaMinutes(km);
+    }
     const mid = { lat:(a.lat+z.lat)/2, lng:(a.lng+z.lng)/2 };
-    const label = new FloatingLabel(new google.maps.LatLng(mid.lat, mid.lng), `${fmtDist(d)} · ${fmtEtaMinutes(d)}`, color);
+    const label = new FloatingLabel(new google.maps.LatLng(mid.lat, mid.lng), `${fmtDist(km)} · ${etaTxt}`, color);
     label.setMap(map);
     segmentLabels.push(label);
   }
@@ -968,7 +1013,7 @@ function renderMapMarkers(){
       if (role === 'delivery' && c.assignedTo === myBoyId){
         let distLine = '';
         if (myBoy && myBoy.lat != null){
-          const d = distanceKm(myBoy.lat, myBoy.lng, c.lat, c.lng);
+          const d = estimatedRoadKm(myBoy.lat, myBoy.lng, c.lat, c.lng);
           distLine = `<div style="font-size:11px; color:#5B6178; margin:4px 0 8px;">📍 ${fmtDist(d)} away · ~${fmtEtaMinutes(d)}</div>`;
         }
         if (c.status !== 'completed'){
@@ -1134,8 +1179,13 @@ async function showBoyRoute(boyId, shiftFilter, opts){
       const result = await computeDirections({lat:b.lat, lng:b.lng}, ordered);
       const route = result.routes[0];
       const overviewPath = route.overview_path.map(p=>[p.lat(), p.lng()]);
+      // route.legs[i] holds the REAL road distance/duration for each stop-to-stop
+      // segment (already paid for in this API call) — use it instead of
+      // recomputing straight-line distance, so the pill on the map matches the
+      // actual routed line drawn and the top ETA summary.
+      const legInfo = route.legs.map(l => ({ km: l.distance.value/1000, min: l.duration.value/60 }));
       drawRoute(overviewPath, b.color, false, !auto || isNewStopSet);
-      drawSegmentLabels(routePoints, b.color);
+      drawSegmentLabels(routePoints, b.color, legInfo);
       activeDirectionsResult = result;
       activeLegSteps = route.legs[0] ? route.legs[0].steps : [];
       currentStepIdx = 0;
@@ -1157,12 +1207,18 @@ async function showBoyRoute(boyId, shiftFilter, opts){
   }
 
   const coordStr = routePoints.map(p=>p.lng+','+p.lat).join(';');
-  let latlngs, dashed = false;
+  let latlngs, dashed = false, legInfo = null;
   try{
     const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${coordStr}?overview=full&geometries=geojson`);
     const data = await res.json();
     if (data.routes && data.routes[0]){
       latlngs = data.routes[0].geometry.coordinates.map(c=>[c[1],c[0]]);
+      // OSRM already returns real road distance/duration per leg (meters,
+      // seconds) — reuse it for the labels instead of recomputing straight-line
+      // distance, so the number matches the actual road line being drawn.
+      if (data.routes[0].legs){
+        legInfo = data.routes[0].legs.map(l => ({ km: l.distance/1000, min: l.duration/60 }));
+      }
     } else throw new Error('no route');
   }catch(e){
     latlngs = routePoints.map(p=>[p.lat,p.lng]);
@@ -1170,7 +1226,7 @@ async function showBoyRoute(boyId, shiftFilter, opts){
   }
 
   drawRoute(latlngs, b.color, dashed, !auto || isNewStopSet);
-  drawSegmentLabels(routePoints, b.color);
+  drawSegmentLabels(routePoints, b.color, legInfo);
   lastRoutedKey = routeKey;
   lastRouteFetchTime = now;
   if (dashed && !auto) showToast("Live road routing unavailable — showing straight-line path");
@@ -1216,7 +1272,7 @@ function getNavPendingStops(){
   const me = deliveryBoys.find(b=>b.id===myBoyId);
   let pending = customers.filter(c=>c.assignedTo===myBoyId && custShift(c)===activeShift && c.status!=='completed');
   if (me && me.lat!=null){
-    pending.forEach(c=> c._d = distanceKm(me.lat, me.lng, c.lat, c.lng));
+    pending.forEach(c=> c._d = estimatedRoadKm(me.lat, me.lng, c.lat, c.lng));
     pending.sort((a,z)=>a._d-z._d);
   }
   return pending;
@@ -1723,7 +1779,7 @@ function renderBoyModalBody(boyId){
   let shiftPending = shiftMine.filter(c=>c.status!=='completed');
   const shiftDone = shiftMine.filter(c=>c.status==='completed');
   if (b.lat!=null){
-    shiftPending = [...shiftPending].map(c=>({...c, _d: distanceKm(b.lat,b.lng,c.lat,c.lng)})).sort((a,z)=>a._d-z._d);
+    shiftPending = [...shiftPending].map(c=>({...c, _d: estimatedRoadKm(b.lat,b.lng,c.lat,c.lng)})).sort((a,z)=>a._d-z._d);
   }
 
   document.getElementById('boyModalContent').innerHTML = `
@@ -1853,7 +1909,7 @@ function renderAdminOverview(){
         const pendingEvening = pendingList.filter(c=>custShift(c)==='evening').length;
         let headingTo = null;
         if (pendingCount && b.lat!=null){
-          pendingList = [...pendingList].map(c=>({...c, _d: distanceKm(b.lat,b.lng,c.lat,c.lng)})).sort((a,z)=>a._d-z._d);
+          pendingList = [...pendingList].map(c=>({...c, _d: estimatedRoadKm(b.lat,b.lng,c.lat,c.lng)})).sort((a,z)=>a._d-z._d);
           headingTo = `${pendingList[0].name} · ${fmtDist(pendingList[0]._d)} away`;
         } else if (pendingCount){
           headingTo = pendingList[0].name;
@@ -2061,7 +2117,7 @@ function renderDeliveryList(){
     document.getElementById('dbStatDone').innerText = done.length;
 
     if(me && me.lat!=null){
-        pending.forEach(c => c._dist = distanceKm(me.lat, me.lng, c.lat, c.lng));
+        pending.forEach(c => c._dist = estimatedRoadKm(me.lat, me.lng, c.lat, c.lng));
         pending.sort((a,b) => a._dist - b._dist);
     }
 
