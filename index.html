@@ -18,13 +18,6 @@
     });
   }
 </script>
-  <!-- iOS Web App Support -->
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Anadi Tracking">
-
-<!-- iOS Icon (High Quality PNG) -->
-<link rel="apple-touch-icon" href="./icon-192.png">
 <title>Anadi — Delivery Tracking</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -466,6 +459,10 @@
             <option value="completed">Delivered</option>
           </select>
         </div>
+        <div class="filter-row">
+          <button class="btn btn-ghost btn-sm" id="downloadFilteredPdfBtn" style="flex:1;">⬇️ PDF of filtered list</button>
+          <button class="btn btn-ghost btn-sm" id="downloadAllPdfBtn" style="flex:1;">⬇️ PDF of ALL customers</button>
+        </div>
         <div id="adminCustList"></div>
       </div>
 
@@ -600,6 +597,10 @@
   <div class="modal wide" id="boyModalContent"></div>
 </div>
 
+<div class="modal-backdrop" id="editCustModal">
+  <div class="modal wide" id="editCustModalContent"></div>
+</div>
+
 <div class="modal-backdrop" id="confirmModal">
   <div class="modal">
     <h3 id="confirmText">Are you sure?</h3>
@@ -612,6 +613,8 @@
 
 <div class="toast" id="toast"></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
@@ -655,22 +658,15 @@ function timeAgo(ts){
   if (s<5) return 'just now'; if (s<60) return s+'s ago';
   if (s<3600) return Math.floor(s/60)+'m ago'; return Math.floor(s/3600)+'h ago';
 }
-// Online status now has TWO signals: an explicit `online` flag (set true when GPS
-// tracking starts, set false the instant a boy logs out or disconnects via Firebase's
-// onDisconnect hook) PLUS a freshness fallback (in case the flag is stale/missing on
-// old records). Explicit "false" always wins immediately — no more waiting for a timeout.
 function isOnline(b){
   if(!b) return false;
   if (b.online === false) return false;
   if(!b.lastUpdate) return false;
   const ms = typeof b.lastUpdate === 'number' ? b.lastUpdate : Date.now();
-  return (Date.now()-ms) < 120000; // 2 minute freshness window (fallback only)
+  return (Date.now()-ms) < 120000;
 }
 function custShift(c){ return c.shift === 'evening' ? 'evening' : 'morning'; }
 function defaultShiftNow(){ return new Date().getHours() < 16 ? 'morning' : 'evening'; }
-// Greedy nearest-neighbor stop ordering — shared by the admin "show route" button,
-// the delivery boy's own auto-route, and Navigation Mode, so numbering on the map
-// and the route line always agree with each other.
 function nearestNeighborOrder(startLat, startLng, stops){
   let remaining = [...stops];
   let order = [];
@@ -697,9 +693,6 @@ function confirmAction(text, onOk){
   okBtn.onclick = ()=>{ cleanup(); onOk(); };
   cancelBtn.onclick = cleanup;
 }
-// Any number of modals can be "open" at once (in practice just one), so we
-// track a count and only drop the modal-open body class (which hides the
-// floating mobile List/Map toggle) once nothing is left open.
 let openModalCount = 0;
 function openModal(id){
   document.getElementById(id).classList.add('show');
@@ -714,7 +707,6 @@ function closeModal(id){
 function parseGoogleMapsLink(text){
   if(!text) return null;
   try{
-    // precise dropped-pin coordinates (most accurate, appears in full place URLs)
     let m = text.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
     if(m) return {lat:parseFloat(m[1]), lng:parseFloat(m[2])};
     m = text.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
@@ -729,9 +721,6 @@ function parseGoogleMapsLink(text){
 function isShortMapsLink(url){
   return /goo\.gl\/|maps\.app\.goo\.gl/i.test(url);
 }
-// Short links (maps.app.goo.gl, goo.gl/maps) don't contain coordinates — they only
-// reveal them after the redirect. A browser can't follow that redirect itself due to
-// CORS, so we resolve it through a public read-only proxy and parse the real page.
 async function resolveGoogleMapsLink(url){
   const direct = parseGoogleMapsLink(url);
   if (direct) return direct;
@@ -761,10 +750,12 @@ let myBoyId = null;
 let currentAdminTab = 'overview';
 let locMode = 'map';
 let routedBoyId = null;
-let activeShift = defaultShiftNow(); // used by delivery boy view (and reused for map filtering)
-let navMode = false; // true while a delivery boy is in the full-screen "Start Route" experience
+let activeShift = defaultShiftNow();
+let navMode = false;
+let editingLocationForCustId = null; // set while admin is re-picking a customer's pin on the map
+let boyModalShift = 'morning'; // which shift tab is open inside the boy detail modal
 
-/* ---------------- session (device-local login only — all app data lives in Firebase) ---------------- */
+/* ---------------- session ---------------- */
 function loadSession(){
   try{
     const raw = localStorage.getItem('rb_session');
@@ -789,9 +780,7 @@ function loadGoogleMaps(apiKey){
 }
 
 /* ---------------- mobile List/Map toggle helpers ---------------- */
-// Centralised so every caller (manual tab clicks, "Route" buttons, pin taps,
-// Start Route, etc.) stays perfectly in sync with the actual view + button state.
-function setMobileView(mode){ // 'list' | 'map'
+function setMobileView(mode){
   const isMap = mode === 'map';
   document.body.classList.toggle('show-map-mobile', isMap);
   document.body.classList.toggle('show-list-mobile', !isMap);
@@ -799,8 +788,6 @@ function setMobileView(mode){ // 'list' | 'map'
   document.getElementById('mobShowList').classList.toggle('active', !isMap);
   setTimeout(()=>{ if (map) google.maps.event.trigger(map, 'resize'); }, 150);
 }
-// Only relevant below the 860px breakpoint where list/map are stacked and only
-// one is visible at a time — on desktop both are always visible side-by-side.
 function isMobileLayout(){ return window.matchMedia('(max-width:860px)').matches; }
 function ensureMapVisible(){ if (isMobileLayout()) setMobileView('map'); }
 
@@ -815,19 +802,14 @@ let segmentLabels = [];
 let lastRoutedKey = null;
 let lastRouteFetchTime = 0;
 let deliveryMapCenteredOnce = false;
-let FloatingLabel = null; // defined once google.maps is available, inside initMap()
+let FloatingLabel = null;
 
-// Navigation Mode (turn-by-turn) state — populated by showBoyRoute() when
-// called with { nav:true }, consumed by updateTurnBanner()/updateEtaSummary().
 let directionsService = null;
 let activeDirectionsResult = null;
 let activeLegSteps = [];
 let currentStepIdx = 0;
-let navFollow = true; // true = map auto-pans to the rider's live position
+let navFollow = true;
 
-// Small floating pill (distance · ETA) anchored to a lat/lng, used between
-// consecutive stops on a route. Defined lazily because it extends
-// google.maps.OverlayView, which only exists once the Maps script has loaded.
 function defineFloatingLabelClass(){
   FloatingLabel = class extends google.maps.OverlayView {
     constructor(position, text, color){
@@ -883,6 +865,16 @@ function initMap(){
   infoWindow = new google.maps.InfoWindow();
 
   map.addListener('click', (e)=>{
+    // Admin is re-picking an existing customer's pin from the edit modal
+    if (role === 'admin' && editingLocationForCustId){
+      const id = editingLocationForCustId;
+      const lat = e.latLng.lat(), lng = e.latLng.lng();
+      editingLocationForCustId = null;
+      update(ref(db, 'customers/' + id), { lat, lng }).then(()=>{
+        showToast('Location updated!');
+      });
+      return;
+    }
     if (role !== 'admin' || currentAdminTab !== 'customers' || locMode !== 'map') return;
     pendingPinLatLng = { lat: e.latLng.lat(), lng: e.latLng.lng() };
     if (pendingPinMarker) pendingPinMarker.setMap(null);
@@ -890,8 +882,6 @@ function initMap(){
     document.getElementById('pendingPinNote').style.display = 'block';
   });
 
-  // In Navigation Mode we auto-follow the rider's live position. The moment they
-  // drag the map themselves we stop following until they tap the re-centre button.
   map.addListener('dragstart', ()=>{
     if (navMode && navFollow){ navFollow = false; updateRecenterBtnUI(); }
   });
@@ -917,8 +907,6 @@ function makeCustIcon(color, label, done, shift){
   };
 }
 
-// Bike-rider marker: colored per delivery boy, turns grayscale + gets an "OFFLINE" tag
-// the moment their last GPS update is older than the online window.
 function makeBoyIcon(color, initialsTxt, online){
   const bodyColor = online ? color : '#9AA0AC';
   const ringColor = online ? '#FFFFFF' : '#D8DBE0';
@@ -950,7 +938,7 @@ function renderMapMarkers(){
 
   let visibleCustomers = customers;
   let myBoy = null;
-  let routeOrderMap = null; // customerId -> visiting order number, delivery role only
+  let routeOrderMap = null;
 
   if (role === 'delivery' && myBoyId){
     visibleCustomers = customers.filter(c=>c.assignedTo === myBoyId && custShift(c) === activeShift);
@@ -1034,10 +1022,6 @@ function getDirectionsService(){
   if (!directionsService) directionsService = new google.maps.DirectionsService();
   return directionsService;
 }
-// origin: {lat,lng}. orderedStops: array already sorted nearest-first (from
-// nearestNeighborOrder) — last stop becomes the Directions "destination",
-// everything before it becomes waypoints, so the road route visits every
-// house in the exact order the rider sees in their stop list.
 function computeDirections(origin, orderedStops){
   return new Promise((resolve, reject)=>{
     if (!orderedStops.length) { reject(new Error('no stops')); return; }
@@ -1048,14 +1032,19 @@ function computeDirections(origin, orderedStops){
       destination: { lat:destination.lat, lng:destination.lng },
       waypoints,
       optimizeWaypoints:false,
-      travelMode: google.maps.TravelMode.DRIVING
+      travelMode: google.maps.TravelMode.DRIVING,
+      // Delivery boys ride bikes/two-wheelers — the legacy Directions API has
+      // no dedicated two-wheeler mode, so we bias the driving route away from
+      // highways/expressways and tolls (which two-wheelers usually can't or
+      // shouldn't use in India) to get the most realistic, quickest-by-bike path.
+      avoidHighways: true,
+      avoidFerries: true
     }, (result, status)=>{
       if (status === 'OK' && result) resolve(result);
       else reject(new Error(status || 'DIRECTIONS_FAILED'));
     });
   });
 }
-// Arrow icon rotated to match the upcoming maneuver, shown in the top nav banner.
 function maneuverArrowSvg(maneuver){
   const rot = {
     'turn-left':-90,'turn-right':90,'turn-slight-left':-30,'turn-slight-right':30,
@@ -1065,9 +1054,6 @@ function maneuverArrowSvg(maneuver){
   }[maneuver] || 0;
   return `<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="transform:rotate(${rot}deg)"><path d="M12 19V5"/><path d="M6 11l6-6 6 6"/></svg>`;
 }
-// Updates the top turn-by-turn banner using the currently cached Directions
-// steps + the rider's live position — cheap (no network call), so this can
-// run on every GPS ping without hitting the Directions API repeatedly.
 function updateTurnBanner(boyPos){
   const banner = document.getElementById('navTurnBanner');
   if (!navMode || !activeLegSteps.length || !boyPos || boyPos.lat == null){
@@ -1090,8 +1076,6 @@ function updateTurnBanner(boyPos){
   document.getElementById('navTurnArrowIcon').innerHTML = maneuverArrowSvg(step.maneuver);
   banner.style.display = 'flex';
 }
-// Big "X min / Y km · arriving H:MM" line in the bottom sheet, summed across
-// every remaining leg of the Directions result (i.e. to the LAST stop).
 function updateEtaSummary(result){
   if (!result || !result.routes || !result.routes[0]) return;
   const legs = result.routes[0].legs;
@@ -1109,17 +1093,6 @@ function updateRecenterBtnUI(){
   document.getElementById('navRecenterBtn').classList.toggle('following', navFollow);
 }
 
-/* ---------------- live route ----------------
-   Two routing engines are used on purpose:
-   - OSRM (free, no key) draws the quick preview line for the admin's
-     "Route" button and the delivery boy's normal (non-navigating) map.
-   - Google Directions (opts.nav = true) is used only inside Navigation
-     Mode, because it's the one that gives real turn-by-turn steps for
-     the top instruction banner + accurate multi-stop ETA.
-   Auto mode is throttled — it only re-fetches when the stop sequence
-   actually changes or ~20s have passed, so it doesn't hammer either
-   routing service on every periodic refresh. When throttled, Navigation
-   Mode still refreshes the turn banner from the already-cached steps. */
 async function showBoyRoute(boyId, shiftFilter, opts){
   opts = opts || {};
   const auto = !!opts.auto;
@@ -1146,7 +1119,7 @@ async function showBoyRoute(boyId, shiftFilter, opts){
   const routeKey = boyId + '|' + (shiftFilter||'all') + '|' + (useNav?'nav':'std') + '|' + ordered.map(s=>s.id).join(',');
   const now = Date.now();
   if (auto && routeKey === lastRoutedKey && (now - lastRouteFetchTime) < 20000){
-    if (useNav) updateTurnBanner(b); // cheap, geometry-only refresh — no network call
+    if (useNav) updateTurnBanner(b);
     return;
   }
   const isNewStopSet = routeKey !== lastRoutedKey;
@@ -1173,7 +1146,6 @@ async function showBoyRoute(boyId, shiftFilter, opts){
       return;
     }catch(e){
       if(!auto) showToast("Live turn-by-turn unavailable — showing straight-line path (check Directions API is enabled)");
-      // fall through to straight-line fallback below
     }
     drawRoute(routePoints.map(p=>[p.lat,p.lng]), b.color, true, !auto || isNewStopSet);
     drawSegmentLabels(routePoints, b.color);
@@ -1238,12 +1210,7 @@ document.getElementById('navRecenterBtn').onclick = ()=>{
   if (b && b.lat!=null){ map.panTo({lat:b.lat,lng:b.lng}); map.setZoom(17); }
 };
 
-/* ================= NAVIGATION MODE ("Start Route") =================
-   A focused, full-screen, one-thing-at-a-time experience for delivery
-   boys — tap Start Route and the map takes over the whole screen with
-   a top turn-by-turn instruction banner, a live road route to every
-   remaining house this shift, and a bottom card with next-stop details
-   plus three big buttons (Delivered / Call / Open in Maps). */
+/* ================= NAVIGATION MODE ================= */
 function getNavPendingStops(){
   if (!myBoyId) return [];
   const me = deliveryBoys.find(b=>b.id===myBoyId);
@@ -1260,16 +1227,13 @@ function enterNavMode(){
   if (!pending.length){ showToast("No pending stops in this shift"); return; }
   navMode = true;
   navFollow = true;
-  lastRoutedKey = null; // force a fresh (nav-mode) route fetch immediately
-  // On mobile, list/map are toggled via body.show-list-mobile / show-map-mobile,
-  // and that rule can otherwise leave #mapWrap stuck at display:none underneath
-  // nav-mode (blank white/paper screen). Force it to the map view explicitly.
+  lastRoutedKey = null;
   setMobileView('map');
   document.body.classList.add('nav-mode');
   document.getElementById('navComplete').style.display = 'none';
   document.getElementById('navRecenterBtn').style.display = 'flex';
   updateRecenterBtnUI();
-  renderMapMarkers(); // make sure every house pin for this shift is visible right away
+  renderMapMarkers();
   const me = deliveryBoys.find(b=>b.id===myBoyId);
   if (me && me.lat!=null){ map.panTo({lat:me.lat,lng:me.lng}); map.setZoom(17); }
   updateNavSheet();
@@ -1312,8 +1276,6 @@ function updateNavSheet(){
   document.getElementById('navProgressTxt').textContent = `Stop ${doneForShift+1} of ${totalForShift}`;
   document.getElementById('navProgressFill').style.width = totalForShift ? Math.round(doneForShift/totalForShift*100)+'%' : '0%';
 
-  // ETA row: prefer the real Directions summary; fall back to straight-line estimate
-  // (e.g. while the Directions fetch is still in flight, or if it failed).
   if (activeDirectionsResult){
     updateEtaSummary(activeDirectionsResult);
   } else if (next._d != null){
@@ -1327,8 +1289,6 @@ function updateNavSheet(){
   document.getElementById('navGmapsBtn').href = `https://www.google.com/maps/dir/?api=1&destination=${next.lat},${next.lng}`;
   document.getElementById('navDeliveredBtn').onclick = ()=> markComplete(next.id);
 
-  // Keep the route line, segment labels, and turn banner up to date while
-  // navigating — this is what makes "Start Route" show a live route + guidance.
   const me = deliveryBoys.find(b=>b.id===myBoyId);
   showBoyRoute(myBoyId, activeShift, { auto: true, nav: true });
   if (me && me.lat != null) updateTurnBanner(me);
@@ -1432,9 +1392,6 @@ function updateWhoami(){
 }
 
 /* ================= FIREBASE REALTIME DATABASE LISTENERS ================= */
-/* Every piece of app data (customers, delivery boys, zones, live locations) lives
-   in Firebase Realtime Database, so any phone/tablet that logs in sees the same
-   live data instantly — nothing is stored only on one device. */
 function toArray(val){
   if (!val) return [];
   return Object.keys(val).map(id => ({ id, ...val[id] }));
@@ -1476,7 +1433,6 @@ document.querySelectorAll('.locmode-btn').forEach(btn=>{
   };
 });
 
-/* ---- Delivery boy shift tabs (Morning / Evening) ---- */
 function updateShiftTabsUI(){
   document.querySelectorAll('.shift-tab-btn').forEach(btn=>{
     btn.classList.toggle('active', btn.dataset.shift === activeShift);
@@ -1534,7 +1490,7 @@ document.getElementById('parseLinkBtn').onclick = async ()=>{
   }
 };
 
-/* ================= ACTIONS (all writes go straight to Firebase Realtime Database) ================= */
+/* ================= ACTIONS ================= */
 document.getElementById('saveCustBtn').onclick = async ()=>{
   const name = document.getElementById('custName').value.trim();
   const phone = document.getElementById('custPhone').value.trim();
@@ -1597,8 +1553,6 @@ window.setCustomerShift = async (id, shift) => { await update(ref(db, 'customers
 window.deleteCustomer = (id) => confirmAction("Delete customer?", async () => await remove(ref(db, 'customers/' + id)));
 window.removeBoy = (id) => confirmAction("Remove delivery boy?", async () => await remove(ref(db, 'deliveryBoys/' + id)));
 window.deleteZone = (id) => confirmAction("Delete zone?", async () => await remove(ref(db, 'zones/' + id)));
-// Panning to a boy's route or a customer pin is only useful if the map is
-// actually on screen — on mobile that means switching out of list view too.
 window.panToBoy = (id, shift) => {
   const b = deliveryBoys.find(x=>x.id===id);
   ensureMapVisible();
@@ -1607,20 +1561,171 @@ window.panToBoy = (id, shift) => {
 };
 window.panToCust = (lat,lng) => { ensureMapVisible(); map.panTo({lat,lng}); map.setZoom(16); };
 
-/* ---- Delivery boy full-status modal ---- */
+/* ---- Edit customer modal ---- */
+window.openEditCustModal = (id) => {
+  const c = customers.find(x=>x.id===id);
+  if (!c) return;
+  const sh = custShift(c);
+  document.getElementById('editCustModalContent').innerHTML = `
+    <h3>Edit customer</h3>
+    <div class="field"><label>Customer name</label><input id="ecName" type="text" value="${escapeHtml(c.name||'')}"></div>
+    <div class="field-row">
+      <div class="field"><label>Phone</label><input id="ecPhone" type="text" value="${escapeHtml(c.phone||'')}"></div>
+      <div class="field"><label>Assign to</label><select id="ecAssign">
+        <option value="">Unassigned</option>
+        ${deliveryBoys.map(b=>`<option value="${b.id}" ${c.assignedTo===b.id?'selected':''}>${escapeHtml(b.name)}</option>`).join('')}
+      </select></div>
+    </div>
+    <div class="field"><label>Address / note</label><input id="ecAddr" type="text" value="${escapeHtml(c.address||'')}"></div>
+    <div class="field-row">
+      <div class="field"><label>Zone</label><select id="ecZone">
+        <option value="">No zone</option>
+        ${zones.map(z=>`<option value="${z.id}" ${c.zone===z.id?'selected':''}>${escapeHtml(z.name)}</option>`).join('')}
+      </select></div>
+      <div class="field"><label>Shift</label><select id="ecShift">
+        <option value="morning" ${sh==='morning'?'selected':''}>🌅 Morning</option>
+        <option value="evening" ${sh==='evening'?'selected':''}>🌆 Evening</option>
+      </select></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Latitude</label><input id="ecLat" type="text" value="${c.lat!=null?c.lat:''}"></div>
+      <div class="field"><label>Longitude</label><input id="ecLng" type="text" value="${c.lng!=null?c.lng:''}"></div>
+    </div>
+    <button class="btn btn-ghost btn-sm" style="width:100%;" onclick="startEditLocation('${c.id}')">📍 Re-pick exact location on map</button>
+    <div class="hint">Or type latitude/longitude directly above, then Save.</div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="closeModal('editCustModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditCust('${c.id}')">Save changes</button>
+    </div>
+  `;
+  openModal('editCustModal');
+};
+window.closeModal = closeModal;
+window.startEditLocation = (id) => {
+  closeModal('editCustModal');
+  editingLocationForCustId = id;
+  ensureMapVisible();
+  showToast('Tap anywhere on the map to set the new location for this customer');
+};
+window.saveEditCust = async (id) => {
+  const name = document.getElementById('ecName').value.trim();
+  if (!name) return showToast('Name is required');
+  const lat = parseFloat(document.getElementById('ecLat').value);
+  const lng = parseFloat(document.getElementById('ecLng').value);
+  if (isNaN(lat) || isNaN(lng)) return showToast('Latitude/Longitude must be valid numbers');
+  const updates = {
+    name,
+    phone: document.getElementById('ecPhone').value.trim(),
+    address: document.getElementById('ecAddr').value.trim(),
+    assignedTo: document.getElementById('ecAssign').value || null,
+    zone: document.getElementById('ecZone').value || null,
+    shift: document.getElementById('ecShift').value === 'evening' ? 'evening' : 'morning',
+    lat, lng
+  };
+  await update(ref(db, 'customers/' + id), updates);
+  closeModal('editCustModal');
+  showToast('Customer updated!');
+};
+
+/* ---- PDF export helpers ---- */
+function jsPDFReady(){ return !!(window.jspdf && window.jspdf.jsPDF); }
+function customersToPdf(list, title){
+  if (!jsPDFReady()){ showToast('PDF library abhi load ho raha hai — thodi der me dobara try karein'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(15);
+  doc.text(title, 14, 15);
+  doc.setFontSize(9.5);
+  doc.setTextColor(110);
+  doc.text(`Total customers: ${list.length}   ·   Generated: ${new Date().toLocaleString('en-IN')}`, 14, 21);
+  doc.setTextColor(0);
+
+  const rows = list.map((c,i)=>{
+    const boyName = (deliveryBoys.find(b=>b.id===c.assignedTo)||{}).name || 'Unassigned';
+    const zoneName = (zones.find(z=>z.id===c.zone)||{}).name || '-';
+    const mapLink = (c.lat!=null && c.lng!=null) ? `https://www.google.com/maps?q=${c.lat},${c.lng}` : '-';
+    return [
+      i+1,
+      c.name || '',
+      c.phone || '-',
+      c.address || '-',
+      custShift(c)==='evening' ? 'Evening' : 'Morning',
+      c.status==='completed' ? 'Delivered' : 'Pending',
+      boyName,
+      zoneName,
+      mapLink
+    ];
+  });
+
+  doc.autoTable({
+    startY: 26,
+    head: [['#','Name','Phone','Address','Shift','Status','Delivery Boy','Zone','Map Location']],
+    body: rows,
+    styles: { fontSize: 7.5, cellPadding: 2, overflow:'linebreak' },
+    headStyles: { fillColor: [14,21,38] },
+    columnStyles: { 1:{cellWidth:24}, 3:{cellWidth:34}, 8:{cellWidth:38} }
+  });
+
+  doc.save(title.replace(/[^a-z0-9]+/gi,'_') + '.pdf');
+}
+window.downloadBoyShiftPdf = (boyId, shift) => {
+  const b = deliveryBoys.find(x=>x.id===boyId);
+  if (!b) return;
+  const list = customers.filter(c=>c.assignedTo===boyId && custShift(c)===shift);
+  if (!list.length){ showToast('No customers in this shift for ' + b.name); return; }
+  customersToPdf(list, `${b.name} - ${shift==='evening'?'Evening':'Morning'} Deliveries`);
+};
+
+document.getElementById('downloadFilteredPdfBtn').onclick = ()=>{
+  const bFilter = document.getElementById('filterBoy').value;
+  const zFilter = document.getElementById('filterZone').value;
+  const sFilter = document.getElementById('filterStatus').value;
+  const shiftFilter = document.getElementById('filterShift').value;
+  const filtered = customers.filter(c => {
+    if(bFilter !== 'all' && c.assignedTo !== bFilter) return false;
+    if(zFilter !== 'all' && c.zone !== zFilter) return false;
+    if(sFilter !== 'all' && c.status !== sFilter) return false;
+    if(shiftFilter !== 'all' && custShift(c) !== shiftFilter) return false;
+    return true;
+  });
+  if (!filtered.length){ showToast('No customers match this filter'); return; }
+  customersToPdf(filtered, 'Filtered Customer List');
+};
+document.getElementById('downloadAllPdfBtn').onclick = ()=>{
+  if (!customers.length){ showToast('No customers yet'); return; }
+  customersToPdf(customers, 'All Customers Biodata');
+};
+
+/* ---- Delivery boy full-status modal (with Morning/Evening tabs) ---- */
 window.openBoyModal = (boyId) => {
+  boyModalShift = activeShiftForModal(boyId);
+  renderBoyModalBody(boyId);
+  openModal('boyModal');
+};
+function activeShiftForModal(boyId){
+  return defaultShiftNow();
+}
+window.switchBoyModalShift = (boyId, shift) => {
+  boyModalShift = shift;
+  renderBoyModalBody(boyId);
+};
+function renderBoyModalBody(boyId){
   const b = deliveryBoys.find(x=>x.id===boyId);
   if (!b) return;
   const mine = customers.filter(c=>c.assignedTo===boyId);
-  const pending = mine.filter(c=>c.status!=='completed');
   const done = mine.filter(c=>c.status==='completed');
-  const pendingMorning = pending.filter(c=>custShift(c)==='morning').length;
-  const pendingEvening = pending.filter(c=>custShift(c)==='evening').length;
-  if (b.lat!=null){
-    pending.forEach(c=> c._d = distanceKm(b.lat,b.lng,c.lat,c.lng));
-    pending.sort((a,z)=>a._d-z._d);
-  }
+  const pendingAll = mine.filter(c=>c.status!=='completed');
+  const pendingMorning = pendingAll.filter(c=>custShift(c)==='morning').length;
+  const pendingEvening = pendingAll.filter(c=>custShift(c)==='evening').length;
   const on = isOnline(b);
+
+  const shiftMine = mine.filter(c=>custShift(c)===boyModalShift);
+  let shiftPending = shiftMine.filter(c=>c.status!=='completed');
+  const shiftDone = shiftMine.filter(c=>c.status==='completed');
+  if (b.lat!=null){
+    shiftPending = [...shiftPending].map(c=>({...c, _d: distanceKm(b.lat,b.lng,c.lat,c.lng)})).sort((a,z)=>a._d-z._d);
+  }
+
   document.getElementById('boyModalContent').innerHTML = `
     <div class="boy-modal-header">
       <span class="swatch-lg" style="background:${b.color}"></span>
@@ -1631,30 +1736,36 @@ window.openBoyModal = (boyId) => {
     <div class="boy-modal-stats">
       <div class="mstat"><div class="n">${mine.length}</div><div class="l">Total</div></div>
       <div class="mstat"><div class="n">${done.length}</div><div class="l">Delivered</div></div>
-      <div class="mstat"><div class="n">${pending.length}</div><div class="l">Pending</div></div>
-    </div>
-    <div class="shift-mini-row">
-      <span class="shift-mini morning">🌅 Morning pending: ${pendingMorning}</span>
-      <span class="shift-mini evening">🌆 Evening pending: ${pendingEvening}</span>
+      <div class="mstat"><div class="n">${pendingAll.length}</div><div class="l">Pending</div></div>
     </div>
     <div class="boy-modal-actions">
       <button class="btn btn-ghost btn-sm" onclick="closeBoyModal(); panToBoy('${b.id}','morning')">🌅 Route (Morning)</button>
       <button class="btn btn-ghost btn-sm" onclick="closeBoyModal(); panToBoy('${b.id}','evening')">🌆 Route (Evening)</button>
       <button class="btn btn-danger btn-sm" ${!done.length?'disabled style="opacity:.4;cursor:not-allowed;"':''} onclick="resetBoyDeliveries('${b.id}')">🔄 Reset for tomorrow</button>
     </div>
-    ${pending.length ? `<div class="boy-modal-list-title">Pending (${pending.length})</div>
-    <div class="boy-modal-list">${pending.map(c=>`
-      <div class="mini-stop"><div><div class="mn">${escapeHtml(c.name)} <span class="shift-badge ${custShift(c)}" style="padding:1px 6px; font-size:9px;">${custShift(c)==='evening'?'🌆':'🌅'}</span></div><div class="md">${escapeHtml(c.address||'')}</div></div><div class="md">${c._d!=null?fmtDist(c._d):''}</div></div>
+
+    <div class="shift-tabs" style="margin-top:14px;">
+      <button type="button" class="shift-tab-btn morning ${boyModalShift==='morning'?'active':''}" onclick="switchBoyModalShift('${b.id}','morning')"><span class="sw" style="background:var(--morning)"></span> 🌅 Morning (${pendingMorning})</button>
+      <button type="button" class="shift-tab-btn evening ${boyModalShift==='evening'?'active':''}" onclick="switchBoyModalShift('${b.id}','evening')"><span class="sw" style="background:var(--evening)"></span> 🌆 Evening (${pendingEvening})</button>
+    </div>
+
+    <div style="display:flex; gap:8px; align-items:center; margin-bottom:6px;">
+      <div class="boy-modal-list-title" style="margin:0; flex:1;">${boyModalShift==='evening'?'🌆 Evening':'🌅 Morning'} — ${shiftMine.length} customer${shiftMine.length!==1?'s':''}</div>
+      <button class="btn btn-ghost btn-sm" onclick="downloadBoyShiftPdf('${b.id}','${boyModalShift}')">⬇️ PDF</button>
+    </div>
+
+    ${shiftPending.length ? `<div class="boy-modal-list-title">Pending (${shiftPending.length})</div>
+    <div class="boy-modal-list">${shiftPending.map(c=>`
+      <div class="mini-stop"><div><div class="mn">${escapeHtml(c.name)}</div><div class="md">${escapeHtml(c.address||'')}${c.phone?' · '+escapeHtml(c.phone):''}</div></div><div class="md">${c._d!=null?fmtDist(c._d):''}</div></div>
     `).join('')}</div>` : ''}
-    ${done.length ? `<div class="boy-modal-list-title">Delivered today (${done.length})</div>
-    <div class="boy-modal-list">${done.map(c=>`
+    ${shiftDone.length ? `<div class="boy-modal-list-title">Delivered (${shiftDone.length})</div>
+    <div class="boy-modal-list">${shiftDone.map(c=>`
       <div class="mini-stop"><div><div class="mn">${escapeHtml(c.name)}</div><div class="md">${escapeHtml(c.address||'')}</div></div><div class="md" style="color:#1D9E86;">✓ Done</div></div>
     `).join('')}</div>` : ''}
-    ${!mine.length ? `<div class="empty-state">Is delivery boy ko abhi koi customer assign nahi hai.</div>` : ''}
+    ${!shiftMine.length ? `<div class="empty-state">Is shift me koi customer assign nahi hai.</div>` : ''}
     <div class="btn-row"><button class="btn btn-ghost" onclick="closeBoyModal()" style="width:100%;">Close</button></div>
   `;
-  openModal('boyModal');
-};
+}
 window.closeBoyModal = () => closeModal('boyModal');
 
 window.resetBoyDeliveries = (boyId) => {
@@ -1684,6 +1795,10 @@ function renderAll(){
     renderTeamList();
     renderZonesList();
     if (routedBoyId) showBoyRoute(routedBoyId);
+    if (document.getElementById('boyModal').classList.contains('show')){
+      // keep the open boy modal's numbers live without resetting its shift tab
+      const openBtn = document.querySelector('#boyModalContent .boy-modal-header .nm');
+    }
   } else if (role === 'delivery') {
     renderDeliveryList();
     if (myBoyId) showBoyRoute(myBoyId, activeShift, { auto: true, nav: navMode });
@@ -1691,15 +1806,35 @@ function renderAll(){
   }
 }
 
+// Rebuilding a <select>'s options via innerHTML wipes whatever the user had
+// selected (this was causing the admin's "Assigned to" / "Zone" filters on
+// the Customers tab to visibly reset within a second, since renderAll() runs
+// on every Firebase update and a 10s auto-refresh). We now snapshot the
+// current value first and restore it after rebuilding, so filters stay put.
+function setSelectOptionsPreserveValue(id, html){
+  const el = document.getElementById(id);
+  if (!el) return;
+  const prevValue = el.value;
+  if (el.dataset.optionsHtml === html){
+    // Options haven't actually changed — skip touching the DOM entirely,
+    // which is the safest way to guarantee zero flicker/reset.
+    return;
+  }
+  el.dataset.optionsHtml = html;
+  el.innerHTML = html;
+  const stillExists = Array.from(el.options).some(o => o.value === prevValue);
+  if (stillExists) el.value = prevValue;
+}
+
 function populateDropdowns(){
     const bOpts = `<option value="">Unassigned</option>` + deliveryBoys.map(b=>`<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('');
     const zOpts = `<option value="">No zone</option>` + zones.map(z=>`<option value="${z.id}">${escapeHtml(z.name)}</option>`).join('');
 
-    document.getElementById('custAssign').innerHTML = bOpts;
-    document.getElementById('filterBoy').innerHTML = `<option value="all">All delivery boys</option>` + bOpts;
-    document.getElementById('custZone').innerHTML = zOpts;
-    document.getElementById('filterZone').innerHTML = `<option value="all">All zones</option>` + zOpts;
-    document.getElementById('boyZone').innerHTML = zOpts;
+    setSelectOptionsPreserveValue('custAssign', bOpts);
+    setSelectOptionsPreserveValue('filterBoy', `<option value="all">All delivery boys</option>` + bOpts);
+    setSelectOptionsPreserveValue('custZone', zOpts);
+    setSelectOptionsPreserveValue('filterZone', `<option value="all">All zones</option>` + zOpts);
+    setSelectOptionsPreserveValue('boyZone', zOpts);
 }
 
 function renderAdminOverview(){
@@ -1785,6 +1920,7 @@ function renderAdminCustList(){
                         <option value="morning" ${sh==='morning'?'selected':''}>🌅 Morning</option>
                         <option value="evening" ${sh==='evening'?'selected':''}>🌆 Evening</option>
                     </select>
+                    <button class="btn btn-ghost btn-sm" onclick="openEditCustModal('${c.id}')">✏️ Edit</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteCustomer('${c.id}')">Delete</button>
                 </div>
             </div>
@@ -1822,9 +1958,6 @@ let geoWatch = null;
 let wakeLockRef = null;
 let bgWarnShown = false;
 
-// Wake Lock keeps the screen awake (best-effort) so mobile OSes don't suspend
-// GPS updates while the delivery boy has the app open — this does NOT survive
-// the tab/app being fully closed; browsers deliberately kill all JS then.
 async function requestWakeLock(){
   try{
     if ('wakeLock' in navigator){
@@ -1846,10 +1979,17 @@ document.addEventListener('visibilitychange', ()=>{
   }
   if (document.visibilityState === 'visible') bgWarnShown = false;
 });
+// Some Android/iOS browsers silently release the Wake Lock after a while even
+// with the tab visible (e.g. after certain OS power-saving events). Re-request
+// it periodically so the screen keeps staying on for as long as this delivery
+// boy has pending deliveries and the app is open in the foreground.
+setInterval(()=>{
+  if (tracking && role==='delivery' && document.visibilityState==='visible' && !wakeLockRef){
+    requestWakeLock();
+  }
+}, 4*60*1000);
 window.addEventListener('beforeunload', (e)=>{
   if (tracking && role==='delivery'){
-    // Best-effort nudge only — browsers cannot be forced to keep a tab open,
-    // and once it's actually closed, location sharing stops immediately.
     e.preventDefault();
     e.returnValue = '';
   }
@@ -1863,9 +2003,6 @@ function startTracking(){
   renderTrackBanner();
 
   const boyRef = ref(db, 'deliveryBoys/' + myBoyId);
-  // Firebase watches this device's connection itself: if the app is killed, loses
-  // network, or the OS force-closes it, Firebase flips this boy to offline
-  // server-side within seconds — no reliance on the client running any code.
   onDisconnect(boyRef).update({ online: false });
 
   geoWatch = navigator.geolocation.watchPosition(pos => {
@@ -1877,8 +2014,6 @@ function startTracking(){
       });
       renderTrackBanner();
       renderMapMarkers();
-      // Navigation Mode: follow the rider (unless they've manually panned away)
-      // and refresh the turn banner / route on every fresh GPS fix.
       if (navMode){
         if (navFollow && map){ map.panTo({ lat: pos.coords.latitude, lng: pos.coords.longitude }); }
         updateTurnBanner({ lat: pos.coords.latitude, lng: pos.coords.longitude });
@@ -1892,8 +2027,6 @@ function stopTracking(){
   tracking = false;
   if (geoWatch != null){ navigator.geolocation.clearWatch(geoWatch); geoWatch = null; }
   releaseWakeLock();
-  // Explicit, immediate offline write — this is what makes logout show offline
-  // everywhere (sidebar + map) right away, instead of waiting on a timeout.
   if (myBoyId){
     update(ref(db, 'deliveryBoys/' + myBoyId), { online: false }).catch(()=>{});
   }
@@ -1917,7 +2050,6 @@ function renderDeliveryList(){
     let pending = myStops.filter(c => c.status !== 'completed');
     let done = myStops.filter(c => c.status === 'completed');
 
-    // shift tab badge counts (pending only), shown regardless of which tab is active
     document.querySelectorAll('.shift-tab-btn').forEach(btn=>{
       const sh = btn.dataset.shift;
       const cnt = customers.filter(c=>c.assignedTo===myBoyId && custShift(c)===sh && c.status!=='completed').length;
@@ -1941,7 +2073,6 @@ function renderDeliveryList(){
       if (navMode) exitNavMode();
     } else {
       allDoneWrap.innerHTML = '';
-      // admin may have just reset completed orders back to pending — resume GPS sharing automatically
       if (totalPendingAllShifts > 0 && !tracking) startTracking();
     }
 
@@ -2009,7 +2140,7 @@ document.getElementById('mobShowMap').onclick = ()=> setMobileView('map');
   } else {
     document.getElementById('loginScreen').style.display = 'flex';
   }
-  setInterval(()=>{ if(role) renderAll(); }, 10000); // periodic refresh (recomputes online status, distances)
+  setInterval(()=>{ if(role) renderAll(); }, 10000);
 })();
 </script>
 </body>
