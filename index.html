@@ -189,6 +189,22 @@
   .track-banner .sub{font-size:11.5px; opacity:.75; margin-top:2px;}
   .track-banner.warn{background:#4A2A12;}
 
+  .track-switch{position:relative; display:inline-block; width:46px; height:27px; flex-shrink:0;}
+  .track-switch input{opacity:0; width:0; height:0; position:absolute;}
+  .track-switch-slider{position:absolute; inset:0; background:rgba(255,255,255,.22); border-radius:999px; cursor:pointer; transition:background .18s ease;}
+  .track-banner.off .track-switch-slider{background:#D8D4C8;}
+  .track-switch-slider:before{content:""; position:absolute; height:21px; width:21px; left:3px; top:3px; background:white; border-radius:50%; transition:transform .18s ease; box-shadow:0 1px 3px rgba(0,0,0,.25);}
+  .track-switch input:checked + .track-switch-slider{background:var(--mint);}
+  .track-switch input:checked + .track-switch-slider:before{transform:translateX(19px);}
+  .track-switch input:disabled + .track-switch-slider{opacity:.5; cursor:not-allowed;}
+
+  .track-gate{display:none; flex-direction:column; align-items:center; text-align:center; background:var(--navy); color:white; border-radius:var(--radius-lg); padding:30px 22px; margin-bottom:14px;}
+  .track-gate-ic{font-size:34px; margin-bottom:10px;}
+  .track-gate-title{font-family:'Space Grotesk'; font-weight:700; font-size:18px; margin-bottom:8px;}
+  .track-gate-sub{font-size:12.5px; color:var(--slate-light); line-height:1.6; margin-bottom:18px; max-width:280px;}
+  .track-gate-err{font-size:12px; color:var(--danger); font-weight:600; margin-top:12px; display:none;}
+  .track-gate-err.show{display:block;}
+
   .all-done-card{background:linear-gradient(135deg,var(--mint),#00A67D); color:white; border-radius:18px; padding:26px 20px; text-align:center; margin-bottom:16px;}
   .all-done-card .big{font-size:38px; margin-bottom:7px;}
   .all-done-card .t1{font-family:'Space Grotesk'; font-weight:700; font-size:17px;}
@@ -252,7 +268,7 @@
   .nav-recenter-btn.following{background:var(--navy); color:white;}
   @media(min-width:641px){ .nav-recenter-btn{bottom:238px; right:calc(50% - 200px + 14px);} }
 
-  .nav-sheet{position:absolute; left:0; right:0; bottom:34px; background:var(--card); z-index:600; box-shadow:var(--shadow-lg); border-radius:22px 22px 0 0; padding:10px 20px calc(18px + var(--safe-b)); animation:navSlideUp .25s ease;}
+  .nav-sheet{position:absolute; left:0; right:0; bottom:2px; background:var(--card); z-index:600; box-shadow:var(--shadow-lg); border-radius:22px 22px 0 0; padding:10px 20px calc(18px + var(--safe-b)); animation:navSlideUp .25s ease;}
   @keyframes navSlideUp{from{transform:translateY(40px); opacity:0;} to{transform:translateY(0); opacity:1;}}
   .nav-sheet-handle{width:38px; height:4px; background:#E4E1D6; border-radius:99px; margin:0 auto 12px;}
   .nav-sheet-top{display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:0px;}
@@ -500,11 +516,25 @@
     <div id="deliveryView" style="display:none; flex-direction:column; height:100%;">
       <div class="scroll-area">
         <div class="track-banner" id="trackBanner">
-          <span class="live-dot"></span>
-          <div><div class="txt" id="trackTxt">Live location sharing</div><div class="sub" id="trackSubtext">Starting GPS…</div></div>
+          <span class="live-dot" id="trackDot"></span>
+          <div style="flex:1; min-width:0;"><div class="txt" id="trackTxt">Live location sharing</div><div class="sub" id="trackSubtext">Turn on to start your shift</div></div>
+          <label class="track-switch">
+            <input type="checkbox" id="trackToggle">
+            <span class="track-switch-slider"></span>
+          </label>
         </div>
+
+        <div class="track-gate" id="trackGate">
+          <div class="track-gate-ic">📍</div>
+          <div class="track-gate-title">Turn on your location</div>
+          <div class="track-gate-sub">Turn this on to go online, share your live location with admin, and see your delivery stops. It stays live until you turn it off.</div>
+          <button type="button" class="btn btn-primary" id="trackGateBtn" style="width:auto; padding:12px 24px;">Turn on location</button>
+          <div class="track-gate-err" id="trackGateErr"></div>
+        </div>
+
         <div id="allDoneWrap"></div>
 
+        <div id="deliveryMainWrap">
         <div class="shift-tabs" id="shiftTabs">
           <button type="button" class="shift-tab-btn morning" data-shift="morning"><span class="sw" style="background:var(--morning)"></span> 🌅 Morning</button>
           <button type="button" class="shift-tab-btn evening" data-shift="evening"><span class="sw" style="background:var(--evening)"></span> 🌆 Evening</button>
@@ -521,6 +551,7 @@
 
         <div class="section-title" id="deliveryListTitle">Your stops — nearest first</div>
         <div id="deliveryCustList"></div>
+        </div>
       </div>
     </div>
 
@@ -1411,12 +1442,16 @@ function enterApp(r, boyId){
   document.getElementById('deliveryMapToolbar').style.display = role==='delivery' ? 'flex' : 'none';
   deliveryMapCenteredOnce = false;
   updateWhoami();
-  if (role === 'delivery') { updateShiftTabsUI(); startTracking(); }
+  if (role === 'delivery') {
+    updateShiftTabsUI();
+    if (loadTrackingPref(boyId)) { startTracking(); } else { tracking = false; renderTrackBanner(); }
+  }
   renderAll();
   setTimeout(()=>{ if (map) google.maps.event.trigger(map, 'resize'); }, 250);
 }
 
 function logout(){
+  if (myBoyId) saveTrackingPref(myBoyId, false);
   stopTracking();
   clearSession();
   clearRoute();
@@ -2013,6 +2048,17 @@ let tracking = false;
 let geoWatch = null;
 let wakeLockRef = null;
 let bgWarnShown = false;
+let trackErrorMsg = '';
+
+// Delivery boy's own explicit online/offline choice, remembered per-boy so
+// re-opening the app (without a full OS kill) can resume sharing without
+// asking again — but a fresh "no" always requires an explicit tap first.
+function loadTrackingPref(boyId){
+  try{ return localStorage.getItem('rb_track_' + boyId) === '1'; }catch(e){ return false; }
+}
+function saveTrackingPref(boyId, on){
+  try{ localStorage.setItem('rb_track_' + boyId, on ? '1' : '0'); }catch(e){ /* storage unavailable — ignore */ }
+}
 
 async function requestWakeLock(){
   try{
@@ -2038,7 +2084,7 @@ document.addEventListener('visibilitychange', ()=>{
 // Some Android/iOS browsers silently release the Wake Lock after a while even
 // with the tab visible (e.g. after certain OS power-saving events). Re-request
 // it periodically so the screen keeps staying on for as long as this delivery
-// boy has pending deliveries and the app is open in the foreground.
+// boy is toggled on and the app is open in the foreground.
 setInterval(()=>{
   if (tracking && role==='delivery' && document.visibilityState==='visible' && !wakeLockRef){
     requestWakeLock();
@@ -2053,7 +2099,13 @@ window.addEventListener('beforeunload', (e)=>{
 
 function startTracking(){
   if (!myBoyId) return;
-  if (!navigator.geolocation){ showToast("GPS not supported on this device"); return; }
+  trackErrorMsg = '';
+  if (!navigator.geolocation){
+    trackErrorMsg = 'GPS not supported on this device/browser.';
+    tracking = false; saveTrackingPref(myBoyId, false);
+    renderTrackBanner();
+    return;
+  }
   tracking = true;
   requestWakeLock();
   renderTrackBanner();
@@ -2062,6 +2114,7 @@ function startTracking(){
   onDisconnect(boyRef).update({ online: false });
 
   geoWatch = navigator.geolocation.watchPosition(pos => {
+      trackErrorMsg = '';
       update(boyRef, {
           lat: pos.coords.latitude,
           lng: pos.coords.longitude,
@@ -2076,11 +2129,23 @@ function startTracking(){
         updateNavSheet();
       }
   }, (err) => {
-      document.getElementById('trackSubtext').textContent = 'Location access denied — enable GPS to be tracked';
+      // Permission denied / GPS unavailable — flip the toggle back off so the
+      // UI never claims to be "sharing live location" when it isn't, and
+      // surface a clear, persistent reason instead of a toast that disappears.
+      trackErrorMsg = err && err.code === 1
+        ? 'Location permission denied — allow location access for this site in your browser/site settings, then try again.'
+        : 'Could not get a GPS fix — make sure device location is turned on, then try again.';
+      tracking = false;
+      if (geoWatch != null){ navigator.geolocation.clearWatch(geoWatch); geoWatch = null; }
+      releaseWakeLock();
+      saveTrackingPref(myBoyId, false);
+      if (myBoyId) update(ref(db, 'deliveryBoys/' + myBoyId), { online: false }).catch(()=>{});
+      renderTrackBanner();
   }, { enableHighAccuracy: true, maximumAge: 5000 });
 }
 function stopTracking(){
   tracking = false;
+  trackErrorMsg = '';
   if (geoWatch != null){ navigator.geolocation.clearWatch(geoWatch); geoWatch = null; }
   releaseWakeLock();
   if (myBoyId){
@@ -2088,6 +2153,30 @@ function stopTracking(){
   }
   renderTrackBanner();
 }
+
+// Shows/hides the full-screen "Turn on your location" gate and the normal
+// stops-list content. The gate stays up until the toggle is switched on —
+// unless the boy has already finished every stop for the day, in which case
+// the "all done" celebration card (rendered in renderDeliveryList) takes over
+// instead of nagging them to go online again.
+function updateDeliveryGateUI(){
+  if (role !== 'delivery') return;
+  const gate = document.getElementById('trackGate');
+  const mainWrap = document.getElementById('deliveryMainWrap');
+  if (!gate || !mainWrap) return;
+  const hasAnyAssigned = myBoyId ? customers.some(c=>c.assignedTo===myBoyId) : false;
+  const totalPendingAllShifts = myBoyId ? customers.filter(c=>c.assignedTo===myBoyId && c.status!=='completed').length : 0;
+  const allDoneToday = hasAnyAssigned && totalPendingAllShifts === 0;
+  const showGate = !tracking && !allDoneToday;
+  gate.style.display = showGate ? 'flex' : 'none';
+  mainWrap.style.display = showGate ? 'none' : '';
+  const errEl = document.getElementById('trackGateErr');
+  if (errEl){
+    errEl.textContent = trackErrorMsg;
+    errEl.classList.toggle('show', !!trackErrorMsg && showGate);
+  }
+}
+
 function renderTrackBanner(){
   const el = document.getElementById('trackBanner');
   if (!el) return;
@@ -2095,8 +2184,26 @@ function renderTrackBanner(){
   document.getElementById('trackTxt').textContent = tracking ? 'Live location sharing — ON' : 'Live location sharing — OFF';
   document.getElementById('trackSubtext').textContent = tracking
     ? 'Admin can see your position in real time · keep app open to stay live'
-    : 'All deliveries complete for today';
+    : (trackErrorMsg || 'Turn on to go online and start your shift');
+  const toggle = document.getElementById('trackToggle');
+  if (toggle) toggle.checked = tracking;
+  updateDeliveryGateUI();
 }
+document.getElementById('trackToggle').addEventListener('change', (e)=>{
+  if (!myBoyId) return;
+  if (e.target.checked){
+    saveTrackingPref(myBoyId, true);
+    startTracking();
+  } else {
+    saveTrackingPref(myBoyId, false);
+    stopTracking();
+  }
+});
+document.getElementById('trackGateBtn').addEventListener('click', ()=>{
+  if (!myBoyId) return;
+  saveTrackingPref(myBoyId, true);
+  startTracking();
+});
 
 function renderDeliveryList(){
     if(!myBoyId) return;
@@ -2129,8 +2236,8 @@ function renderDeliveryList(){
       if (navMode) exitNavMode();
     } else {
       allDoneWrap.innerHTML = '';
-      if (totalPendingAllShifts > 0 && !tracking) startTracking();
     }
+    updateDeliveryGateUI();
 
     const startBtn = document.getElementById('startRouteBtn');
     if (startBtn){
