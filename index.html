@@ -176,12 +176,24 @@
   .badge.dist{background:#EFEFF5; color:#5B6178;}
   .badge.eta{background:#FBF3E0; color:#A8791E;}
   .badge.unassigned{background:#FBEFEF; color:var(--danger);}
+  .badge.new{background:#FFE8E0; color:#E64A28; animation:newPulse 1.8s infinite;}
+  @keyframes newPulse{0%{box-shadow:0 0 0 0 rgba(255,90,54,.35);} 70%{box-shadow:0 0 0 5px rgba(255,90,54,0);} 100%{box-shadow:0 0 0 0 rgba(255,90,54,0);}}
   .stop-actions{display:flex; gap:7px; margin-top:10px; flex-wrap:wrap;}
   .stop-actions .btn{flex:1 1 auto; min-width:88px; text-align:center;}
+  .new-toggle-label{display:flex; align-items:center; gap:6px; font-size:11px; font-weight:700; color:var(--slate); background:#FBFAF6; border:1.5px solid #DEDBCF; border-radius:9px; padding:8px 11px; cursor:pointer; user-select:none; min-height:38px;}
+  .new-toggle-label input{width:15px; height:15px; accent-color:var(--orange); cursor:pointer;}
+  .new-toggle-label.active{background:#FFE8E0; border-color:var(--orange); color:var(--orange-dark);}
   .empty-state{text-align:center; color:var(--slate); font-size:13px; padding:38px 14px; line-height:1.7;}
 
   .filter-row{display:flex; gap:7px; margin-bottom:13px; flex-wrap:wrap;}
   .filter-row select{flex:1; border:1.5px solid #DEDBCF; border-radius:10px; padding:9px 8px; font-size:12.5px; background:#FBFAF6; min-width:110px; min-height:40px;}
+
+  .search-row{position:relative; margin-bottom:12px;}
+  .search-row .search-ic{position:absolute; left:13px; top:50%; transform:translateY(-50%); font-size:14px; opacity:.55; pointer-events:none;}
+  .search-row input{width:100%; border:1.5px solid #DEDBCF; border-radius:11px; padding:12px 14px 12px 36px; font-size:14px; background:#FBFAF6; font-family:'Inter';}
+  .search-row input:focus{outline:2px solid var(--orange); outline-offset:1px; border-color:var(--orange);}
+  .search-row .search-clear{position:absolute; right:8px; top:50%; transform:translateY(-50%); border:none; background:#EEECE2; color:var(--slate); width:22px; height:22px; border-radius:50%; font-size:12px; cursor:pointer; display:none; align-items:center; justify-content:center; line-height:1;}
+  .search-row .search-clear.show{display:flex;}
 
   .track-banner{display:flex; align-items:center; gap:10px; background:#0F2A24; color:white; border-radius:14px; padding:14px 15px; margin-bottom:14px;}
   .track-banner.off{background:#F0EEE4; color:var(--navy);}
@@ -240,6 +252,17 @@
   .toast{position:fixed; bottom:calc(24px + var(--safe-b)); left:50%; transform:translateX(-50%); background:var(--navy); color:white; padding:12px 20px; border-radius:11px; font-size:13.5px; font-weight:600; z-index:2200; box-shadow:var(--shadow-lg); display:none; max-width:88vw; text-align:center;}
   .toast.show{display:block;}
 
+  /* ---------------- delivery proof photo ---------------- */
+  .photo-capture-btn{width:100%; background:#FBFAF6; border:2px dashed #DEDBCF; border-radius:14px; padding:26px 16px; text-align:center; cursor:pointer; color:var(--navy); font-weight:700; font-size:14px; display:flex; flex-direction:column; align-items:center; gap:8px;}
+  .photo-capture-btn:active{transform:scale(.98);}
+  .photo-capture-btn .ic{font-size:30px;}
+  .photo-preview{width:100%; border-radius:14px; margin-top:12px; max-height:220px; object-fit:cover; display:none;}
+  .photo-status{text-align:center; font-size:12.5px; color:var(--slate); font-weight:600; margin-top:10px; display:none;}
+  .photo-status.show{display:block;}
+  .photo-thumb-link{display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; color:var(--mint-dark); background:#E4F8F3; padding:5px 10px; border-radius:999px; text-decoration:none; margin-top:6px;}
+  .photo-thumb-link img{width:20px; height:20px; border-radius:5px; object-fit:cover;}
+  .mini-stop-photo{width:26px; height:26px; border-radius:6px; object-fit:cover; flex-shrink:0;}
+
   .zone-row{display:flex; align-items:center; justify-content:space-between; background:#FBFAF6; border:1px solid #EEECE2; border-radius:12px; padding:11px 13px; margin-bottom:9px;}
   .zone-row .left{display:flex; align-items:center; gap:9px; font-size:13.5px; font-weight:600;}
   .zone-row .sw{width:12px; height:12px; border-radius:50%;}
@@ -248,7 +271,16 @@
   .map-toolbar{position:absolute; top:12px; right:12px; z-index:500; display:flex; flex-direction:column; gap:7px;}
   .map-toolbar button{background:white; border:1px solid #E4E1D6; box-shadow:var(--shadow-md); border-radius:11px; padding:10px 13px; font-size:12px; font-weight:700; cursor:pointer; color:var(--navy); min-height:40px;}
   .map-toolbar button.active{background:var(--navy); color:white; border-color:var(--navy);}
-  .map-loading{position:absolute; inset:0; background:var(--paper); display:flex; align-items:center; justify-content:center; font-size:13.5px; color:var(--slate); font-weight:600; z-index:400;}
+  .map-loading{position:absolute; inset:0; background:var(--paper); display:flex; align-items:center; justify-content:center; font-size:13.5px; color:var(--slate); font-weight:600; z-index:400; gap:10px;}
+  /* ---------------- generic loader / spinner ---------------- */
+  @keyframes rb-spin{to{transform:rotate(360deg);}}
+  .rb-spinner{width:15px; height:15px; border-radius:50%; border:2px solid rgba(255,255,255,.35); border-top-color:#fff; display:inline-block; animation:rb-spin .7s linear infinite; flex-shrink:0; vertical-align:-3px;}
+  .rb-spinner.dark{border:2px solid rgba(16,25,46,.15); border-top-color:var(--navy);}
+  .btn.is-loading{pointer-events:none; opacity:.82; position:relative;}
+  .btn.is-loading .btn-label{visibility:hidden;}
+  .btn.is-loading .rb-spinner{position:absolute; left:50%; top:50%; margin:-8px 0 0 -8px;}
+  /* full-panel skeleton shown while the first Firebase snapshot hasn't arrived yet */
+  .rb-skeleton{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; padding:40px 16px; color:var(--slate); font-size:12.5px; font-weight:600;}
 
   /* ---------------- NAVIGATION MODE (delivery boy "start route") ---------------- */
   body.nav-mode #sidebar{display:none !important;}
@@ -452,7 +484,7 @@
         <div id="locModeLink" style="display:none;">
           <div class="field"><label>Google Maps link</label><input id="custMapLink" type="text" placeholder="Paste full Google Maps link here"></div>
           <button class="btn btn-ghost btn-sm" id="parseLinkBtn" style="width:100%;">Set location from link</button>
-          <div class="hint">Open Google Maps → find the spot → Share → Copy link, then paste it here.</div>
+          <div class="hint">Works with coordinate links, shortened share links (goo.gl/maps.app.goo.gl), and plain shared-location / place links — open Google Maps → find the spot → Share → Copy link, then paste it here.</div>
         </div>
 
         <div id="pendingPinNote" class="hint" style="display:none; color:var(--orange-dark); font-weight:700; margin-top:9px;">📍 Location set — tap "Save customer" to confirm.</div>
@@ -461,6 +493,11 @@
         <div style="height:1px; background:#EEECE2; margin:20px 0;"></div>
 
         <div class="section-title">All customers</div>
+        <div class="search-row">
+          <span class="search-ic">🔍</span>
+          <input id="custSearchInput" type="text" placeholder="Search customers by name, phone or address…">
+          <button class="search-clear" id="custSearchClear">✕</button>
+        </div>
         <div class="filter-row">
           <select id="filterBoy"><option value="all">All delivery boys</option></select>
           <select id="filterZone"><option value="all">All zones</option></select>
@@ -548,6 +585,12 @@
         <button type="button" class="start-route-btn" id="startRouteBtn" style="display:none;">
           <span class="pulse-ic"></span> Start Route
         </button>
+
+        <div class="search-row">
+          <span class="search-ic">🔍</span>
+          <input id="dbSearchInput" type="text" placeholder="Search your stops by name or address…">
+          <button class="search-clear" id="dbSearchClear">✕</button>
+        </div>
 
         <div class="section-title" id="deliveryListTitle">Your stops — nearest first</div>
         <div id="deliveryCustList"></div>
@@ -642,6 +685,10 @@
   </div>
 </div>
 
+<div class="modal-backdrop" id="photoModal">
+  <div class="modal" id="photoModalContent"></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -672,6 +719,16 @@ const AVG_SPEED_KMH = 25;
 const ADMIN_PASSWORD = 'admin123';
 const DELIVERY_PASSWORD = '123';
 const GOOGLE_MAPS_API_KEY = 'AIzaSyCdJWu6gsjXhC1qmz9O6y6U5f7pC3ucC6E';
+const NEW_BADGE_DURATION_MS = 24 * 60 * 60 * 1000; // "new customer" badge stays up for 24 hours
+
+// Delivery-proof photo storage (Cloudinary — free plan, no card required).
+// Only the resulting photo URL is ever written to Firebase; the actual image
+// bytes live on Cloudinary's CDN, so the Realtime Database itself never gets
+// bloated with large payloads and stays fast no matter how many photos pile up.
+const CLOUDINARY_CLOUD_NAME = 'nj3kuxsl';
+const CLOUDINARY_UPLOAD_PRESET = 'routeboy_delivery';
+const PHOTO_MAX_WIDTH = 900;       // resized on-device before upload
+const PHOTO_JPEG_QUALITY = 0.72;   // keeps proof photos readable at ~80-150KB each
 
 /* ---------------- helpers ---------------- */
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
@@ -689,6 +746,7 @@ function distanceKm(lat1, lon1, lat2, lon2){
 function fmtDist(km){ if(km==null) return '—'; return km<1 ? Math.round(km*1000)+' m' : km.toFixed(1)+' km'; }
 function fmtMinutes(mins){ if(mins==null) return '—'; const m=Math.round(mins); return m<60 ? m+' min' : (m/60).toFixed(1)+' hr'; }
 function fmtEtaMinutes(km){ if(km==null) return '—'; return fmtMinutes((km/AVG_SPEED_KMH)*60); }
+function isNewCustomer(c){ return !!(c && c.newUntil && c.newUntil > Date.now()); }
 
 /* ---------------- road-distance calibration ----------------
    Every place that previously called distanceKm() straight to the UI was
@@ -745,13 +803,53 @@ function showToast(msg){
   t.textContent = msg; t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'), 2600);
 }
+// Puts a button into a spinning "working…" state and guarantees it's restored
+// even if the async action throws — used on every network-hitting button so
+// the person always sees something is happening instead of a frozen tap.
+function setBtnLoading(btn, on, loadingText){
+  if (!btn) return;
+  if (on){
+    if (btn.dataset.rbBusy === '1') return;
+    btn.dataset.rbBusy = '1';
+    btn.dataset.rbOrigHtml = btn.innerHTML;
+    btn.classList.add('is-loading');
+    btn.disabled = true;
+    btn.innerHTML = `<span class="btn-label">${btn.dataset.rbOrigHtml}</span><span class="rb-spinner"></span>` + (loadingText ? `<span style="margin-left:6px;">${escapeHtml(loadingText)}</span>` : '');
+  } else {
+    if (btn.dataset.rbBusy !== '1') return;
+    btn.dataset.rbBusy = '0';
+    btn.classList.remove('is-loading');
+    btn.disabled = false;
+    if (btn.dataset.rbOrigHtml != null) btn.innerHTML = btn.dataset.rbOrigHtml;
+  }
+}
+// Wraps an async on-click handler so the button auto-spins while it runs and
+// always resets afterwards (success or failure) — one line to make any
+// button-triggered async action show a loader.
+function withBtnLoading(btn, fn){
+  return async (...args)=>{
+    setBtnLoading(btn, true);
+    try{ await fn(...args); }
+    catch(err){ console.error(err); showToast('Something went wrong — please try again.'); }
+    finally{ setBtnLoading(btn, false); }
+  };
+}
 function confirmAction(text, onOk){
   document.getElementById('confirmText').textContent = text;
   openModal('confirmModal');
   const okBtn = document.getElementById('confirmOk');
   const cancelBtn = document.getElementById('confirmCancel');
   const cleanup = ()=>{ closeModal('confirmModal'); okBtn.onclick=null; cancelBtn.onclick=null; };
-  okBtn.onclick = ()=>{ cleanup(); onOk(); };
+  // Keep the modal open with a spinner while the (usually Firebase) action is
+  // in flight, so a slow/flaky connection never looks like a dead tap —
+  // it only closes once the write has actually finished.
+  okBtn.onclick = async ()=>{
+    setBtnLoading(okBtn, true);
+    cancelBtn.disabled = true;
+    try{ await onOk(); }
+    catch(err){ console.error(err); showToast('Something went wrong — please try again.'); }
+    finally{ setBtnLoading(okBtn, false); cancelBtn.disabled = false; cleanup(); }
+  };
   cancelBtn.onclick = cleanup;
 }
 let openModalCount = 0;
@@ -772,7 +870,11 @@ function parseGoogleMapsLink(text){
     if(m) return {lat:parseFloat(m[1]), lng:parseFloat(m[2])};
     m = text.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
     if(m) return {lat:parseFloat(m[1]), lng:parseFloat(m[2])};
-    m = text.match(/[?&](?:q|ll|query)=(-?\d+\.\d+),(-?\d+\.\d+)/);
+    m = text.match(/[?&](?:q|ll|query|center|sll|sspn|viewpoint|destination)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/);
+    if(m) return {lat:parseFloat(m[1]), lng:parseFloat(m[2])};
+    m = text.match(/[?&]daddr=(-?\d+\.\d+),\s*(-?\d+\.\d+)/);
+    if(m) return {lat:parseFloat(m[1]), lng:parseFloat(m[2])};
+    m = text.match(/\/place\/[^\/]*\/(-?\d+\.\d+),(-?\d+\.\d+)/);
     if(m) return {lat:parseFloat(m[1]), lng:parseFloat(m[2])};
     m = text.match(/(-?\d{1,3}\.\d{3,}),\s*(-?\d{1,3}\.\d{3,})/);
     if(m) return {lat:parseFloat(m[1]), lng:parseFloat(m[2])};
@@ -782,22 +884,93 @@ function parseGoogleMapsLink(text){
 function isShortMapsLink(url){
   return /goo\.gl\/|maps\.app\.goo\.gl/i.test(url);
 }
+// Pull a human place-name / search-query out of a Maps URL (or its resolved
+// HTML) so that, if no raw coordinates are present anywhere, we can fall
+// back to geocoding it into a lat/lng. This is what lets a plain shared
+// "place" link (no @lat,lng, no !3d!4d) — like someone sharing their
+// current location as a named address instead of a coordinate pin — still
+// resolve to an exact point on the map.
+function extractPlaceQuery(text){
+  if(!text) return null;
+  try{
+    let m = text.match(/\/maps\/place\/([^\/@?]+)/);
+    if(m) return decodeURIComponent(m[1].replace(/\+/g,' '));
+    m = text.match(/[?&]q=([^&]+)/);
+    if(m){
+      const val = decodeURIComponent(m[1].replace(/\+/g,' '));
+      if(!/^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/.test(val)) return val;
+    }
+    m = text.match(/[?&]query=([^&]+)/);
+    if(m){
+      const val = decodeURIComponent(m[1].replace(/\+/g,' '));
+      if(!/^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/.test(val)) return val;
+    }
+    m = text.match(/<title>([^<]+)<\/title>/i);
+    if(m){
+      const val = m[1].replace(/\s*-\s*Google\s*Maps\s*$/i,'').trim();
+      if(val && val.toLowerCase() !== 'google maps') return val;
+    }
+    m = text.match(/content="([^"]+)"\s+property="og:title"/i) || text.match(/property="og:title"\s+content="([^"]+)"/i);
+    if(m) return m[1].trim();
+    return null;
+  }catch(e){ return null; }
+}
+// Geocode a free-text place name/address into coordinates using the same
+// Google Maps API key already loaded on the page. Used only as a last
+// resort, after we've tried every pattern-based coordinate extraction.
+async function geocodePlaceName(name){
+  if(!name) return null;
+  try{
+    const res = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(name)}&key=${GOOGLE_MAPS_API_KEY}`);
+    const data = await res.json();
+    if (data.status === 'OK' && data.results && data.results[0]){
+      const loc = data.results[0].geometry.location;
+      return { lat: loc.lat, lng: loc.lng };
+    }
+  }catch(e){ /* geocoding failed — fall through to null */ }
+  return null;
+}
 async function resolveGoogleMapsLink(url){
   const direct = parseGoogleMapsLink(url);
   if (direct) return direct;
-  if (!isShortMapsLink(url)) return null;
-  const proxies = [
-    'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
-    'https://corsproxy.io/?' + encodeURIComponent(url)
-  ];
-  for (const proxyUrl of proxies){
-    try{
-      const res = await fetch(proxyUrl);
-      if (!res.ok) continue;
-      const text = await res.text();
-      const coords = parseGoogleMapsLink(text);
-      if (coords) return coords;
-    }catch(e){ /* try next proxy */ }
+
+  let finalUrl = url;
+  let pageText = '';
+
+  if (isShortMapsLink(url)){
+    const proxies = [
+      'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+      'https://corsproxy.io/?' + encodeURIComponent(url)
+    ];
+    for (const proxyUrl of proxies){
+      try{
+        const res = await fetch(proxyUrl);
+        if (!res.ok) continue;
+        const text = await res.text();
+        pageText = text;
+        const coords = parseGoogleMapsLink(text);
+        if (coords) return coords;
+        const canon = text.match(/<link rel="canonical" href="([^"]+)"/i) || text.match(/property="og:url"\s+content="([^"]+)"/i);
+        if (canon && canon[1]) finalUrl = canon[1];
+        break; // got a page back, no need to try the next proxy
+      }catch(e){ /* try next proxy */ }
+    }
+  }
+
+  // The canonical/resolved URL sometimes carries coordinates even when the
+  // raw HTML text didn't match our patterns.
+  if (finalUrl !== url){
+    const fromFinal = parseGoogleMapsLink(finalUrl);
+    if (fromFinal) return fromFinal;
+  }
+
+  // Last resort: no coordinates anywhere — this is a plain shared "place" /
+  // named-location link, so pull out whatever place text we can find and
+  // geocode it directly.
+  const placeName = extractPlaceQuery(finalUrl) || extractPlaceQuery(url) || extractPlaceQuery(pageText);
+  if (placeName){
+    const geocoded = await geocodePlaceName(placeName);
+    if (geocoded) return geocoded;
   }
   return null;
 }
@@ -815,6 +988,8 @@ let activeShift = defaultShiftNow();
 let navMode = false;
 let editingLocationForCustId = null; // set while admin is re-picking a customer's pin on the map
 let boyModalShift = 'morning'; // which shift tab is open inside the boy detail modal
+let custSearchTerm = '';
+let dbSearchTerm = '';
 
 /* ---------------- session ---------------- */
 function loadSession(){
@@ -854,8 +1029,9 @@ function ensureMapVisible(){ if (isMobileLayout()) setMobileView('map'); }
 
 /* ---------------- map ---------------- */
 let map, infoWindow;
-let custMarkers = [];
+let custMarkers = {};
 let boyMarkers = {};
+let openInfoFor = null; // {type:'cust'|'boy', id} — tracks which marker's popup is open so it survives re-renders
 let pendingPinLatLng = null;
 let pendingPinMarker = null;
 let routePolyline = null;
@@ -939,6 +1115,10 @@ function initMap(){
     clickableIcons: false
   });
   infoWindow = new google.maps.InfoWindow();
+  // Only clear our "popup is open" tracker when the user actually dismisses
+  // it (tapping the built-in × or Esc) — this is what lets renderMapMarkers
+  // keep refreshing the open popup's content instead of ever force-closing it.
+  infoWindow.addListener('closeclick', ()=>{ openInfoFor = null; });
 
   map.addListener('click', (e)=>{
     // Admin is re-picking an existing customer's pin from the edit modal
@@ -954,7 +1134,7 @@ function initMap(){
     if (role !== 'admin' || currentAdminTab !== 'customers' || locMode !== 'map') return;
     pendingPinLatLng = { lat: e.latLng.lat(), lng: e.latLng.lng() };
     if (pendingPinMarker) pendingPinMarker.setMap(null);
-    pendingPinMarker = new google.maps.Marker({ position: pendingPinLatLng, map, icon: makeCustIcon('#10192E','+',false,null) });
+    pendingPinMarker = new google.maps.Marker({ position: pendingPinLatLng, map, icon: makeCustIcon('#10192E','+',false,null,false) });
     document.getElementById('pendingPinNote').style.display = 'block';
   });
 
@@ -966,15 +1146,17 @@ function initMap(){
   document.getElementById('mapLoading').style.display = 'none';
 }
 
-function makeCustIcon(color, label, done, shift){
+function makeCustIcon(color, label, done, shift, isNew){
   const fill = done ? '#2AC2A6' : color;
   const shiftColor = shift ? (SHIFT_COLORS[shift] || null) : null;
   const shiftDot = shiftColor ? `<circle cx="24" cy="7" r="6.5" fill="${shiftColor}" stroke="white" stroke-width="1.6"/>` : '';
+  const newBadge = isNew ? `<circle cx="6" cy="7" r="7" fill="#FF5A36" stroke="white" stroke-width="1.6"/><text x="6" y="10" font-family="monospace" font-size="8.5" font-weight="700" fill="white" text-anchor="middle">N</text>` : '';
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40">
     <path d="M15 2C6.7 2 0 8.7 0 17c0 10.7 15 23 15 23s15-12.3 15-23C30 8.7 23.3 2 15 2z" fill="${fill}" stroke="white" stroke-width="2"/>
     <circle cx="15" cy="17" r="10.5" fill="${fill}" stroke="white" stroke-width="1.2"/>
     <text x="15" y="21" font-family="monospace" font-size="11" font-weight="700" fill="white" text-anchor="middle">${done?'✓':label}</text>
     ${shiftDot}
+    ${newBadge}
   </svg>`;
   return {
     url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
@@ -1005,10 +1187,59 @@ function makeBoyIcon(color, initialsTxt, online){
 }
 function initials(name){ return (name||'?').trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
 
+// Builds the popup HTML for a customer marker fresh from LIVE data (looked up
+// by id at click/refresh time) — never from a stale closured object — so the
+// text always matches what's true right now, not what was true when the
+// marker happened to be created.
+function custPopupHtml(custId){
+  const c = customers.find(x=>x.id===custId);
+  if (!c) return '';
+  const myBoy = (role==='delivery' && myBoyId) ? deliveryBoys.find(b=>b.id===myBoyId) : null;
+  const shiftLbl = custShift(c)==='evening' ? '🌆 Evening' : '🌅 Morning';
+  const newLbl = isNewCustomer(c) ? `<span style="font-size:11px;color:#E64A28;font-weight:700;">🆕 NEW</span> · ` : '';
+  let extra = '';
+  if (role === 'delivery' && c.assignedTo === myBoyId){
+    let distLine = '';
+    if (myBoy && myBoy.lat != null){
+      const d = estimatedRoadKm(myBoy.lat, myBoy.lng, c.lat, c.lng);
+      distLine = `<div style="font-size:11px; color:#5B6178; margin:4px 0 8px;">📍 ${fmtDist(d)} away · ~${fmtEtaMinutes(d)}</div>`;
+    }
+    if (c.status !== 'completed'){
+      extra = `${distLine}<div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">
+        <button onclick="deliverFromMap('${c.id}')" style="background:#2AC2A6;color:white;border:none;border-radius:7px;padding:7px 10px;font-size:11.5px;font-weight:700;cursor:pointer;">✓ Delivered</button>
+        ${c.phone ? `<a href="tel:${escapeHtml(c.phone)}" style="background:#F5F4EF;color:#10192E;border:1px solid #DEDBCF;border-radius:7px;padding:7px 10px;font-size:11.5px;font-weight:700;text-decoration:none;">📞 Call</a>` : ''}
+        <a href="https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}" target="_blank" style="background:#F5F4EF;color:#10192E;border:1px solid #DEDBCF;border-radius:7px;padding:7px 10px;font-size:11.5px;font-weight:700;text-decoration:none;">🧭 Navigate</a>
+      </div>`;
+    } else {
+      extra = `<div style="font-size:11px; color:#1D9E86; font-weight:700; margin-top:4px;">✓ Delivered</div>`;
+    }
+  }
+  return `<div style="font-family:Inter,sans-serif; min-width:170px;"><b>${escapeHtml(c.name)}</b><br>${escapeHtml(c.address||'')}${c.phone && role!=='delivery'?`<br>${escapeHtml(c.phone)}`:''}<br>${newLbl}<span style="font-size:11px;color:#8A93A6;">${shiftLbl}</span>${extra}</div>`;
+}
+// Same idea for a delivery boy's popup — always computed fresh from the
+// live deliveryBoys array so Online/Offline never shows a frozen answer.
+function boyPopupHtml(boyId){
+  const b = deliveryBoys.find(x=>x.id===boyId);
+  if (!b) return '';
+  const online = isOnline(b);
+  return `<div style="font-family:Inter,sans-serif;"><b>${escapeHtml(b.name)}</b><br><span style="font-size:11px;color:${online?'#1D9E86':'#8A93A6'};">${online?'🟢 Online now':'⚫ Offline · last seen ' + timeAgo(b.lastUpdate)}</span></div>`;
+}
+// Refreshes the content of a currently-open popup in place (called on every
+// re-render) so Online/Offline / last-seen text stays live and accurate
+// while the popup is open, without ever closing/reopening it.
+function refreshOpenInfoWindow(){
+  if (!openInfoFor) return;
+  if (openInfoFor.type === 'cust'){
+    if (!customers.find(x=>x.id===openInfoFor.id)){ openInfoFor = null; return; }
+    infoWindow.setContent(custPopupHtml(openInfoFor.id));
+  } else if (openInfoFor.type === 'boy'){
+    if (!deliveryBoys.find(x=>x.id===openInfoFor.id)){ openInfoFor = null; return; }
+    infoWindow.setContent(boyPopupHtml(openInfoFor.id));
+  }
+}
+
 function renderMapMarkers(){
   if (!map) return;
-  custMarkers.forEach(m=>m.setMap(null));
-  custMarkers = [];
 
   const boyColorMap = {}; deliveryBoys.forEach(b=> boyColorMap[b.id]=b.color);
 
@@ -1027,40 +1258,45 @@ function renderMapMarkers(){
     }
   }
 
+  // Diff-update customer markers instead of destroying/recreating them on
+  // every render. Recreating markers on every single Firebase tick (which
+  // happens constantly while any delivery boy is GPS-tracking) was what made
+  // any open popup vanish almost instantly — removing a marker from the map
+  // auto-closes an InfoWindow anchored to it. Reusing the same marker object
+  // and just moving/repainting it never touches the open popup, and it's
+  // also far cheaper (no icon rebuild / DOM churn), which keeps things smooth.
+  const visibleCustIds = new Set(visibleCustomers.map(c=>c.id));
+  Object.keys(custMarkers).forEach(id=>{
+    if (!visibleCustIds.has(id)){ custMarkers[id].setMap(null); delete custMarkers[id]; }
+  });
+
   visibleCustomers.forEach((c,i)=>{
+    if (c.lat == null) return;
     const color = c.assignedTo ? (boyColorMap[c.assignedTo] || '#8A93A6') : '#8A93A6';
     const label = routeOrderMap ? (routeOrderMap[c.id] || i+1) : (i+1);
-    const marker = new google.maps.Marker({
-      position: { lat:c.lat, lng:c.lng },
-      map,
-      icon: makeCustIcon(color, label, c.status==='completed', custShift(c)),
-      title: c.name,
-      zIndex: c.status==='completed' ? 50 : 300 - label
-    });
+    const icon = makeCustIcon(color, label, c.status==='completed', custShift(c), isNewCustomer(c));
+    const zIndex = c.status==='completed' ? 50 : 300 - label;
 
-    marker.addListener('click', ()=>{
-      const shiftLbl = custShift(c)==='evening' ? '🌆 Evening' : '🌅 Morning';
-      let extra = '';
-      if (role === 'delivery' && c.assignedTo === myBoyId){
-        let distLine = '';
-        if (myBoy && myBoy.lat != null){
-          const d = estimatedRoadKm(myBoy.lat, myBoy.lng, c.lat, c.lng);
-          distLine = `<div style="font-size:11px; color:#5B6178; margin:4px 0 8px;">📍 ${fmtDist(d)} away · ~${fmtEtaMinutes(d)}</div>`;
-        }
-        if (c.status !== 'completed'){
-          extra = `${distLine}<div style="display:flex; gap:6px; margin-top:6px; flex-wrap:wrap;">
-            <button onclick="deliverFromMap('${c.id}')" style="background:#2AC2A6;color:white;border:none;border-radius:7px;padding:7px 10px;font-size:11.5px;font-weight:700;cursor:pointer;">✓ Delivered</button>
-            ${c.phone ? `<a href="tel:${escapeHtml(c.phone)}" style="background:#F5F4EF;color:#10192E;border:1px solid #DEDBCF;border-radius:7px;padding:7px 10px;font-size:11.5px;font-weight:700;text-decoration:none;">📞 Call</a>` : ''}
-            <a href="https://www.google.com/maps/dir/?api=1&destination=${c.lat},${c.lng}" target="_blank" style="background:#F5F4EF;color:#10192E;border:1px solid #DEDBCF;border-radius:7px;padding:7px 10px;font-size:11.5px;font-weight:700;text-decoration:none;">🧭 Navigate</a>
-          </div>`;
-        } else {
-          extra = `<div style="font-size:11px; color:#1D9E86; font-weight:700; margin-top:4px;">✓ Delivered</div>`;
-        }
-      }
-      infoWindow.setContent(`<div style="font-family:Inter,sans-serif; min-width:170px;"><b>${escapeHtml(c.name)}</b><br>${escapeHtml(c.address||'')}${c.phone && role!=='delivery'?`<br>${escapeHtml(c.phone)}`:''}<br><span style="font-size:11px;color:#8A93A6;">${shiftLbl}</span>${extra}</div>`);
-      infoWindow.open(map, marker);
-    });
-    custMarkers.push(marker);
+    if (!custMarkers[c.id]){
+      const marker = new google.maps.Marker({
+        position: { lat:c.lat, lng:c.lng },
+        map,
+        icon,
+        title: c.name,
+        zIndex
+      });
+      marker.addListener('click', ()=>{
+        openInfoFor = { type:'cust', id:c.id };
+        infoWindow.setContent(custPopupHtml(c.id));
+        infoWindow.open(map, marker);
+      });
+      custMarkers[c.id] = marker;
+    } else {
+      const marker = custMarkers[c.id];
+      marker.setPosition({ lat:c.lat, lng:c.lng });
+      marker.setIcon(icon);
+      marker.setZIndex(zIndex);
+    }
   });
 
   const visibleBoys = (role==='delivery' && myBoyId) ? deliveryBoys.filter(b=>b.id===myBoyId) : deliveryBoys;
@@ -1081,7 +1317,8 @@ function renderMapMarkers(){
         opacity: online ? 1 : 0.7
       });
       boyMarkers[b.id].addListener('click', ()=>{
-        infoWindow.setContent(`<div style="font-family:Inter,sans-serif;"><b>${escapeHtml(b.name)}</b><br><span style="font-size:11px;color:${online?'#1D9E86':'#8A93A6'};">${online?'🟢 Online now':'⚫ Offline · last seen ' + timeAgo(b.lastUpdate)}</span></div>`);
+        openInfoFor = { type:'boy', id:b.id };
+        infoWindow.setContent(boyPopupHtml(b.id));
         infoWindow.open(map, boyMarkers[b.id]);
       });
     } else {
@@ -1091,6 +1328,10 @@ function renderMapMarkers(){
       boyMarkers[b.id].setZIndex(online ? 1000 : 500);
     }
   });
+
+  // Keep an already-open popup's text (e.g. Online/Offline, delivered status)
+  // live and correct without ever closing it.
+  refreshOpenInfoWindow();
 }
 
 /* ---------------- Google Directions (turn-by-turn, Navigation Mode only) ---------------- */
@@ -1472,7 +1713,9 @@ function logout(){
 
 function updateWhoami(){
   if (role === 'admin'){
-    document.getElementById('whoami').innerHTML = `<span class="hide-mobile"><b>Admin</b></span><button id="logoutBtn">Logout</button>`;
+    document.getElementById('whoami').innerHTML = `<span class="hide-mobile"><b>Admin</b></span><button id="photosNavBtn">📷 Photos</button><button id="logoutBtn">Logout</button>`;
+    const pb = document.getElementById('photosNavBtn');
+    if (pb) pb.onclick = ()=>{ window.location.href = './photos.html'; };
   } else {
     const boy = deliveryBoys.find(b=>b.id===myBoyId);
     const name = boy ? boy.name : '…';
@@ -1487,18 +1730,31 @@ function toArray(val){
   if (!val) return [];
   return Object.keys(val).map(id => ({ id, ...val[id] }));
 }
+// A GPS-tracking delivery boy writes a new location every few seconds, which
+// fires the 'deliveryBoys' listener below constantly. Calling the full
+// renderAll() (which rebuilds the admin customer list, team list, photos,
+// etc.) on every single one of those ticks is what made the UI feel laggy.
+// Coalesce bursts of updates into one render per animation frame instead —
+// still feels instant to the eye, but cuts redundant work drastically.
+let renderAllScheduled = false;
+function scheduleRenderAll(){
+  if (renderAllScheduled) return;
+  renderAllScheduled = true;
+  requestAnimationFrame(()=>{ renderAllScheduled = false; renderAll(); });
+}
+
 function startListeners(){
   onValue(ref(db, 'deliveryBoys'), (snap)=>{
     deliveryBoys = toArray(snap.val());
-    if (role) { updateWhoami(); renderAll(); }
+    if (role) { updateWhoami(); scheduleRenderAll(); }
   });
   onValue(ref(db, 'customers'), (snap)=>{
     customers = toArray(snap.val());
-    if (role) renderAll();
+    if (role) scheduleRenderAll();
   });
   onValue(ref(db, 'zones'), (snap)=>{
     zones = toArray(snap.val());
-    if (role) renderAll();
+    if (role) scheduleRenderAll();
   });
 }
 
@@ -1547,7 +1803,7 @@ document.getElementById('useMyLocBtn').onclick = ()=>{
   navigator.geolocation.getCurrentPosition(pos=>{
     pendingPinLatLng = { lat: pos.coords.latitude, lng: pos.coords.longitude };
     if (pendingPinMarker) pendingPinMarker.setMap(null);
-    pendingPinMarker = new google.maps.Marker({ position: pendingPinLatLng, map, icon: makeCustIcon('#10192E','+',false,null) });
+    pendingPinMarker = new google.maps.Marker({ position: pendingPinLatLng, map, icon: makeCustIcon('#10192E','+',false,null,false) });
     map.panTo(pendingPinLatLng);
     ensureMapVisible();
     document.getElementById('pendingPinNote').style.display = 'block';
@@ -1564,12 +1820,12 @@ document.getElementById('parseLinkBtn').onclick = async ()=>{
   try{
     const coords = await resolveGoogleMapsLink(url);
     if (!coords){
-      showToast("Couldn't read coordinates from that link — try opening it once in Google Maps and copying the link again");
+      showToast("Couldn't read a location from that link — try opening it once in Google Maps and copying the link again");
       return;
     }
     pendingPinLatLng = coords;
     if (pendingPinMarker) pendingPinMarker.setMap(null);
-    pendingPinMarker = new google.maps.Marker({ position: coords, map, icon: makeCustIcon('#10192E','+',false,null) });
+    pendingPinMarker = new google.maps.Marker({ position: coords, map, icon: makeCustIcon('#10192E','+',false,null,false) });
     map.panTo(coords);
     map.setZoom(16);
     ensureMapVisible();
@@ -1582,7 +1838,7 @@ document.getElementById('parseLinkBtn').onclick = async ()=>{
 };
 
 /* ================= ACTIONS ================= */
-document.getElementById('saveCustBtn').onclick = async ()=>{
+document.getElementById('saveCustBtn').onclick = withBtnLoading(document.getElementById('saveCustBtn'), async ()=>{
   const name = document.getElementById('custName').value.trim();
   const phone = document.getElementById('custPhone').value.trim();
   const addr = document.getElementById('custAddr').value.trim();
@@ -1599,6 +1855,7 @@ document.getElementById('saveCustBtn').onclick = async ()=>{
     zone: zone || null,
     shift,
     status: 'pending',
+    newUntil: Date.now() + NEW_BADGE_DURATION_MS,
     createdAt: serverTimestamp()
   });
 
@@ -1611,9 +1868,9 @@ document.getElementById('saveCustBtn').onclick = async ()=>{
   pendingPinLatLng = null;
   document.getElementById('pendingPinNote').style.display = 'none';
   showToast("Customer added!");
-};
+});
 
-document.getElementById('addBoyBtn').onclick = async ()=>{
+document.getElementById('addBoyBtn').onclick = withBtnLoading(document.getElementById('addBoyBtn'), async ()=>{
   const name = document.getElementById('boyName').value.trim();
   const zone = document.getElementById('boyZone').value;
   if (!name) return;
@@ -1622,9 +1879,9 @@ document.getElementById('addBoyBtn').onclick = async ()=>{
   await set(newRef, { name, zone: zone || null, color, lat:null, lng:null, lastUpdate:null });
   document.getElementById('boyName').value = '';
   showToast("Delivery boy added!");
-};
+});
 
-document.getElementById('addZoneBtn').onclick = async ()=>{
+document.getElementById('addZoneBtn').onclick = withBtnLoading(document.getElementById('addZoneBtn'), async ()=>{
   const name = document.getElementById('zoneName').value.trim();
   const color = document.getElementById('zoneColor').value;
   if (!name) return;
@@ -1632,18 +1889,236 @@ document.getElementById('addZoneBtn').onclick = async ()=>{
   await set(newRef, { name, color });
   document.getElementById('zoneName').value = '';
   showToast("Zone added!");
-};
+});
 
-window.markComplete = async (id) => {
-    await update(ref(db, 'customers/' + id), { status: 'completed', completedAt: serverTimestamp() });
-    showToast("Marked as delivered!");
+/* ---------------- Delivery proof photo capture + upload ---------------- */
+let pendingDeliveryCustId = null;
+
+function compressImageToJpegBlob(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onerror = ()=> reject(new Error('Could not read file'));
+    reader.onload = (e)=>{
+      const img = new Image();
+      img.onerror = ()=> reject(new Error('Could not decode image'));
+      img.onload = ()=>{
+        let w = img.width, h = img.height;
+        if (w > PHOTO_MAX_WIDTH){ h = Math.round(h * (PHOTO_MAX_WIDTH / w)); w = PHOTO_MAX_WIDTH; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        canvas.toBlob(blob=>{
+          if (blob) resolve(blob); else reject(new Error('Compression failed'));
+        }, 'image/jpeg', PHOTO_JPEG_QUALITY);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadDeliveryPhoto(blob, custId){
+  const form = new FormData();
+  form.append('file', blob, 'delivery_' + custId + '_' + Date.now() + '.jpg');
+  form.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  // Tag + context make it easy to find/audit all delivery-proof photos from
+  // the Cloudinary dashboard later if ever needed (e.g. for a billing query).
+  form.append('tags', 'delivery_proof');
+  form.append('context', `customer_id=${custId}|uploaded_at=${Date.now()}`);
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+    method: 'POST', body: form
+  });
+  if (!res.ok) throw new Error('Cloudinary upload failed: ' + res.status);
+  const data = await res.json();
+  if (!data.secure_url) throw new Error('No URL returned from Cloudinary');
+  // data.bytes = final uploaded file size — logged alongside the photo so
+  // the admin's storage dashboard (photos.html) can show real usage instead
+  // of just a photo count.
+  return { url: data.secure_url, bytes: data.bytes || blob.size || null };
+}
+
+async function finalizeDelivery(custId, photoUrl, photoBytes){
+  const now = Date.now();
+  const updates = { status: 'completed', completedAt: serverTimestamp() };
+  if (photoUrl) { updates.deliveryPhotoUrl = photoUrl; updates.deliveryPhotoAt = now; }
+  const tasks = [ update(ref(db, 'customers/' + custId), updates) ];
+  if (photoUrl){
+    // customers/{id}.deliveryPhotoUrl only ever holds the LATEST photo — it
+    // gets overwritten the next time this same customer is delivered to
+    // (e.g. next month). To let the admin browse every past proof photo by
+    // date/customer/month (photos.html), keep a permanent, append-only log
+    // of every delivery photo here instead of relying on that single field.
+    const c = customers.find(x=>x.id===custId);
+    const boy = myBoyId ? deliveryBoys.find(b=>b.id===myBoyId) : null;
+    const logRef = push(ref(db, 'deliveryPhotos'));
+    tasks.push(set(logRef, {
+      custId,
+      custName: c ? c.name : '',
+      custAddress: c ? (c.address || '') : '',
+      boyId: myBoyId || null,
+      boyName: boy ? boy.name : '',
+      url: photoUrl,
+      bytes: photoBytes || null,
+      ts: now
+    }));
+  }
+  // Both writes fired together instead of one-after-another — shaves a
+  // network round-trip off every single delivery.
+  await Promise.all(tasks);
+}
+
+/* ---------------- Background photo upload queue ----------------
+   The delivery boy should NEVER sit and watch a spinner. As soon as a photo
+   is picked, the stop is marked delivered immediately (optimistic) and the
+   compress+upload+log work continues silently in the background. A small
+   floating badge shows how many photos are still finishing up, and failed
+   uploads auto-retry (and can be retried by hand) without losing the photo. */
+const bgUploadQueue = []; // {id, custId, custName, file, status: 'pending'|'uploading'|'failed'|'done', error}
+let bgUploadIdSeq = 1;
+
+function bgQueueBadgeEl(){ return document.getElementById('bgUploadBadge'); }
+
+function renderBgUploadBadge(){
+  const active = bgUploadQueue.filter(t => t.status !== 'done');
+  let badge = bgQueueBadgeEl();
+  if (!active.length){
+    if (badge) badge.remove();
+    return;
+  }
+  const failed = active.filter(t => t.status === 'failed').length;
+  const busy = active.length - failed;
+  if (!badge){
+    badge = document.createElement('div');
+    badge.id = 'bgUploadBadge';
+    badge.style.cssText = 'position:fixed; left:14px; bottom:calc(14px + var(--safe-b)); z-index:1500; background:var(--navy); color:#fff; border-radius:14px; padding:10px 14px; font-size:12.5px; font-weight:700; box-shadow:var(--shadow-lg); display:flex; align-items:center; gap:9px; max-width:280px; cursor:pointer;';
+    document.body.appendChild(badge);
+    badge.onclick = ()=>{
+      const retryable = bgUploadQueue.filter(t=>t.status==='failed');
+      if (retryable.length){ retryable.forEach(t => processBgUpload(t)); showToast('Retrying failed uploads…'); }
+    };
+  }
+  badge.innerHTML = busy
+    ? `<span class="rb-spinner"></span> Uploading ${busy} photo${busy>1?'s':''}…${failed?` <span style="color:#FFB4BC;">(${failed} failed — tap to retry)</span>`:''}`
+    : `⚠️ ${failed} photo${failed>1?'s':''} failed to upload — tap to retry`;
+}
+
+async function processBgUpload(task){
+  task.status = 'uploading';
+  renderBgUploadBadge();
+  try{
+    const blob = await compressImageToJpegBlob(task.file);
+    const { url, bytes } = await uploadDeliveryPhoto(blob, task.custId);
+    await finalizeDelivery(task.custId, url, bytes);
+    task.status = 'done';
+    showToast(`📷 Proof photo saved — ${task.custName}`);
+  }catch(err){
+    console.error('Background photo upload failed:', err);
+    task.status = 'failed';
+    task.error = err;
+  }
+  // Drop finished tasks from the queue so it doesn't grow forever.
+  const idx = bgUploadQueue.indexOf(task);
+  if (task.status === 'done' && idx !== -1) bgUploadQueue.splice(idx, 1);
+  renderBgUploadBadge();
+}
+
+function queueDeliveryPhoto(custId, file){
+  const c = customers.find(x=>x.id===custId);
+  const task = { id: bgUploadIdSeq++, custId, custName: c ? c.name : 'Customer', file, status: 'pending' };
+  bgUploadQueue.push(task);
+  renderBgUploadBadge();
+  processBgUpload(task);
+}
+
+// Auto-retry anything that failed once the connection comes back.
+window.addEventListener('online', ()=>{
+  bgUploadQueue.filter(t=>t.status==='failed').forEach(t => processBgUpload(t));
+});
+
+function renderPhotoModal(custId){
+  const c = customers.find(x=>x.id===custId);
+  document.getElementById('photoModalContent').innerHTML = `
+    <h3>📷 Delivery proof photo</h3>
+    <p class="sub">${c ? escapeHtml(c.name) : 'Customer'} ke ghar ki photo click karo — ye billing proof ke liye save hogi.</p>
+    <input type="file" accept="image/*" capture="environment" id="photoFileInput" style="display:none;">
+    <div class="photo-capture-btn" id="photoCaptureBtn"><span class="ic">📷</span> Tap to open camera</div>
+    <img id="photoPreviewImg" class="photo-preview">
+    <div class="photo-status" id="photoStatusEl">Preparing…</div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" id="photoCancelBtn">Cancel</button>
+      <button class="btn btn-danger" id="photoSkipBtn" style="flex:1;">Skip (no photo)</button>
+    </div>
+  `;
+  const fileInput = document.getElementById('photoFileInput');
+  const captureBtn = document.getElementById('photoCaptureBtn');
+  const previewImg = document.getElementById('photoPreviewImg');
+  const statusEl = document.getElementById('photoStatusEl');
+  const cancelBtn = document.getElementById('photoCancelBtn');
+  const skipBtn = document.getElementById('photoSkipBtn');
+
+  const setStatus = (txt, spinning)=>{
+    statusEl.innerHTML = spinning ? `<span class="rb-spinner dark"></span> ${escapeHtml(txt)}` : escapeHtml(txt);
+    statusEl.classList.add('show');
+  };
+  const setBusy = (busy)=>{
+    cancelBtn.disabled = busy;
+    skipBtn.disabled = busy;
+    cancelBtn.style.opacity = busy ? '.5' : '1';
+    skipBtn.style.opacity = busy ? '.5' : '1';
+  };
+
+  captureBtn.onclick = ()=> fileInput.click();
+
+  fileInput.onchange = (e)=>{
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    previewImg.src = URL.createObjectURL(file);
+    previewImg.style.display = 'block';
+    setStatus('Delivered ✓ — photo uploading in background…', true);
+    setBusy(true);
+    // Fire-and-forget: mark delivered + queue the photo for background
+    // compress/upload, and close the modal immediately. The delivery boy
+    // never has to wait for the network — see queueDeliveryPhoto() /
+    // processBgUpload() above.
+    (async ()=>{
+      try{
+        await update(ref(db, 'customers/' + custId), { status: 'completed', completedAt: serverTimestamp() });
+      }catch(err){
+        console.error('Instant mark-complete failed:', err);
+        showToast('Could not mark delivered — check your internet connection');
+        setStatus('Failed — internet check karo aur dobara try karo.', false);
+        setBusy(false);
+        return;
+      }
+      queueDeliveryPhoto(custId, file);
+      showToast('Delivered! Photo uploading in background…');
+      closeModal('photoModal');
+    })();
+  };
+
+  document.getElementById('photoCancelBtn').onclick = ()=> closeModal('photoModal');
+  document.getElementById('photoSkipBtn').onclick = ()=>{
+    closeModal('photoModal');
+    confirmAction("Bina photo ke deliver mark karein? Billing proof nahi rahega.", ()=> finalizeDelivery(custId, null));
+  };
+}
+
+window.markComplete = (id) => {
+  pendingDeliveryCustId = id;
+  renderPhotoModal(id);
+  openModal('photoModal');
 };
-window.deliverFromMap = (id) => { infoWindow.close(); markComplete(id); };
+window.deliverFromMap = (id) => { infoWindow.close(); openInfoFor = null; markComplete(id); };
 window.reassignCustomer = async (id, bId) => { await update(ref(db, 'customers/' + id), { assignedTo: bId || null }); };
 window.setCustomerShift = async (id, shift) => { await update(ref(db, 'customers/' + id), { shift: shift==='evening'?'evening':'morning' }); };
 window.deleteCustomer = (id) => confirmAction("Delete customer?", async () => await remove(ref(db, 'customers/' + id)));
 window.removeBoy = (id) => confirmAction("Remove delivery boy?", async () => await remove(ref(db, 'deliveryBoys/' + id)));
 window.deleteZone = (id) => confirmAction("Delete zone?", async () => await remove(ref(db, 'zones/' + id)));
+window.toggleNewBadge = async (id, checked) => {
+  await update(ref(db, 'customers/' + id), { newUntil: checked ? (Date.now() + NEW_BADGE_DURATION_MS) : null });
+  showToast(checked ? "Marked as New — badge visible for 24 hours" : "New badge removed");
+};
 window.panToBoy = (id, shift) => {
   const b = deliveryBoys.find(x=>x.id===id);
   ensureMapVisible();
@@ -1684,6 +2159,14 @@ window.openEditCustModal = (id) => {
     </div>
     <button class="btn btn-ghost btn-sm" style="width:100%;" onclick="startEditLocation('${c.id}')">📍 Re-pick exact location on map</button>
     <div class="hint">Or type latitude/longitude directly above, then Save.</div>
+    <label class="new-toggle-label ${isNewCustomer(c)?'active':''}" style="margin-top:12px; width:100%; justify-content:center;">
+      <input type="checkbox" ${isNewCustomer(c)?'checked':''} onchange="toggleNewBadge('${c.id}', this.checked)"> 🆕 Mark as New Customer (shows badge for 24 hrs)
+    </label>
+    ${c.deliveryPhotoUrl ? `
+    <div class="section-title" style="margin-top:16px;">Delivery proof photo</div>
+    <img src="${c.deliveryPhotoUrl}" style="width:100%; border-radius:12px; max-height:220px; object-fit:cover; cursor:pointer;" onclick="window.open('${c.deliveryPhotoUrl}','_blank')">
+    <div class="hint">Delivered: ${c.deliveryPhotoAt ? new Date(c.deliveryPhotoAt).toLocaleString('en-IN') : ''} · tap photo to open full size</div>
+    ` : ''}
     <div class="btn-row">
       <button class="btn btn-ghost" onclick="closeModal('editCustModal')">Cancel</button>
       <button class="btn btn-primary" onclick="saveEditCust('${c.id}')">Save changes</button>
@@ -1735,6 +2218,7 @@ function customersToPdf(list, title){
     const boyName = (deliveryBoys.find(b=>b.id===c.assignedTo)||{}).name || 'Unassigned';
     const zoneName = (zones.find(z=>z.id===c.zone)||{}).name || '-';
     const mapLink = (c.lat!=null && c.lng!=null) ? `https://www.google.com/maps?q=${c.lat},${c.lng}` : '-';
+    const deliveredOn = c.completedAt && typeof c.completedAt === 'number' ? new Date(c.completedAt).toLocaleDateString('en-IN') : (c.status==='completed' ? 'Yes' : '-');
     return [
       i+1,
       c.name || '',
@@ -1744,17 +2228,18 @@ function customersToPdf(list, title){
       c.status==='completed' ? 'Delivered' : 'Pending',
       boyName,
       zoneName,
-      mapLink
+      mapLink,
+      c.deliveryPhotoUrl || '-'
     ];
   });
 
   doc.autoTable({
     startY: 26,
-    head: [['#','Name','Phone','Address','Shift','Status','Delivery Boy','Zone','Map Location']],
+    head: [['#','Name','Phone','Address','Shift','Status','Delivery Boy','Zone','Map Location','Delivery Proof Photo']],
     body: rows,
-    styles: { fontSize: 7.5, cellPadding: 2, overflow:'linebreak' },
+    styles: { fontSize: 7, cellPadding: 2, overflow:'linebreak' },
     headStyles: { fillColor: [14,21,38] },
-    columnStyles: { 1:{cellWidth:24}, 3:{cellWidth:34}, 8:{cellWidth:38} }
+    columnStyles: { 1:{cellWidth:22}, 3:{cellWidth:30}, 8:{cellWidth:32}, 9:{cellWidth:32} }
   });
 
   doc.save(title.replace(/[^a-z0-9]+/gi,'_') + '.pdf');
@@ -1772,13 +2257,7 @@ document.getElementById('downloadFilteredPdfBtn').onclick = ()=>{
   const zFilter = document.getElementById('filterZone').value;
   const sFilter = document.getElementById('filterStatus').value;
   const shiftFilter = document.getElementById('filterShift').value;
-  const filtered = customers.filter(c => {
-    if(bFilter !== 'all' && c.assignedTo !== bFilter) return false;
-    if(zFilter !== 'all' && c.zone !== zFilter) return false;
-    if(sFilter !== 'all' && c.status !== sFilter) return false;
-    if(shiftFilter !== 'all' && custShift(c) !== shiftFilter) return false;
-    return true;
-  });
+  const filtered = getFilteredAdminCustomers();
   if (!filtered.length){ showToast('No customers match this filter'); return; }
   customersToPdf(filtered, 'Filtered Customer List');
 };
@@ -1847,11 +2326,11 @@ function renderBoyModalBody(boyId){
 
     ${shiftPending.length ? `<div class="boy-modal-list-title">Pending (${shiftPending.length})</div>
     <div class="boy-modal-list">${shiftPending.map(c=>`
-      <div class="mini-stop"><div><div class="mn">${escapeHtml(c.name)}</div><div class="md">${escapeHtml(c.address||'')}${c.phone?' · '+escapeHtml(c.phone):''}</div></div><div class="md">${c._d!=null?fmtDist(c._d):''}</div></div>
+      <div class="mini-stop"><div><div class="mn">${isNewCustomer(c)?'🆕 ':''}${escapeHtml(c.name)}</div><div class="md">${escapeHtml(c.address||'')}${c.phone?' · '+escapeHtml(c.phone):''}</div></div><div class="md">${c._d!=null?fmtDist(c._d):''}</div></div>
     `).join('')}</div>` : ''}
     ${shiftDone.length ? `<div class="boy-modal-list-title">Delivered (${shiftDone.length})</div>
     <div class="boy-modal-list">${shiftDone.map(c=>`
-      <div class="mini-stop"><div><div class="mn">${escapeHtml(c.name)}</div><div class="md">${escapeHtml(c.address||'')}</div></div><div class="md" style="color:#1D9E86;">✓ Done</div></div>
+      <div class="mini-stop"><div style="display:flex;align-items:center;gap:8px;">${c.deliveryPhotoUrl?`<img src="${c.deliveryPhotoUrl}" class="mini-stop-photo" onclick="window.open('${c.deliveryPhotoUrl}','_blank')">`:''}<div><div class="mn">${escapeHtml(c.name)}</div><div class="md">${escapeHtml(c.address||'')}</div></div></div><div class="md" style="color:#1D9E86;">✓ Done${c.deliveryPhotoUrl?' · 📷':''}</div></div>
     `).join('')}</div>` : ''}
     ${!shiftMine.length ? `<div class="empty-state">Is shift me koi customer assign nahi hai.</div>` : ''}
     <div class="btn-row"><button class="btn btn-ghost" onclick="closeBoyModal()" style="width:100%;">Close</button></div>
@@ -1972,23 +2451,36 @@ function renderAdminOverview(){
     }).join('') : '<div class="empty-state">No delivery boys added yet. Go to the Team tab to add one.</div>';
 }
 
-function renderAdminCustList(){
+function matchesSearch(c, term){
+  if (!term) return true;
+  const hay = `${c.name||''} ${c.phone||''} ${c.address||''}`.toLowerCase();
+  return hay.includes(term);
+}
+
+function getFilteredAdminCustomers(){
     const bFilter = document.getElementById('filterBoy').value;
     const zFilter = document.getElementById('filterZone').value;
     const sFilter = document.getElementById('filterStatus').value;
     const shiftFilter = document.getElementById('filterShift').value;
+    const term = custSearchTerm.trim().toLowerCase();
 
-    let filtered = customers.filter(c => {
+    return customers.filter(c => {
         if(bFilter !== 'all' && c.assignedTo !== bFilter) return false;
         if(zFilter !== 'all' && c.zone !== zFilter) return false;
         if(sFilter !== 'all' && c.status !== sFilter) return false;
         if(shiftFilter !== 'all' && custShift(c) !== shiftFilter) return false;
+        if(!matchesSearch(c, term)) return false;
         return true;
     });
+}
+
+function renderAdminCustList(){
+    const filtered = getFilteredAdminCustomers();
 
     document.getElementById('adminCustList').innerHTML = filtered.length ? filtered.map(c => {
       const z = zones.find(zz=>zz.id===c.zone);
       const sh = custShift(c);
+      const newActive = isNewCustomer(c);
       return `
         <div class="stop ${c.status==='completed'?'done':''}">
             <div class="idx">${c.status==='completed'?'✓':'•'}</div>
@@ -2001,6 +2493,8 @@ function renderAdminCustList(){
                   <span class="shift-badge ${sh}">${sh==='evening'?'🌆 Evening':'🌅 Morning'}</span>
                   ${z ? `<span class="zone-tag"><span class="sw" style="background:${z.color}"></span>${escapeHtml(z.name)}</span>` : ''}
                   ${!c.assignedTo ? `<span class="badge unassigned">UNASSIGNED</span>` : ''}
+                  ${newActive ? `<span class="badge new">🆕 NEW</span>` : ''}
+                  ${c.deliveryPhotoUrl ? `<a href="${c.deliveryPhotoUrl}" target="_blank" class="photo-thumb-link"><img src="${c.deliveryPhotoUrl}">📷 Proof</a>` : ''}
                 </div>
                 <div class="stop-actions">
                     <select onchange="reassignCustomer('${c.id}', this.value)" style="font-size:11.5px; padding:8px; border-radius:8px; border:1.5px solid #DEDBCF; min-height:38px;">
@@ -2014,6 +2508,9 @@ function renderAdminCustList(){
                     <button class="btn btn-ghost btn-sm" onclick="openEditCustModal('${c.id}')">✏️ Edit</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteCustomer('${c.id}')">Delete</button>
                 </div>
+                <label class="new-toggle-label ${newActive?'active':''}" style="margin-top:8px;">
+                  <input type="checkbox" ${newActive?'checked':''} onchange="toggleNewBadge('${c.id}', this.checked)"> ${newActive?'🆕 New badge active (24 hrs)':'Mark as New Customer'}
+                </label>
             </div>
         </div>
     `;}).join('') : '<div class="empty-state">No customers match this filter.</div>';
@@ -2210,6 +2707,8 @@ function renderDeliveryList(){
     updateShiftTabsUI();
     const me = deliveryBoys.find(b=>b.id===myBoyId);
     let myStops = customers.filter(c => c.assignedTo === myBoyId && custShift(c) === activeShift);
+    const term = dbSearchTerm.trim().toLowerCase();
+    if (term) myStops = myStops.filter(c => matchesSearch(c, term));
     let pending = myStops.filter(c => c.status !== 'completed');
     let done = myStops.filter(c => c.status === 'completed');
 
@@ -2253,7 +2752,7 @@ function renderDeliveryList(){
         <div class="stop ${i===0?'nearest':''}">
             <div class="idx">${i+1}</div>
             <div class="stop-body">
-                <div class="name">${escapeHtml(c.name)}${i===0?' · Next stop':''} <span class="shift-badge ${activeShift}" style="padding:1px 7px; font-size:9.5px;">${activeShift==='evening'?'🌆':'🌅'}</span></div>
+                <div class="name">${escapeHtml(c.name)}${i===0?' · Next stop':''} <span class="shift-badge ${activeShift}" style="padding:1px 7px; font-size:9.5px;">${activeShift==='evening'?'🌆':'🌅'}</span>${isNewCustomer(c) ? ' <span class="badge new">🆕 NEW</span>' : ''}</div>
                 <div class="addr">${escapeHtml(c.address || '')}</div>
                 ${c.phone ? `<div class="phn">📞 ${escapeHtml(c.phone)}</div>` : ''}
                 <div class="stop-meta">
@@ -2273,8 +2772,37 @@ function renderDeliveryList(){
         <div class="stop done"><div class="idx">✓</div><div class="stop-body"><div class="name">${escapeHtml(c.name)}</div><div class="addr">${escapeHtml(c.address||'')}</div></div></div>
     `).join('');
 
-    document.getElementById('deliveryCustList').innerHTML = html || `<div class="empty-state">No ${activeShift} tasks assigned yet. Check back soon.</div>`;
+    document.getElementById('deliveryCustList').innerHTML = html || `<div class="empty-state">${term ? 'No stops match your search.' : `No ${activeShift} tasks assigned yet. Check back soon.`}</div>`;
 }
+
+/* ================= SEARCH ================= */
+const custSearchInputEl = document.getElementById('custSearchInput');
+const custSearchClearEl = document.getElementById('custSearchClear');
+custSearchInputEl.addEventListener('input', (e)=>{
+  custSearchTerm = e.target.value;
+  custSearchClearEl.classList.toggle('show', !!custSearchTerm);
+  renderAdminCustList();
+});
+custSearchClearEl.addEventListener('click', ()=>{
+  custSearchTerm = '';
+  custSearchInputEl.value = '';
+  custSearchClearEl.classList.remove('show');
+  renderAdminCustList();
+});
+
+const dbSearchInputEl = document.getElementById('dbSearchInput');
+const dbSearchClearEl = document.getElementById('dbSearchClear');
+dbSearchInputEl.addEventListener('input', (e)=>{
+  dbSearchTerm = e.target.value;
+  dbSearchClearEl.classList.toggle('show', !!dbSearchTerm);
+  renderDeliveryList();
+});
+dbSearchClearEl.addEventListener('click', ()=>{
+  dbSearchTerm = '';
+  dbSearchInputEl.value = '';
+  dbSearchClearEl.classList.remove('show');
+  renderDeliveryList();
+});
 
 /* ================= MOBILE TOGGLE ================= */
 document.getElementById('mobShowList').onclick = ()=> setMobileView('list');
