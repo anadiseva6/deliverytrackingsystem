@@ -1118,43 +1118,140 @@ function wireCardEditors(){
 /* ---------------- PDF export ---------------- */
 function jsPDFReady(){ return !!(window.jspdf && window.jspdf.jsPDF); }
 
+function computeProductTotals(list){
+  const totals = {};
+  PRODUCTS.forEach(p => totals[p.key] = 0);
+  list.forEach(c=>{
+    const eff = effectiveFor(c, viewDate);
+    PRODUCTS.forEach(p => totals[p.key] += (eff[p.key]||0));
+  });
+  // round off floating point noise from 0.25-step quantities
+  PRODUCTS.forEach(p => totals[p.key] = Math.round(totals[p.key]*100)/100);
+  return totals;
+}
+
 function buildBoyShiftSection(doc, boyName, shift, list, isFirstSectionOnPage){
   if (!isFirstSectionOnPage) doc.addPage();
-  doc.setFontSize(14);
-  doc.setTextColor(20,25,40);
-  doc.text(`${boyName} — ${shift==='evening'?'Evening':'Morning'} · ${formatDateLabel(viewDate)}`, 14, 16);
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const marginX = 14;
+
+  // header banner
+  doc.setFillColor(14,21,38);
+  doc.roundedRect(marginX, 10, pageWidth - marginX*2, 13, 2, 2, 'F');
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(13);
+  doc.setTextColor(255,255,255);
+  doc.text(`${boyName}  ·  ${shift==='evening'?'Evening Shift':'Morning Shift'}`, marginX + 4, 18.5);
+  doc.setFont('helvetica','normal');
   doc.setFontSize(9);
+  doc.setTextColor(255,196,150);
+  doc.text(formatDateLabel(viewDate), pageWidth - marginX - 4, 18.5, { align:'right' });
+
+  doc.setFontSize(8.5);
   doc.setTextColor(110);
-  doc.text(`${list.length} customer${list.length!==1?'s':''} · Generated ${new Date().toLocaleString('en-IN')}`, 14, 22);
+  doc.text(`${list.length} customer${list.length!==1?'s':''} on this run  ·  Generated ${new Date().toLocaleString('en-IN')}`, marginX, 28);
   doc.setTextColor(0);
+
+  const totals = computeProductTotals(list);
 
   const rows = list.map((c,i)=>{
     const eff = effectiveFor(c, viewDate);
     const row = [i+1, c.name || '', `${c.address||'-'}${c.phone?('\n'+c.phone):''}`];
     PRODUCTS.forEach(p => row.push(eff[p.key] > 0 ? `${eff[p.key]}${p.short}` : '-'));
     row.push(eff.note || '-');
-    row.push(eff.isOverride ? 'Modified' : '');
+    row.push(eff.isOverride ? '📅 Modified' : '');
     return row;
   });
 
+  const totalRow = [
+    '', 'SHIFT TOTAL', `${list.length} stop${list.length!==1?'s':''}`,
+    ...PRODUCTS.map(p => totals[p.key] > 0 ? `${totals[p.key]}${p.short}` : '-'),
+    '', ''
+  ];
+
   doc.autoTable({
-    startY: 27,
-    head: [['#','Customer','Address / Phone', ...PRODUCTS.map(p=>p.label), 'Note', '']],
+    startY: 33,
+    head: [['#','Customer','Address / Phone', ...PRODUCTS.map(p=>p.label), 'Note', 'Status']],
     body: rows,
-    styles: { fontSize: 7.8, cellPadding: 2.4, overflow:'linebreak', valign:'top' },
-    headStyles: { fillColor: [14,21,38], fontSize: 7.8 },
+    foot: [totalRow],
+    showFoot: 'lastPage',
+    styles: { fontSize: 7.8, cellPadding: 2.6, overflow:'linebreak', valign:'middle', lineColor:[225,222,207], lineWidth:0.2 },
+    headStyles: { fillColor:[14,21,38], textColor:255, fontSize:7.8, halign:'center' },
+    footStyles: { fillColor:[255,238,214], textColor:[20,25,40], fontStyle:'bold', fontSize:8.4, halign:'center' },
+    alternateRowStyles: { fillColor:[250,249,244] },
     columnStyles: {
-      0:{cellWidth:7}, 1:{cellWidth:26}, 2:{cellWidth:32},
-      3:{cellWidth:13}, 4:{cellWidth:13}, 5:{cellWidth:13}, 6:{cellWidth:13}, 7:{cellWidth:13}, 8:{cellWidth:13},
-      9:{cellWidth:26}, 10:{cellWidth:14}
+      0:{cellWidth:8, halign:'center'},
+      1:{cellWidth:36},
+      2:{cellWidth:50},
+      3:{cellWidth:18, halign:'center'}, 4:{cellWidth:18, halign:'center'}, 5:{cellWidth:18, halign:'center'},
+      6:{cellWidth:18, halign:'center'}, 7:{cellWidth:18, halign:'center'}, 8:{cellWidth:18, halign:'center'},
+      9:{cellWidth:38}, 10:{cellWidth:21, halign:'center'}
     },
     didParseCell: (data)=>{
-      if (data.section === 'body' && data.column.index === 10 && data.cell.raw === 'Modified'){
+      if (data.section === 'body' && data.column.index === 10 && data.cell.raw === '📅 Modified'){
         data.cell.styles.textColor = [139,58,184];
         data.cell.styles.fontStyle = 'bold';
       }
+      if (data.section === 'foot' && data.column.index === 1){
+        data.cell.styles.halign = 'left';
+      }
     }
   });
+}
+
+// Highlighted "day total to carry" block — appended after a delivery boy's
+// last shift section on their PDF, combining morning + evening quantities
+// so it's immediately clear how much total milk / other products to send
+// out with them for the whole day.
+function buildBoyGrandTotal(doc, boyName, boySections){
+  const allList = [].concat(...boySections.map(s=>s.list));
+  if (!allList.length) return;
+  const totals = computeProductTotals(allList);
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const marginX = 14;
+  let y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : 30) + 10;
+  if (y > pageHeight - 55){ doc.addPage(); y = 20; }
+
+  doc.setFillColor(255,140,66);
+  doc.roundedRect(marginX, y, pageWidth - marginX*2, 10, 2, 2, 'F');
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(11);
+  doc.setTextColor(255,255,255);
+  doc.text(`📦 DAY TOTAL TO CARRY — ${boyName}  ·  ${formatDateLabel(viewDate)}`, marginX + 4, y + 7);
+  doc.setFont('helvetica','normal');
+  doc.setTextColor(0);
+
+  const shiftNote = boySections.map(s=>`${s.shift==='evening'?'Evening':'Morning'}: ${s.list.length} stop${s.list.length!==1?'s':''}`).join('  ·  ');
+
+  doc.autoTable({
+    startY: y + 13,
+    head: [['Total stops', ...PRODUCTS.map(p=>`${p.label} (${p.unit})`)]],
+    body: [[String(allList.length), ...PRODUCTS.map(p=> totals[p.key] > 0 ? String(totals[p.key]) : '0')]],
+    styles: { fontSize: 10.5, cellPadding: 5, halign:'center', valign:'middle', lineColor:[225,222,207], lineWidth:0.2 },
+    headStyles: { fillColor:[255,238,214], textColor:[139,74,10], fontStyle:'bold', fontSize:8.5 },
+    bodyStyles: { fontStyle:'bold', fontSize:13, textColor:[14,21,38], fillColor:[255,247,230] },
+  });
+
+  doc.setFontSize(8);
+  doc.setTextColor(130);
+  doc.text(shiftNote, marginX, doc.lastAutoTable.finalY + 5);
+  doc.setTextColor(0);
+}
+
+function addPdfFooters(doc){
+  const pageCount = doc.internal.getNumberOfPages();
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  for (let i = 1; i <= pageCount; i++){
+    doc.setPage(i);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(150);
+    doc.text('RouteBoy — Delivery Order Chart', 14, pageHeight - 7);
+    doc.text(`Page ${i} of ${pageCount}`, pageWidth - 14, pageHeight - 7, { align:'right' });
+    doc.setTextColor(0);
+  }
 }
 
 function downloadPdf(opts){
@@ -1170,20 +1267,20 @@ function downloadPdf(opts){
     if (!b) return;
     ['morning','evening'].forEach(shift=>{
       const list = customers.filter(c=>c.assignedTo===b.id && custShift(c)===shift);
-      if (list.length) sections.push({ boyName: b.name, shift, list });
+      if (list.length) sections.push({ boyName: b.name, shift, list, boyKey: b.id });
     });
     if (!sections.length){ showToast('No customers assigned to ' + b.name); return; }
   } else if (opts.all){
     deliveryBoys.forEach(b=>{
       ['morning','evening'].forEach(shift=>{
         const list = customers.filter(c=>c.assignedTo===b.id && custShift(c)===shift);
-        if (list.length) sections.push({ boyName: b.name, shift, list });
+        if (list.length) sections.push({ boyName: b.name, shift, list, boyKey: b.id });
       });
     });
     const unassigned = customers.filter(c=>!c.assignedTo || !deliveryBoys.find(b=>b.id===c.assignedTo));
     ['morning','evening'].forEach(shift=>{
       const list = unassigned.filter(c=>custShift(c)===shift);
-      if (list.length) sections.push({ boyName: 'Unassigned', shift, list });
+      if (list.length) sections.push({ boyName: 'Unassigned', shift, list, boyKey: 'unassigned' });
     });
     if (!sections.length){ showToast('No customers to export yet'); return; }
   } else {
@@ -1192,20 +1289,30 @@ function downloadPdf(opts){
     boysToShow.forEach(b=>{
       shiftsToShow.forEach(shift=>{
         const list = customers.filter(c=>c.assignedTo===b.id && custShift(c)===shift && matchesFilters(c));
-        if (list.length) sections.push({ boyName: b.name, shift, list });
+        if (list.length) sections.push({ boyName: b.name, shift, list, boyKey: b.id });
       });
     });
     if (filtBoy === 'all'){
       const unassigned = customers.filter(c=>!c.assignedTo || !deliveryBoys.find(b=>b.id===c.assignedTo));
       shiftsToShow.forEach(shift=>{
         const list = unassigned.filter(c=>custShift(c)===shift && matchesFilters(c));
-        if (list.length) sections.push({ boyName: 'Unassigned', shift, list });
+        if (list.length) sections.push({ boyName: 'Unassigned', shift, list, boyKey: 'unassigned' });
       });
     }
     if (!sections.length){ showToast('No customers match the current filters'); return; }
   }
 
-  sections.forEach((sec, idx)=> buildBoyShiftSection(doc, sec.boyName, sec.shift, sec.list, idx===0));
+  sections.forEach((sec, idx)=>{
+    buildBoyShiftSection(doc, sec.boyName, sec.shift, sec.list, idx===0);
+    const nextSec = sections[idx+1];
+    const isLastSectionForThisBoy = !nextSec || nextSec.boyKey !== sec.boyKey;
+    if (isLastSectionForThisBoy){
+      const boySections = sections.filter(s=>s.boyKey===sec.boyKey);
+      buildBoyGrandTotal(doc, sec.boyName, boySections);
+    }
+  });
+
+  addPdfFooters(doc);
 
   const filenameBase = opts.boyId
     ? ((deliveryBoys.find(b=>b.id===opts.boyId)||{}).name || 'delivery_chart') + '_' + viewDate
