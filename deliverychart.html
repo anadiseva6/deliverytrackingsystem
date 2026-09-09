@@ -253,6 +253,8 @@
   .product-field input{width:100%; border:none; background:transparent; text-align:center; font-size:15px; font-weight:700; font-family:'JetBrains Mono'; padding:2px 0; color:var(--ink);}
   .product-field input:focus{outline:none;}
   .product-field .unit{font-size:8px; color:var(--slate-light); margin-top:1px; font-weight:600;}
+  .product-field .prev-hint{font-size:8px; color:var(--mod-dark); font-weight:700; margin-top:3px; background:#F5E1FF; border-radius:6px; padding:1px 4px; display:inline-block;}
+  .prev-day-hint-bar{font-size:11px; color:var(--ink-soft); background:var(--card-2); border:1px dashed var(--line); border-radius:10px; padding:8px 10px; margin-bottom:10px; line-height:1.5;}
 
   .ov-date-row{display:flex; gap:7px; align-items:center; margin-bottom:10px; flex-wrap:wrap;}
   .ov-date-row input[type=date]{flex:1; min-width:130px; border:1.5px solid var(--line); border-radius:10px; padding:9px 10px; font-size:13.5px; background:var(--card);}
@@ -333,6 +335,84 @@
     .mm-stat b{font-size:13.5px;}
     .mm-stat span{font-size:7px;}
   }
+
+  /* ---------------- modified badge ---------------- */
+  .mod-badge{display:inline-flex; align-items:center; gap:3px; background:#F5E1FF; color:var(--mod-dark); font-size:9px; font-weight:800; letter-spacing:.02em; text-transform:uppercase; padding:3px 7px; border-radius:var(--radius-full); margin-left:7px; vertical-align:middle; white-space:nowrap; flex-shrink:0;}
+  .row-name-main-wrap{display:flex; align-items:center; flex-wrap:wrap; gap:0; min-width:0;}
+  .row-name-main-wrap .row-name-main{min-width:0; flex-shrink:1;}
+
+  /* ---------------- qty field wrapper (desktop: same footprint as before + prev-day badge, mobile: card grid) ---------------- */
+  .qty-fields-wrap{display:contents;}
+  .qty-field{display:block; position:relative;}
+  .qty-lbl{display:none;}
+  .qty-prev-badge{position:absolute; top:-7px; right:-3px; background:#EDEBFF; color:#5B4B9E; font-size:7.5px; font-weight:800; padding:1px 4px; border-radius:6px; line-height:1.35; white-space:nowrap; box-shadow:0 1px 3px rgba(16,22,48,.18); z-index:2; pointer-events:none;}
+
+  /* ---------------- mobile-first responsive order rows ---------------- */
+  @media (max-width:680px){
+    #main{padding-left:8px; padding-right:8px;}
+    .table-scroll{overflow-x:visible; background:transparent; border:none; box-shadow:none;}
+    .order-grid{min-width:0;}
+    .order-head{display:none;}
+    #chartWrap{display:flex; flex-direction:column; gap:10px;}
+    .order-row{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      grid-template-areas:
+        "name name status"
+        "boy boy boy"
+        "q q q"
+        "actions actions actions";
+      gap:10px;
+      padding:13px 13px 12px;
+      border:1px solid var(--line);
+      border-radius:var(--radius-lg);
+      background:var(--card);
+      box-shadow:var(--shadow-sm);
+      margin:0;
+    }
+    .order-row:hover{background:var(--card);}
+    .drag-handle{display:none;}
+    .row-name{grid-area:name; min-width:0;}
+    .row-name-main{white-space:normal; font-size:14.5px;}
+    .row-name-sub{white-space:normal;}
+    .boy-chip{grid-area:boy; justify-self:start; width:fit-content; max-width:100%;}
+    .row-status-dot{grid-area:status; justify-self:end; align-self:start; margin-top:5px;}
+    .qty-fields-wrap{grid-area:q; display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
+    .qty-field{display:flex; flex-direction:column; align-items:center; gap:4px; background:var(--card-2); border-radius:11px; padding:8px 4px; position:relative;}
+    .qty-lbl{display:block; font-size:9px; font-weight:800; color:var(--ink-mute); text-transform:uppercase; letter-spacing:.02em;}
+    .qty-cell{width:100%; font-size:15px; padding:9px 2px;}
+    .qty-prev-badge{top:-6px; right:-4px; font-size:7px;}
+    .row-actions{grid-area:actions; justify-content:space-between; border-top:1px dashed var(--line); padding-top:10px; margin-top:2px;}
+    .ract-btn{flex:1; width:auto; height:38px; font-size:14px;}
+
+    .ctrl-row1{flex-direction:column; align-items:stretch;}
+    .date-field, .shift-toggle, .search-field{flex:1 1 auto; width:100%;}
+    .summary-row{flex-direction:column; align-items:stretch;}
+    .total-load{justify-content:center;}
+    .summary-actions{width:100%;}
+    .summary-actions .act-btn{flex:1;}
+    .tiles-row{grid-template-columns:repeat(3,1fr);}
+    #topbar{padding:10px 12px; padding-top:calc(10px + var(--safe-t));}
+    #topbar-actions{width:100%; justify-content:stretch;}
+    #topbar-actions a, #topbar-actions button{flex:1; text-align:center;}
+  }
+
+  /* ---------------- multi-date select (date-specific modify modal) ---------------- */
+  .md-multi-toggle{display:flex; align-items:center; gap:8px; margin-bottom:10px; font-size:12px; font-weight:700; color:var(--ink-soft); cursor:pointer; user-select:none;}
+  .md-multi-toggle input{width:16px; height:16px; accent-color:var(--orange);}
+  .md-multi-wrap{display:none; margin-bottom:12px; background:var(--card-2); border:1.5px dashed var(--line); border-radius:12px; padding:10px;}
+  .md-multi-wrap.show{display:block;}
+  .md-add-row{display:flex; gap:7px; flex-wrap:wrap; margin-bottom:9px;}
+  .md-add-row input[type=date]{flex:1; min-width:120px; border:1.5px solid var(--line); border-radius:9px; padding:8px 9px; font-size:12.5px; background:var(--card);}
+  .md-add-row button{white-space:nowrap;}
+  .md-range-row{display:flex; gap:7px; flex-wrap:wrap; align-items:center; margin-bottom:2px; font-size:10.5px; color:var(--ink-mute); font-weight:700;}
+  .md-range-row input[type=date]{border:1.5px solid var(--line); border-radius:9px; padding:7px 8px; font-size:12px; background:var(--card); min-width:110px;}
+  .md-chip-row{display:flex; flex-wrap:wrap; gap:6px; margin-top:9px;}
+  .md-chip{display:flex; align-items:center; gap:6px; background:#F5E1FF; color:var(--mod-dark); font-family:'JetBrains Mono'; font-weight:700; font-size:11px; padding:5px 6px 5px 10px; border-radius:var(--radius-full);}
+  .md-chip button{border:none; background:rgba(155,52,192,.16); color:var(--mod-dark); width:18px; height:18px; border-radius:50%; font-size:11px; cursor:pointer; line-height:1; display:flex; align-items:center; justify-content:center;}
+  .md-chip button:hover{background:rgba(155,52,192,.3);}
+  .md-empty-hint{font-size:11px; color:var(--slate-light); font-style:italic;}
+  .md-count-note{font-size:10.5px; color:var(--mod-dark); font-weight:700; margin-top:8px;}
 </style>
 </head>
 <body>
@@ -713,9 +793,17 @@ document.querySelectorAll('#shiftToggle button').forEach(btn=>{
     filtShift = btn.dataset.shift;
     document.querySelectorAll('#shiftToggle button').forEach(x=>x.classList.remove('active'));
     btn.classList.add('active');
+    updateSummaryBtnLabel();
     renderAll();
   };
 });
+function updateSummaryBtnLabel(){
+  const btn = document.getElementById('downloadAllBtn');
+  if (!btn) return;
+  const tag = filtShift === 'all' ? 'Morning + Evening' : (filtShift === 'evening' ? 'Evening only' : 'Morning only');
+  btn.title = `Downloads a full summary for all delivery boys — ${tag} (based on the shift toggle above)`;
+}
+updateSummaryBtnLabel();
 
 ['filterZone','filterMod'].forEach(id=>{
   document.getElementById(id).addEventListener('change', (e)=>{
@@ -835,15 +923,25 @@ function renderOrderRow(c, boy, eff){
   const ov = getOverride(c, viewDate);
   const boyColor = boy ? boy.color : '#8891A3';
   const shiftIcon = filtShift === 'all' ? (custShift(c)==='evening' ? '🌙 ' : '⚙️ ') : '';
+  const prevDate = addDays(viewDate, -1);
+  const prevEff = effectiveFor(c, prevDate);
   return `
   <div class="order-row" data-cust-id="${c.id}">
     <span class="drag-handle">⠿</span>
     <div class="row-name">
-      <div class="row-name-main">${escapeHtml(c.name)}</div>
+      <div class="row-name-main-wrap">
+        <span class="row-name-main">${escapeHtml(c.name)}</span>${eff.isOverride ? `<span class="mod-badge" title="Quantities modified for ${formatDateLabel(viewDate)}">📅 Modified</span>` : ''}
+      </div>
       <div class="row-name-sub">${shiftIcon}${escapeHtml(c.address || c.name || '')}</div>
     </div>
     <span class="boy-chip" style="background:${boyColor}1F; color:${boyColor}; border-color:${boyColor}66;">${boy ? escapeHtml(boy.name) : 'Unassigned'}</span>
-    ${PRODUCTS.map(p=>`<input type="number" inputmode="decimal" min="0" step="0.25" class="qty-cell ${eff.isOverride?'mod-cell':''}" data-cust="${c.id}" data-key="${p.key}" value="${eff[p.key] ? eff[p.key] : ''}" placeholder="-">`).join('')}
+    <div class="qty-fields-wrap">
+      ${PRODUCTS.map(p=>{
+        const prevVal = prevEff[p.key] || 0;
+        const prevBadge = prevVal > 0 ? `<span class="qty-prev-badge" title="${formatDateLabel(prevDate)} (previous day): ${prevVal}${p.short} ${p.label}">${prevVal}${p.short}</span>` : '';
+        return `<div class="qty-field"><span class="qty-lbl">${p.label}</span><input type="number" inputmode="decimal" min="0" step="0.25" class="qty-cell ${eff.isOverride?'mod-cell':''}" data-cust="${c.id}" data-key="${p.key}" value="${eff[p.key] ? eff[p.key] : ''}" placeholder="-" title="${prevVal>0?`Y'day: ${prevVal}${p.short}`:''}">${prevBadge}</div>`;
+      }).join('')}
+    </div>
     <span class="row-status-dot ${c.status==='completed'?'ok':'pending'}" title="${c.status==='completed'?'Delivered':'Pending'}"></span>
     <div class="row-actions">
       <button class="ract-btn cal" data-open-date="${c.id}" title="Modify a specific date">📅</button>
@@ -1007,9 +1105,13 @@ document.getElementById('defSaveBtn').onclick = async ()=>{
 /* ---------------- date-specific modify modal ---------------- */
 let dateModalCustId = null;
 let dateModalDate = null;
+let dateModalMultiEnabled = false;
+let dateModalExtraDates = [];
 function openDateModal(custId, dstr){
   dateModalCustId = custId;
   dateModalDate = dstr || viewDate;
+  dateModalMultiEnabled = false;
+  dateModalExtraDates = [];
   document.getElementById('dateModalOverlay').classList.add('show');
   document.body.classList.add('modal-open');
   renderDateModal();
@@ -1019,6 +1121,8 @@ function closeDateModal(){
   document.body.classList.remove('modal-open');
   dateModalCustId = null;
   dateModalDate = null;
+  dateModalMultiEnabled = false;
+  dateModalExtraDates = [];
 }
 function renderDateModal(){
   const c = customers.find(x=>x.id===dateModalCustId);
@@ -1028,6 +1132,8 @@ function renderDateModal(){
 
   const ov = getOverride(c, dateModalDate);
   const def = getDefaults(c);
+  const prevDate = addDays(dateModalDate, -1);
+  const prevEff = effectiveFor(c, prevDate);
 
   document.getElementById('dateModalBody').innerHTML = `
     <div class="modal-section-title">Modify quantity for a specific date</div>
@@ -1037,13 +1143,39 @@ function renderDateModal(){
       <button class="qd-btn btn btn-ghost btn-sm" id="dmTomorrow">Tomorrow</button>
     </div>
     <div class="ov-status-line ${ov?'is-mod':''}" id="dmStatusLine">${ov ? '📅 Editing an existing modification for this date' : 'No modification for this date yet — will use defaults'}</div>
+
+    <label class="md-multi-toggle" for="dmMultiToggle">
+      <input type="checkbox" id="dmMultiToggle" ${dateModalMultiEnabled?'checked':''}>
+      📌 Apply the same quantities to multiple dates at once
+    </label>
+    <div class="md-multi-wrap ${dateModalMultiEnabled?'show':''}" id="dmMultiWrap">
+      <div class="md-add-row">
+        <input type="date" id="dmAddDate">
+        <button class="btn btn-ghost btn-sm" id="dmAddDateBtn" type="button">+ Add date</button>
+      </div>
+      <div class="md-range-row">
+        <span>Range:</span>
+        <input type="date" id="dmRangeFrom">
+        <span>to</span>
+        <input type="date" id="dmRangeTo">
+        <button class="btn btn-ghost btn-sm" id="dmAddRangeBtn" type="button">+ Add range</button>
+      </div>
+      <div class="md-chip-row" id="dmChipRow"></div>
+      <div class="md-count-note" id="dmCountNote"></div>
+    </div>
+
+    <div class="prev-day-hint-bar">🕓 Previous day (${formatDateLabel(prevDate)}): ${hasAnyQty(prevEff) ? PRODUCTS.filter(p=>(prevEff[p.key]||0)>0).map(p=>`${p.label} ${prevEff[p.key]}${p.short}`).join(', ') : 'nothing was ordered'}</div>
     <div class="product-grid" id="dmGrid">
-      ${PRODUCTS.map(p => `
+      ${PRODUCTS.map(p => {
+        const prevVal = prevEff[p.key] || 0;
+        return `
         <div class="product-field">
           <label>${p.label}</label>
           <input type="number" inputmode="decimal" min="0" step="0.25" value="${(ov?ov[p.key]:def[p.key])||0}" data-dm-field="${p.key}">
           <div class="unit">${p.unit}</div>
-        </div>`).join('')}
+          ${prevVal>0 ? `<div class="prev-hint">Y'day: ${prevVal}${p.short}</div>` : ''}
+        </div>`;
+      }).join('')}
     </div>
     <input type="text" class="ov-note-field" id="dmNote" placeholder="Note for this date (optional)" value="${escapeHtml(ov?(ov.note||''):def.note)}">
     <div class="ov-btn-row">
@@ -1060,13 +1192,67 @@ function renderDateModal(){
   `;
   wireDateModal();
 }
+function renderDmChips(){
+  const row = document.getElementById('dmChipRow');
+  const note = document.getElementById('dmCountNote');
+  if (!row) return;
+  if (!dateModalExtraDates.length){
+    row.innerHTML = `<span class="md-empty-hint">No extra dates added yet — add one above or use a range.</span>`;
+  } else {
+    row.innerHTML = dateModalExtraDates.slice().sort().map(d=>
+      `<span class="md-chip">${formatDateLabel(d)}<button type="button" data-rm-md="${d}">✕</button></span>`
+    ).join('');
+    row.querySelectorAll('[data-rm-md]').forEach(btn=>{
+      btn.onclick = ()=>{
+        dateModalExtraDates = dateModalExtraDates.filter(x=>x!==btn.dataset.rmMd);
+        renderDmChips();
+      };
+    });
+  }
+  const total = 1 + dateModalExtraDates.length;
+  note.textContent = dateModalExtraDates.length
+    ? `Will save the same quantities to ${total} dates in total (including ${formatDateLabel(dateModalDate)}).`
+    : '';
+}
+function addExtraDate(d){
+  if (!d) return;
+  if (d === dateModalDate){ showToast('That is already the primary date'); return; }
+  if (!dateModalExtraDates.includes(d)) dateModalExtraDates.push(d);
+  renderDmChips();
+}
 function wireDateModal(){
+  renderDmChips();
   document.getElementById('dmDateInput').addEventListener('change', (e)=>{
     dateModalDate = e.target.value || viewDate;
     renderDateModal();
   });
   document.getElementById('dmToday').onclick = ()=>{ dateModalDate = dateStr(); renderDateModal(); };
   document.getElementById('dmTomorrow').onclick = ()=>{ dateModalDate = addDays(dateStr(),1); renderDateModal(); };
+
+  document.getElementById('dmMultiToggle').onchange = (e)=>{
+    dateModalMultiEnabled = e.target.checked;
+    document.getElementById('dmMultiWrap').classList.toggle('show', dateModalMultiEnabled);
+  };
+  document.getElementById('dmAddDateBtn').onclick = ()=>{
+    const v = document.getElementById('dmAddDate').value;
+    if (!v) return showToast('Pick a date to add first');
+    addExtraDate(v);
+  };
+  document.getElementById('dmAddRangeBtn').onclick = ()=>{
+    const from = document.getElementById('dmRangeFrom').value;
+    const to = document.getElementById('dmRangeTo').value;
+    if (!from || !to) return showToast('Pick both a from and to date');
+    if (to < from) return showToast('"To" date must be after "From" date');
+    let cursor = from, added = 0, guard = 0;
+    while (cursor <= to && guard < 370){
+      addExtraDate(cursor);
+      added++;
+      cursor = addDays(cursor, 1);
+      guard++;
+    }
+    showToast(`Added ${added} date${added!==1?'s':''} from the range`);
+  };
+
   document.getElementById('dmSaveBtn').onclick = async ()=>{
     const custId = dateModalCustId;
     const d = dateModalDate;
@@ -1078,9 +1264,17 @@ function wireDateModal(){
     });
     obj.note = document.getElementById('dmNote').value;
     obj.updatedAt = Date.now();
+    const targetDates = (dateModalMultiEnabled && dateModalExtraDates.length)
+      ? [...new Set([d, ...dateModalExtraDates])]
+      : [d];
     try{
-      await set(ref(db, `customers/${custId}/overrides/${d}`), obj);
-      showToast(`Modification saved for ${formatDateLabel(d)}`);
+      await Promise.all(targetDates.map(td => set(ref(db, `customers/${custId}/overrides/${td}`), obj)));
+      showToast(targetDates.length > 1
+        ? `Saved the same quantities to ${targetDates.length} dates`
+        : `Modification saved for ${formatDateLabel(d)}`);
+      dateModalMultiEnabled = false;
+      dateModalExtraDates = [];
+      renderDateModal();
     }catch(e){ console.error(e); showToast('Could not save — check your internet connection'); }
   };
   document.getElementById('dmRemoveBtn').onclick = async ()=>{
@@ -1128,8 +1322,18 @@ document.getElementById('dateModalOverlay').addEventListener('click', (e)=>{
   if (e.target.id === 'dateModalOverlay') closeDateModal();
 });
 
-/* ---------------- PDF export — delivery-boy summary only, no customer names ---------------- */
+/* ---------------- PDF export ---------------- */
 function jsPDFReady(){ return !!(window.jspdf && window.jspdf.jsPDF); }
+function hexToRgb(hex){
+  hex = (hex||'#888888').replace('#','');
+  if (hex.length === 3) hex = hex.split('').map(c=>c+c).join('');
+  const num = parseInt(hex,16) || 0x888888;
+  return [(num>>16)&255, (num>>8)&255, num&255];
+}
+function filenameDateStr(dstr){
+  const [y,m,d] = (dstr||dateStr()).split('-');
+  return `${d}-${m}-${y}`;
+}
 
 function buildSummaryPdf(doc, sections){
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -1137,79 +1341,192 @@ function buildSummaryPdf(doc, sections){
   const marginX = 14;
 
   doc.setFillColor(14,21,38);
-  doc.rect(0, 0, pageWidth, 28, 'F');
+  doc.rect(0, 0, pageWidth, 26, 'F');
   doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(255,255,255);
-  doc.text('RouteBoy — Delivery Summary Report', marginX, 14);
+  doc.text('RouteBoy — Delivery Summary Report', marginX, 13);
   doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(255,196,150);
-  doc.text(`${formatDateLabel(viewDate)}   ·   Generated ${new Date().toLocaleString('en-IN')}`, marginX, 21);
+  doc.text(`${formatDateLabel(viewDate)}   ·   Generated ${new Date().toLocaleString('en-IN')}`, marginX, 20);
   doc.setTextColor(0);
 
-  const boyKeys = [...new Set(sections.map(s=>s.boyKey))];
-  const body = [];
-  const grandTotals = {}; PRODUCTS.forEach(p=>grandTotals[p.key]=0);
-  let grandStops = 0;
+  let y = 34;
+  const shiftOrder = ['morning','evening'];
+  const overallGrand = {}; PRODUCTS.forEach(p=>overallGrand[p.key]=0);
+  let overallStops = 0;
+  let overallBoyKeys = new Set();
+  let shiftsRendered = 0;
+  const shiftsPresent = shiftOrder.filter(sk => sections.some(s=>s.shift===sk));
 
-  boyKeys.forEach(bk=>{
-    const boySecs = sections.filter(s=>s.boyKey===bk);
-    const boyName = boySecs[0].boyName;
-    const boyTotals = {}; PRODUCTS.forEach(p=>boyTotals[p.key]=0);
-    let boyStops = 0;
+  shiftsPresent.forEach(shiftKey=>{
+    const shiftSecs = sections.filter(s=>s.shift===shiftKey);
+    shiftsRendered++;
+    if (shiftsRendered > 1){ doc.addPage(); y = 18; }
 
-    boySecs.forEach(sec=>{
+    const shiftColor = hexToRgb(shiftKey==='evening' ? '#7C5CFC' : '#FFA23C');
+    const shiftLabel = shiftKey==='evening' ? 'Evening' : 'Morning';
+
+    doc.setFillColor(...shiftColor);
+    doc.roundedRect(marginX, y, pageWidth - marginX*2, 11.5, 2, 2, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(12.5); doc.setTextColor(255,255,255);
+    doc.text(`${shiftLabel.toUpperCase()} ROUTES`, marginX + 5, y + 7.8);
+    doc.setTextColor(0);
+    y += 17;
+
+    const boyKeys = [...new Set(shiftSecs.map(s=>s.boyKey))];
+    const body = [];
+    const shiftTotals = {}; PRODUCTS.forEach(p=>shiftTotals[p.key]=0);
+    let shiftStops = 0;
+
+    boyKeys.forEach(bk=>{
+      const sec = shiftSecs.find(s=>s.boyKey===bk);
       const totals = computeProductTotals(sec.list);
-      PRODUCTS.forEach(p=> boyTotals[p.key] += totals[p.key]);
-      boyStops += sec.list.length;
+      PRODUCTS.forEach(p=> shiftTotals[p.key] += totals[p.key]);
+      shiftStops += sec.list.length;
+      overallBoyKeys.add(bk);
       body.push([
-        boyName,
-        sec.shift === 'evening' ? 'Evening' : 'Morning',
+        sec.boyName,
         String(sec.list.length),
         ...PRODUCTS.map(p => totals[p.key] > 0 ? String(totals[p.key]) : '-')
       ]);
     });
 
-    PRODUCTS.forEach(p=> grandTotals[p.key] += boyTotals[p.key]);
-    grandStops += boyStops;
+    doc.autoTable({
+      startY: y,
+      head: [['Delivery Boy','Stops', ...PRODUCTS.map(p=>`${p.label} (${p.unit})`)]],
+      body,
+      foot: [[ `${shiftLabel} Total`, String(shiftStops), ...PRODUCTS.map(p=>shiftTotals[p.key]>0?String(Math.round(shiftTotals[p.key]*100)/100):'0') ]],
+      styles: { fontSize: 9.5, cellPadding: 4.2, halign:'center', valign:'middle', lineColor:[225,222,207], lineWidth:0.2 },
+      headStyles: { fillColor: shiftColor, textColor:255, fontStyle:'bold', fontSize:9.5 },
+      footStyles: { fillColor:[255,238,214], textColor:[139,74,10], fontStyle:'bold', fontSize:9.5, halign:'center' },
+      alternateRowStyles: { fillColor:[250,249,244] },
+      columnStyles: { 0:{ halign:'left', fontStyle:'bold', cellWidth:55 } }
+    });
 
-    body.push([
-      `${boyName} — Day Total`,
-      'Both shifts',
-      String(boyStops),
-      ...PRODUCTS.map(p => boyTotals[p.key] > 0 ? String(Math.round(boyTotals[p.key]*100)/100) : '-')
-    ]);
-  });
+    PRODUCTS.forEach(p=> overallGrand[p.key] += shiftTotals[p.key]);
+    overallStops += shiftStops;
+    y = doc.lastAutoTable.finalY + 9;
 
-  doc.autoTable({
-    startY: 34,
-    head: [['Delivery Boy','Shift','Stops', ...PRODUCTS.map(p=>`${p.label} (${p.unit})`)]],
-    body,
-    styles: { fontSize: 9.5, cellPadding: 4.2, halign:'center', valign:'middle', lineColor:[225,222,207], lineWidth:0.2 },
-    headStyles: { fillColor:[14,21,38], textColor:255, fontStyle:'bold', fontSize:9.5 },
-    alternateRowStyles: { fillColor:[250,249,244] },
-    columnStyles: { 0:{ halign:'left', fontStyle:'bold', cellWidth:46 }, 1:{ cellWidth:26 } },
-    didParseCell: (data)=>{
-      if (data.section === 'body' && String(data.row.raw[1]) === 'Both shifts'){
-        data.cell.styles.fillColor = [255,238,214];
-        data.cell.styles.fontStyle = 'bold';
-        data.cell.styles.textColor = [139,74,10];
-      }
+    // notes collected for this shift only, grouped by delivery boy
+    const notesByBoy = {};
+    shiftSecs.forEach(sec=>{
+      sec.list.forEach(c=>{
+        const eff = effectiveFor(c, viewDate);
+        if (eff.note && eff.note.trim()){
+          if (!notesByBoy[sec.boyKey]) notesByBoy[sec.boyKey] = { boyName: sec.boyName, items: [] };
+          const already = notesByBoy[sec.boyKey].items.find(x=>x.startsWith(c.name+':'));
+          if (!already) notesByBoy[sec.boyKey].items.push(`${c.name}: ${eff.note.trim()}`);
+        }
+      });
+    });
+    const noteGroups = Object.values(notesByBoy);
+    if (noteGroups.length){
+      if (y > pageHeight - 45){ doc.addPage(); y = 18; }
+      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(...shiftColor);
+      doc.text(`${shiftLabel} — Notes for today`, marginX, y);
+      doc.setTextColor(0);
+      doc.autoTable({
+        startY: y + 4,
+        head: [['Delivery Boy', 'Customer notes']],
+        body: noteGroups.map(g => [g.boyName, g.items.join('\n')]),
+        styles: { fontSize: 8.5, cellPadding: 3.5, valign:'top', lineColor:[225,222,207], lineWidth:0.2, overflow:'linebreak' },
+        headStyles: { fillColor: shiftColor, textColor:255, fontStyle:'bold', fontSize:9 },
+        columnStyles: { 0:{ halign:'left', fontStyle:'bold', cellWidth:40 }, 1:{ halign:'left' } }
+      });
+      y = doc.lastAutoTable.finalY + 10;
     }
   });
 
-  let y = doc.lastAutoTable.finalY + 10;
-  if (y > pageHeight - 42){ doc.addPage(); y = 20; }
+  // combined grand total — only shown when the report covers more than one shift
+  if (shiftsRendered > 1){
+    if (y > pageHeight - 42){ doc.addPage(); y = 20; }
+    doc.setFillColor(14,21,38);
+    doc.roundedRect(marginX, y, pageWidth - marginX*2, 11.5, 2, 2, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(255,255,255);
+    doc.text(`OVERALL TOTAL (BOTH SHIFTS) — ${overallStops} stop${overallStops!==1?'s':''} across ${overallBoyKeys.size} delivery boy${overallBoyKeys.size!==1?'s':''}`, marginX + 5, y + 7.8);
+    doc.setTextColor(0);
 
-  doc.setFillColor(255,106,61);
-  doc.roundedRect(marginX, y, pageWidth - marginX*2, 11, 2, 2, 'F');
-  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(255,255,255);
-  doc.text(`OVERALL TOTAL — ${grandStops} stop${grandStops!==1?'s':''} across ${boyKeys.length} delivery boy${boyKeys.length!==1?'s':''}`, marginX + 4, y + 7.5);
-  doc.setTextColor(0);
+    doc.autoTable({
+      startY: y + 16,
+      head: [PRODUCTS.map(p=>`${p.label} (${p.unit})`)],
+      body: [PRODUCTS.map(p=> overallGrand[p.key] > 0 ? String(Math.round(overallGrand[p.key]*100)/100) : '0')],
+      styles: { fontSize: 12, cellPadding: 6, halign:'center', fontStyle:'bold', textColor:[14,21,38], lineColor:[225,222,207], lineWidth:0.2 },
+      headStyles: { fillColor:[230,232,245], textColor:[14,21,38], fontStyle:'bold', fontSize:9.5 }
+    });
+  }
+}
 
-  doc.autoTable({
-    startY: y + 15,
-    head: [PRODUCTS.map(p=>`${p.label} (${p.unit})`)],
-    body: [PRODUCTS.map(p=> grandTotals[p.key] > 0 ? String(Math.round(grandTotals[p.key]*100)/100) : '0')],
-    styles: { fontSize: 12, cellPadding: 6, halign:'center', fontStyle:'bold', textColor:[14,21,38], lineColor:[225,222,207], lineWidth:0.2 },
-    headStyles: { fillColor:[255,238,214], textColor:[139,74,10], fontStyle:'bold', fontSize:9.5 }
+/* ---------------- PDF export — per-customer detail (name + products + note), color-coded by shift ---------------- */
+function buildCustomerDetailPdf(doc, sections){
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const marginX = 12;
+  let first = true;
+
+  sections.forEach(sec=>{
+    if (!first) doc.addPage();
+    first = false;
+
+    const shiftColor = hexToRgb(sec.shift === 'evening' ? '#7C5CFC' : '#FFA23C');
+    const shiftLabel = sec.shift === 'evening' ? 'Evening' : 'Morning';
+
+    doc.setFillColor(...shiftColor);
+    doc.rect(0, 0, pageWidth, 24, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(255,255,255);
+    doc.text(`${sec.boyName} — ${shiftLabel} Delivery`, marginX, 12);
+    doc.setFont('helvetica','normal'); doc.setFontSize(9);
+    doc.text(`${formatDateLabel(viewDate)}   ·   ${sec.list.length} stop${sec.list.length!==1?'s':''}   ·   Generated ${new Date().toLocaleString('en-IN')}`, marginX, 19);
+    doc.setTextColor(0);
+
+    doc.setFillColor(245,225,255);
+    doc.rect(marginX, 27, 3.6, 3.6, 'F');
+    doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(110,70,140);
+    doc.text('= quantity modified specifically for this date (different from the daily default)', marginX + 6, 30.2);
+    doc.setTextColor(0);
+
+    const sortedList = sec.list.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+    const rowMeta = [];
+    const body = sortedList.map(c=>{
+      const eff = effectiveFor(c, viewDate);
+      rowMeta.push({ isOverride: eff.isOverride, hasQty: hasAnyQty(eff) });
+      return [
+        c.name || '—',
+        ...PRODUCTS.map(p => (eff[p.key]||0) > 0 ? `${eff[p.key]}${p.short}` : '-'),
+        eff.note ? eff.note : ''
+      ];
+    });
+
+    doc.autoTable({
+      startY: 35,
+      head: [['Customer', ...PRODUCTS.map(p=>p.label), 'Note']],
+      body,
+      styles: { fontSize: 9, cellPadding: 3.6, valign:'middle', lineColor:[225,222,207], lineWidth:0.2 },
+      headStyles: { fillColor: shiftColor, textColor:255, fontStyle:'bold', fontSize:9 },
+      alternateRowStyles: { fillColor:[250,249,247] },
+      columnStyles: Object.assign(
+        { 0:{ halign:'left', fontStyle:'bold', cellWidth:50 } },
+        Object.fromEntries(PRODUCTS.map((p,i)=>[i+1, { halign:'center', cellWidth:22 }])),
+        { [PRODUCTS.length+1]: { halign:'left', fontStyle:'italic' } }
+      ),
+      didParseCell:(data)=>{
+        if (data.section === 'body'){
+          const meta = rowMeta[data.row.index];
+          if (meta && meta.isOverride){
+            data.cell.styles.fillColor = [245, 225, 255];
+          } else if (meta && !meta.hasQty && data.column.index !== 0){
+            data.cell.styles.textColor = [180,180,180];
+          }
+        }
+      }
+    });
+
+    const totals = computeProductTotals(sec.list);
+    let y = doc.lastAutoTable.finalY + 7;
+    if (y > pageHeight - 16){ doc.addPage(); y = 20; }
+    doc.setFillColor(...shiftColor);
+    doc.roundedRect(marginX, y - 5.5, pageWidth - marginX*2, 9.5, 2, 2, 'F');
+    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(255,255,255);
+    const totalsLine = PRODUCTS.map(p=> `${p.label} ${totals[p.key]>0?totals[p.key]:0}${p.short}`).join('   ·   ');
+    doc.text(`ROUTE TOTAL — ${totalsLine}`, marginX + 4, y + 1);
+    doc.setTextColor(0);
   });
 }
 
@@ -1238,14 +1555,15 @@ function buildPdfSections({ boyId, all }){
       if (list.length) sections.push({ boyName: b.name, shift, list, boyKey: b.id });
     });
   } else if (all){
+    const shiftsToShow = filtShift === 'all' ? ['morning','evening'] : [filtShift];
     deliveryBoys.forEach(b=>{
-      ['morning','evening'].forEach(shift=>{
+      shiftsToShow.forEach(shift=>{
         const list = customers.filter(c=>c.assignedTo===b.id && custShift(c)===shift);
         if (list.length) sections.push({ boyName: b.name, shift, list, boyKey: b.id });
       });
     });
     const unassigned = customers.filter(c=>!c.assignedTo || !deliveryBoys.find(b=>b.id===c.assignedTo));
-    ['morning','evening'].forEach(shift=>{
+    shiftsToShow.forEach(shift=>{
       const list = unassigned.filter(c=>custShift(c)===shift);
       if (list.length) sections.push({ boyName: 'Unassigned', shift, list, boyKey: 'unassigned' });
     });
@@ -1276,18 +1594,40 @@ function downloadPdf(opts){
   if (!sections.length){ showToast('No customers to summarize for this selection'); return; }
 
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: 'portrait' });
-  buildSummaryPdf(doc, sections);
+  const isDetail = opts.mode === 'detail';
+  const doc = new jsPDF({ orientation: isDetail ? 'landscape' : 'portrait' });
+
+  if (isDetail){
+    buildCustomerDetailPdf(doc, sections);
+  } else {
+    buildSummaryPdf(doc, sections);
+  }
   addPdfFooters(doc);
 
-  const filenameBase = opts.boyId
-    ? ((deliveryBoys.find(b=>b.id===opts.boyId)||{}).name || 'delivery_summary') + '_' + viewDate
-    : (opts.all ? 'All_Delivery_Boys_Summary_' + viewDate : 'Filtered_Delivery_Summary_' + viewDate);
+  const dstamp = filenameDateStr(viewDate);
+  let filenameBase;
+  if (isDetail && filtBoy !== 'all' && filtShift !== 'all'){
+    // e.g. Annu_Morning_09-09-2026 — single boy + single shift selected
+    const boy = deliveryBoys.find(b=>b.id===filtBoy);
+    const boyName = boy ? boy.name : 'delivery';
+    const shiftLabel = filtShift === 'evening' ? 'Evening' : 'Morning';
+    filenameBase = `${boyName}_${shiftLabel}_${dstamp}`;
+  } else if (opts.boyId){
+    const boy = deliveryBoys.find(b=>b.id===opts.boyId);
+    filenameBase = (boy ? boy.name : 'delivery_summary') + '_' + dstamp;
+  } else if (opts.all){
+    const shiftTag = filtShift === 'all' ? 'AllShifts' : (filtShift === 'evening' ? 'Evening' : 'Morning');
+    filenameBase = `All_Delivery_Boys_Summary_${shiftTag}_${dstamp}`;
+  } else if (isDetail){
+    filenameBase = 'Filtered_Delivery_Details_' + dstamp;
+  } else {
+    filenameBase = 'Filtered_Delivery_Summary_' + dstamp;
+  }
   doc.save(filenameBase.replace(/[^a-z0-9]+/gi,'_') + '.pdf');
 }
 
-document.getElementById('downloadAllBtn').onclick = ()=> downloadPdf({ all:true });
-document.getElementById('getPdfBtn').onclick = ()=> downloadPdf({});
+document.getElementById('downloadAllBtn').onclick = ()=> downloadPdf({ all:true, mode:'summary' });
+document.getElementById('getPdfBtn').onclick = ()=> downloadPdf({ mode:'detail' });
 
 /* ---------------- monthly customer history modal ---------------- */
 let monthModalCustId = null;
