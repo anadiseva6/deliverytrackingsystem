@@ -9,261 +9,329 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --navy:#0E1526; --navy-2:#141D33; --paper:#F6F5F0; --card:#FFFFFF;
-    --orange:#FF5A36; --orange-dark:#E64A28;
-    --mint:#00C896; --mint-dark:#00A67D;
-    --slate:#8891A3; --slate-light:#B9BFCB; --line:#EAE7DC; --line-dark:#26314E;
-    --danger:#FF4D5E;
-    --morning:#FFAB2E; --evening:#7C6FF0;
-    --mod:#B25BE0;
-    --radius-sm:8px; --radius:14px; --radius-lg:20px;
-    --shadow-sm:0 2px 8px rgba(16,25,46,.07);
-    --shadow-md:0 8px 22px rgba(16,25,46,.10);
-    --shadow-lg:0 20px 50px rgba(16,25,46,.24);
+    --navy:#10162A; --navy-2:#1A2340; --paper:#F3F5FB; --card:#FFFFFF; --card-2:#FAFBFF;
+    --ink:#10162A; --ink-soft:#4E5771; --ink-mute:#8991A8;
+
+    --orange:#FF6A3D; --orange-dark:#E1501F; --orange-light:#FF9166;
+    --mint:#13BF8B; --mint-dark:#0EA179;
+    --slate:#8991A8; --slate-light:#BAC1D4; --line:#E7E9F3; --line-dark:#2A3355;
+    --danger:#FF4D63; --danger-dark:#E23A50;
+    --morning:#FFA23C; --evening:#7C5CFC;
+    --mod:#B347D9; --mod-dark:#9B34C0;
+
+    --grad-brand: linear-gradient(135deg, #FF7A47 0%, #FF4D6B 100%);
+    --grad-navy: linear-gradient(135deg, #0D1226 0%, #1B2447 55%, #2C1F52 100%);
+    --grad-mint: linear-gradient(135deg, #17D6A0 0%, #0EA179 100%);
+    --grad-violet: linear-gradient(135deg, #8E6CFF 0%, #6A45E8 100%);
+    --grad-amber: linear-gradient(135deg, #FFC163 0%, #FF9C3C 100%);
+
+    /* product accent colors, mapped 1:1 to the summary tiles */
+    --p-milk:#2F6FE0; --p-paneer:#178A56; --p-ghee:#B98900; --p-chach:#C2410C; --p-butter:#1F2937; --p-curd:#7C3AED;
+
+    --radius-sm:10px; --radius:16px; --radius-lg:22px; --radius-full:999px;
+    --shadow-sm:0 2px 10px rgba(16,22,48,.06);
+    --shadow-md:0 10px 28px rgba(16,22,48,.10);
+    --shadow-lg:0 24px 60px rgba(10,14,32,.28);
+    --shadow-glow:0 8px 24px rgba(255,106,61,.28);
+    --ease:cubic-bezier(.22,.8,.36,1);
     --safe-b:env(safe-area-inset-bottom,0px);
     --safe-t:env(safe-area-inset-top,0px);
   }
   *{box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent;}
   html,body{height:100%;}
-  body{font-family:'Inter', sans-serif; background:var(--paper); color:var(--navy); min-height:100vh; font-size:14px; -webkit-font-smoothing:antialiased;}
-  h1,h2,h3,.display{font-family:'Space Grotesk', sans-serif;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:'Inter', sans-serif; color:var(--ink); min-height:100vh; font-size:14px;
+    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+    background:
+      radial-gradient(760px 420px at 100% -8%, rgba(124,92,252,.10), transparent 60%),
+      radial-gradient(700px 500px at -10% 0%, rgba(255,106,61,.09), transparent 55%),
+      var(--paper);
+    background-attachment:fixed;
+  }
+  h1,h2,h3,.display{font-family:'Space Grotesk', sans-serif; letter-spacing:-.01em;}
   .mono{font-family:'JetBrains Mono', monospace;}
   button{font-family:inherit;}
   a{color:inherit;}
-  ::-webkit-scrollbar{width:6px;} ::-webkit-scrollbar-thumb{background:#DEDBCF; border-radius:4px;}
-  :focus-visible{outline:2px solid var(--orange); outline-offset:2px; border-radius:4px;}
+  ::selection{background:rgba(255,106,61,.24); color:var(--ink);}
+  ::-webkit-scrollbar{width:8px; height:8px;} ::-webkit-scrollbar-thumb{background:#D7DBEA; border-radius:99px;} ::-webkit-scrollbar-thumb:hover{background:#C3C9DE;}
+  :focus-visible{outline:none; box-shadow:0 0 0 3px rgba(255,106,61,.35); border-radius:6px;}
   details > summary{cursor:pointer; list-style:none;}
   details > summary::-webkit-details-marker{display:none;}
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; scroll-behavior:auto !important;}
+  }
 
   /* ---------------- LOGIN GATE ---------------- */
-  #loginScreen{position:fixed; inset:0; background:radial-gradient(circle at 20% 15%, #1A2745 0%, var(--navy) 55%, #070B14 100%); z-index:2000; display:flex; align-items:center; justify-content:center; padding:16px;}
-  .login-card{background:var(--card); width:100%; max-width:360px; border-radius:20px; padding:26px 22px 24px; box-shadow:0 30px 70px rgba(0,0,0,.45);}
-  .login-brand{display:flex; align-items:center; gap:9px; font-family:'Space Grotesk'; font-weight:700; font-size:19px; margin-bottom:5px;}
-  .login-brand .dot{width:10px; height:10px; border-radius:50%; background:var(--orange); box-shadow:0 0 0 5px rgba(255,90,54,.18);}
-  .login-sub{font-size:12.5px; color:var(--slate); margin-bottom:20px;}
-  .field{margin-bottom:12px;}
-  .field label{display:block; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--slate); margin-bottom:6px;}
-  .field input, .field select{width:100%; border:1.5px solid #DEDBCF; border-radius:10px; padding:12px 13px; font-size:16px; background:#FBFAF6; font-family:'Inter'; -webkit-appearance:none;}
-  .field input:focus, .field select:focus{outline:2px solid var(--orange); outline-offset:1px; border-color:var(--orange);}
-  .login-err{font-size:12px; color:var(--danger); font-weight:600; margin:-4px 0 10px; display:none;}
+  #loginScreen{position:fixed; inset:0; background:var(--grad-navy); z-index:2000; display:flex; align-items:center; justify-content:center; padding:20px; overflow:hidden;}
+  #loginScreen::before{content:''; position:absolute; width:520px; height:520px; border-radius:50%; background:radial-gradient(circle, rgba(255,106,61,.35), transparent 70%); top:-160px; right:-140px; filter:blur(10px);}
+  #loginScreen::after{content:''; position:absolute; width:460px; height:460px; border-radius:50%; background:radial-gradient(circle, rgba(124,92,252,.30), transparent 70%); bottom:-160px; left:-140px; filter:blur(10px);}
+  .login-card{position:relative; background:var(--card); width:100%; max-width:380px; border-radius:24px; padding:32px 26px 28px; box-shadow:0 40px 90px rgba(0,0,0,.5); animation:loginRise .5s var(--ease);}
+  @keyframes loginRise{from{opacity:0; transform:translateY(16px) scale(.98);} to{opacity:1; transform:none;}}
+  .login-brand{display:flex; align-items:center; gap:10px; font-family:'Space Grotesk'; font-weight:700; font-size:21px; margin-bottom:6px;}
+  .login-brand .dot{width:11px; height:11px; border-radius:50%; background:var(--grad-brand); box-shadow:0 0 0 6px rgba(255,106,61,.16); animation:dotPulse 2.6s ease-in-out infinite;}
+  @keyframes dotPulse{0%,100%{box-shadow:0 0 0 6px rgba(255,106,61,.16);} 50%{box-shadow:0 0 0 9px rgba(255,106,61,.06);}}
+  .login-sub{font-size:12.5px; color:var(--ink-soft); margin-bottom:24px; font-weight:500;}
+  .field{margin-bottom:14px;}
+  .field label{display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-mute); margin-bottom:7px;}
+  .field input, .field select{width:100%; border:1.5px solid var(--line); border-radius:12px; padding:13px 14px; font-size:16px; background:var(--card-2); font-family:'Inter'; -webkit-appearance:none; transition:border-color .15s var(--ease), box-shadow .15s var(--ease);}
+  .field input:focus, .field select:focus{outline:none; border-color:var(--orange); box-shadow:0 0 0 4px rgba(255,106,61,.14);}
+  .login-err{font-size:12px; color:var(--danger); font-weight:600; margin:-6px 0 12px; display:none;}
   .login-err.show{display:block;}
-  .btn{border:none; border-radius:10px; padding:11px 14px; font-weight:700; font-size:13px; cursor:pointer; transition:transform .1s ease, opacity .15s ease, filter .12s ease; min-height:42px;}
-  .btn:active{transform:scale(.97);}
-  .btn-primary{background:var(--orange); color:white; width:100%; box-shadow:0 8px 20px rgba(255,90,54,.28);}
-  .btn-ghost{background:transparent; color:var(--navy); border:1.5px solid #DEDBCF;}
-  .btn-mint{background:var(--mint); color:white;}
-  .btn-danger{background:transparent; color:var(--danger); border:1.5px solid #F3D3D3;}
-  .btn-sm{padding:7px 11px; font-size:11.5px; min-height:34px;}
+  .btn{border:none; border-radius:12px; padding:12px 16px; font-weight:700; font-size:13px; cursor:pointer; transition:transform .12s var(--ease), opacity .15s var(--ease), filter .12s var(--ease), box-shadow .15s var(--ease); min-height:44px; letter-spacing:.005em;}
+  .btn:active{transform:scale(.96);}
+  .btn-primary{background:var(--grad-brand); color:white; width:100%; box-shadow:var(--shadow-glow);}
+  .btn-primary:hover{filter:brightness(1.06); box-shadow:0 12px 30px rgba(255,106,61,.36);}
+  .btn-ghost{background:var(--card); color:var(--ink); border:1.5px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--slate-light); background:var(--card-2);}
+  .btn-mint{background:var(--grad-mint); color:white; box-shadow:0 8px 20px rgba(19,191,139,.25);}
+  .btn-mint:hover{filter:brightness(1.05);}
+  .btn-danger{background:transparent; color:var(--danger); border:1.5px solid #FFD9DE;}
+  .btn-danger:hover{background:#FFF3F4;}
+  .btn-sm{padding:8px 12px; font-size:11.5px; min-height:36px;}
+  .btn:disabled{opacity:.4; cursor:default; transform:none !important;}
 
   /* ---------------- TOPBAR ---------------- */
-  #topbar{background:var(--navy); display:flex; align-items:center; justify-content:space-between; padding:9px 12px; padding-top:calc(9px + var(--safe-t)); color:white; gap:8px; flex-wrap:wrap; position:sticky; top:0; z-index:100;}
-  #topbar .brand{display:flex; align-items:center; gap:8px; font-family:'Space Grotesk'; font-weight:700; font-size:14.5px;}
-  #topbar .brand .dot{width:8px; height:8px; border-radius:50%; background:var(--orange); box-shadow:0 0 0 4px rgba(255,90,54,.2);}
+  #topbar{background:var(--grad-navy); display:flex; align-items:center; justify-content:space-between; padding:12px 16px; padding-top:calc(12px + var(--safe-t)); color:white; gap:10px; flex-wrap:wrap; position:sticky; top:0; z-index:100; box-shadow:0 6px 22px rgba(10,14,32,.22); backdrop-filter:saturate(140%);}
+  #topbar .brand{display:flex; align-items:center; gap:9px; font-family:'Space Grotesk'; font-weight:700; font-size:15.5px;}
+  #topbar .brand .dot{width:9px; height:9px; border-radius:50%; background:var(--grad-brand); box-shadow:0 0 0 5px rgba(255,106,61,.22); animation:dotPulse 2.6s ease-in-out infinite;}
   #topbar .brand-sub{display:none;}
-  #topbar-actions{display:flex; align-items:center; gap:6px; margin-left:auto; flex-wrap:wrap;}
-  #topbar-actions a, #topbar-actions button{font-size:11px; font-weight:700; color:var(--slate); background:transparent; border:1px solid var(--line-dark); padding:8px 10px; border-radius:8px; cursor:pointer; text-decoration:none; white-space:nowrap; min-height:34px;}
-  #topbar-actions a:hover, #topbar-actions button:hover{color:white; border-color:var(--slate);}
-  @media(min-width:560px){ #topbar .brand-sub{display:inline; font-size:11px; color:var(--slate); font-weight:600; padding-left:8px; border-left:1px solid var(--line-dark); margin-left:1px;} }
+  #topbar-actions{display:flex; align-items:center; gap:7px; margin-left:auto; flex-wrap:wrap;}
+  #topbar-actions a, #topbar-actions button{font-size:11.5px; font-weight:700; color:#C6CCE3; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14); padding:9px 12px; border-radius:10px; cursor:pointer; text-decoration:none; white-space:nowrap; min-height:36px; transition:all .15s var(--ease);}
+  #topbar-actions a:hover, #topbar-actions button:hover{color:white; border-color:rgba(255,255,255,.34); background:rgba(255,255,255,.12); transform:translateY(-1px);}
+  #topbar-actions #logoutBtn{border-color:rgba(255,77,99,.35); color:#FFB4BF;}
+  #topbar-actions #logoutBtn:hover{background:rgba(255,77,99,.14); border-color:rgba(255,77,99,.55);}
+  @media(min-width:560px){ #topbar .brand-sub{display:inline; font-size:11.5px; color:#9AA3C4; font-weight:600; padding-left:9px; border-left:1px solid rgba(255,255,255,.18); margin-left:1px;} }
 
   /* ---------------- LAYOUT ---------------- */
-  #main{max-width:820px; margin:0 auto; padding:12px 10px calc(50px + var(--safe-b));}
+  #main{max-width:1180px; margin:0 auto; padding:14px 12px calc(56px + var(--safe-b));}
+  @media (min-width:720px){ #main{padding:18px 20px calc(56px + var(--safe-b));} }
+  @media (min-width:1300px){ #main{max-width:1360px;} }
 
-  .toolbar{background:var(--card); border:1px solid #E4E1D6; border-radius:14px; padding:12px; margin-bottom:14px; box-shadow:var(--shadow-sm);}
-  .viewdate-row{display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; background:#FBFAF6; border:1.5px solid #EEECE2; border-radius:11px; padding:9px 10px;}
-  .viewdate-row label{font-size:11px; font-weight:700; color:var(--slate); text-transform:uppercase; letter-spacing:.03em; white-space:nowrap;}
-  .viewdate-row input[type=date]{border:1.5px solid #DEDBCF; border-radius:9px; padding:8px 9px; font-size:13.5px; background:white; flex:1; min-width:140px;}
-  .qd-btn{border:1.5px solid #DEDBCF; background:white; color:var(--navy); font-size:11px; font-weight:700; padding:8px 10px; border-radius:9px; cursor:pointer; white-space:nowrap;}
-  .qd-btn.active{background:var(--navy); color:white; border-color:var(--navy);}
+  /* ---------------- storage bar ---------------- */
+  .storage-bar{background:var(--card); border:1px solid var(--line); border-radius:var(--radius-lg); padding:13px 14px 12px; margin-bottom:14px; box-shadow:var(--shadow-sm);}
+  .storage-bar-row{display:flex; align-items:center; gap:9px; margin-bottom:9px;}
+  .storage-ic{font-size:15px; flex-shrink:0;}
+  .storage-text{flex:1; min-width:0; font-size:11.5px; color:var(--ink-soft); font-weight:600; line-height:1.4;}
+  .storage-text b{color:var(--ink); font-family:'JetBrains Mono'; font-weight:700;}
+  .storage-refresh{border:none; background:var(--card-2); color:var(--ink); width:32px; height:32px; border-radius:10px; font-size:14px; cursor:pointer; flex-shrink:0; transition:transform .35s var(--ease), background .15s var(--ease);}
+  .storage-refresh:hover{background:var(--line);}
+  .storage-refresh:active{transform:scale(.9) rotate(180deg);}
+  .storage-track{height:8px; border-radius:var(--radius-full); background:var(--line); overflow:hidden;}
+  .storage-fill{height:100%; width:0%; background:var(--grad-mint); border-radius:var(--radius-full); transition:width .5s var(--ease), background .3s ease;}
+  .storage-fill.warn{background:var(--grad-amber);}
+  .storage-fill.danger{background:linear-gradient(135deg,#FF6B7D,var(--danger));}
+  .storage-note{font-size:9.5px; color:var(--slate-light); margin-top:8px; line-height:1.5;}
 
-  .toolbar-row{display:flex; gap:7px; flex-wrap:wrap; margin-bottom:8px;}
-  .toolbar-row:last-child{margin-bottom:0;}
-  .search-row{position:relative; flex:1; min-width:160px;}
-  .search-row .search-ic{position:absolute; left:12px; top:50%; transform:translateY(-50%); font-size:13px; opacity:.55; pointer-events:none;}
-  .search-row input{width:100%; border:1.5px solid #DEDBCF; border-radius:10px; padding:10px 12px 10px 33px; font-size:13.5px; background:#FBFAF6; font-family:'Inter';}
-  .search-row input:focus{outline:2px solid var(--orange); outline-offset:1px; border-color:var(--orange);}
-  .toolbar select{border:1.5px solid #DEDBCF; border-radius:9px; padding:9px 8px; font-size:12px; background:#FBFAF6; min-height:38px; flex:1; min-width:110px;}
-  .stats-mini{display:flex; gap:12px; flex-wrap:wrap; font-size:11px; color:var(--slate); font-weight:600;}
-  .stats-mini b{color:var(--navy); font-family:'JetBrains Mono';}
+  /* ---------------- TOP CONTROL CARD ---------------- */
+  .ctrl-card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius-lg); padding:14px; margin-bottom:14px; box-shadow:var(--shadow-sm);}
+  .ctrl-row1{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:12px;}
+  .date-field{display:flex; align-items:center; gap:8px; background:var(--card-2); border:1.5px solid var(--line); border-radius:12px; padding:9px 12px; flex:1 1 200px; min-width:180px;}
+  .date-field label{font-size:10px; font-weight:700; color:var(--ink-mute); text-transform:uppercase; letter-spacing:.04em; white-space:nowrap;}
+  .date-field input[type=date]{border:none; background:transparent; font-size:14.5px; font-weight:700; font-family:'JetBrains Mono'; flex:1; min-width:0; padding:2px 0;}
+  .date-field input[type=date]:focus{outline:none;}
+
+  .shift-toggle{display:flex; background:var(--card-2); border:1.5px solid var(--line); border-radius:12px; padding:4px; gap:4px; flex:1 1 260px; min-width:220px;}
+  .shift-toggle button{flex:1; border:none; background:transparent; padding:9px 8px; border-radius:9px; font-size:12px; font-weight:700; color:var(--ink-soft); cursor:pointer; white-space:nowrap; transition:all .15s var(--ease);}
+  .shift-toggle button.active{color:white; box-shadow:var(--shadow-sm);}
+  .shift-toggle button[data-shift="morning"].active{background:linear-gradient(135deg,#FFB25E,var(--morning));}
+  .shift-toggle button[data-shift="evening"].active{background:linear-gradient(135deg,#9C82FF,var(--evening));}
+  .shift-toggle button[data-shift="all"].active{background:var(--grad-navy);}
+
+  .search-field{position:relative; flex:1 1 220px; min-width:180px;}
+  .search-field .search-ic{position:absolute; left:13px; top:50%; transform:translateY(-50%); font-size:13px; opacity:.55; pointer-events:none;}
+  .search-field input{width:100%; border:1.5px solid var(--line); border-radius:12px; padding:11px 13px 11px 35px; font-size:13.5px; background:var(--card-2); font-family:'Inter'; transition:border-color .15s var(--ease), box-shadow .15s var(--ease);}
+  .search-field input:focus{outline:none; border-color:var(--orange); box-shadow:0 0 0 4px rgba(255,106,61,.12);}
+
+  /* ---------------- boy tabs ---------------- */
+  .boy-tabs{display:flex; gap:8px; flex-wrap:wrap; justify-content:center; padding:4px 0 12px;}
+  .boy-tab{border:2px solid transparent; border-radius:var(--radius-full); padding:9px 18px; font-size:12px; font-weight:800; letter-spacing:.02em; cursor:pointer; color:white; text-transform:uppercase; transition:all .15s var(--ease); box-shadow:0 3px 10px rgba(16,22,48,.10);}
+  .boy-tab:hover{transform:translateY(-1px); filter:brightness(1.04);}
+  .boy-tab.active{border-color:rgba(16,22,48,.55); box-shadow:0 0 0 3px rgba(16,22,48,.14), 0 6px 16px rgba(16,22,48,.22);}
+  .boy-tab.all-tab{background:var(--grad-navy);}
+
+  /* ---------------- summary row: total load + actions ---------------- */
+  .summary-row{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; padding-top:8px; border-top:1px solid var(--line);}
+  .total-load{display:flex; align-items:center; gap:9px; font-weight:700; font-size:13px; color:var(--ink-soft);}
+  .total-load-badge{background:var(--grad-navy); color:white; font-family:'JetBrains Mono'; font-weight:700; font-size:12.5px; padding:7px 14px; border-radius:var(--radius-full);}
+  .summary-actions{display:flex; gap:9px; flex-wrap:wrap;}
+  .act-btn{display:flex; align-items:center; gap:7px; border-radius:12px; padding:10px 16px; font-weight:800; font-size:12.5px; cursor:pointer; border:1.5px solid transparent; transition:all .15s var(--ease);}
+  .act-btn:hover{transform:translateY(-1px);}
+  .act-btn.save{background:#E4FBF3; color:var(--mint-dark); border-color:#B9EAD4;}
+  .act-btn.save:hover{background:#D6F7EA;}
+  .act-btn.pdf{background:#FFEDEA; color:var(--danger-dark); border-color:#F7C2B8;}
+  .act-btn.pdf:hover{background:#FFE0DB;}
+
+  /* ---------------- filters (collapsible) ---------------- */
+  .more-filters{border-top:1px dashed var(--line); margin-top:12px; padding-top:10px;}
+  .more-filters summary{font-size:11.5px; font-weight:700; color:var(--ink-soft); display:flex; align-items:center; gap:6px; padding:2px;}
+  .more-filters summary:hover{color:var(--orange-dark);}
+  .more-filters summary .chev{margin-left:auto; transition:transform .18s var(--ease); font-size:10px;}
+  .more-filters[open] summary .chev{transform:rotate(90deg);}
+  .more-filters-body{padding-top:10px; animation:fadeIn .18s ease;}
+  @keyframes fadeIn{from{opacity:0;} to{opacity:1;}}
+  .filter-row{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:9px;}
+  .filter-row select{border:1.5px solid var(--line); border-radius:10px; padding:9px 9px; font-size:12px; background:var(--card-2); min-height:38px; flex:1; min-width:130px; cursor:pointer;}
+  .stats-mini{display:flex; gap:13px; flex-wrap:wrap; font-size:11px; color:var(--ink-soft); font-weight:600;}
+  .stats-mini b{color:var(--ink); font-family:'JetBrains Mono'; font-weight:700;}
   .stats-mini .mod-stat b{color:var(--mod);}
-
-  .boy-section{margin-bottom:20px;}
-  .boy-section-head{display:flex; align-items:center; gap:9px; margin-bottom:10px; flex-wrap:wrap;}
-  .boy-swatch-lg{width:12px; height:12px; border-radius:50%; flex-shrink:0;}
-  .boy-section-title{font-family:'Space Grotesk'; font-weight:700; font-size:16px;}
-  .boy-section-count{font-size:10.5px; color:var(--slate); font-family:'JetBrains Mono'; background:#EFEFF5; padding:3px 9px; border-radius:999px;}
-  .boy-section-pdf{margin-left:auto;}
-
-  .shift-block{margin-bottom:12px;}
-  .shift-block-head{display:flex; align-items:center; gap:8px; margin-bottom:8px; padding:8px 11px; border-radius:10px;}
-  .shift-block-head.morning{background:#FEF3E2; color:#8A5A0E;}
-  .shift-block-head.evening{background:#ECEBFB; color:#3F3AA3;}
-  .shift-block-head .lbl{font-weight:700; font-size:12px;}
-  .shift-block-head .cnt{font-size:10px; font-family:'JetBrains Mono'; opacity:.8; margin-left:auto;}
-
-  .cust-card{background:var(--card); border:1px solid #E4E1D6; border-radius:13px; padding:12px; margin-bottom:9px;}
-  .cust-card-top{display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:9px; flex-wrap:wrap;}
-  .cust-name-block .name{font-weight:700; font-size:14px;}
-  .cust-name-block .meta{font-size:11.5px; color:var(--slate); margin-top:2px; line-height:1.45;}
-  .zone-tag{display:inline-flex; align-items:center; gap:4px; font-size:10px; font-weight:700; padding:3px 8px; border-radius:999px; background:#EFEFF5; color:#5B6178; margin-top:5px;}
-  .zone-tag .sw{width:6px; height:6px; border-radius:50%;}
-  .status-tag{font-size:9.5px; font-family:'JetBrains Mono'; font-weight:700; padding:3px 8px; border-radius:6px; white-space:nowrap;}
-  .status-tag.pending{background:#FDECE5; color:var(--orange-dark);}
-  .status-tag.done{background:#E4F8F3; color:#1D9E86;}
-
-  .today-order-wrap{background:#FBFAF6; border:1px solid #EEECE2; border-radius:11px; padding:9px 10px; margin-bottom:9px;}
-  .today-order-wrap.has-mod{background:#FBF3FE; border-color:#EAD6F7;}
-  .today-order-label{font-size:9.5px; font-weight:700; color:var(--slate); text-transform:uppercase; letter-spacing:.05em; margin-bottom:7px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
-  .mod-badge{font-size:9px; font-weight:700; background:var(--mod); color:white; padding:2px 7px; border-radius:999px; letter-spacing:0;}
-  .save-flash{font-size:10px; font-weight:700; color:var(--mint-dark); opacity:0; transition:opacity .25s ease; margin-left:auto;}
-  .save-flash.show{opacity:1;}
-  .today-chips{display:flex; flex-wrap:wrap; gap:6px;}
-  .chip{font-size:11.5px; font-weight:700; padding:5px 10px; border-radius:999px; font-family:'JetBrains Mono';}
-  .chip-def{background:#E4F8F3; color:#1D9E86;}
-  .chip-mod{background:#F5E3FC; color:#8B3AB8;}
-  .today-note{font-size:12px; color:var(--navy); margin-top:7px; background:white; border:1px dashed #DEDBCF; border-radius:8px; padding:7px 9px; line-height:1.4;}
-  .no-order-hint{font-size:12px; color:var(--slate-light); font-style:italic;}
-
-  .editor-block{border-top:1px dashed #E4E1D6; margin-top:2px;}
-  .editor-block summary{display:flex; align-items:center; gap:7px; padding:9px 2px; font-size:12px; font-weight:700; color:var(--navy);}
-  .editor-block summary .chev{margin-left:auto; font-size:11px; color:var(--slate); transition:transform .15s ease;}
-  .editor-block[open] summary .chev{transform:rotate(90deg);}
-  .editor-body{padding:4px 2px 10px;}
-
-  .product-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin-bottom:9px;}
-  .product-field{background:#FBFAF6; border:1.5px solid #DEDBCF; border-radius:9px; padding:7px 4px; text-align:center;}
-  .product-field label{display:block; font-size:9px; font-weight:700; color:var(--slate); text-transform:uppercase; letter-spacing:.02em; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  .product-field input{width:100%; border:none; background:transparent; text-align:center; font-size:14.5px; font-weight:700; font-family:'JetBrains Mono'; padding:2px 0; color:var(--navy);}
-  .product-field input:focus{outline:none;}
-  .product-field.active-field{border-color:var(--orange);}
-  .product-field .unit{font-size:8px; color:var(--slate-light); margin-top:1px;}
-
-  .ov-date-row{display:flex; gap:6px; align-items:center; margin-bottom:9px; flex-wrap:wrap;}
-  .ov-date-row input[type=date]{flex:1; min-width:130px; border:1.5px solid #DEDBCF; border-radius:9px; padding:9px 10px; font-size:13.5px; background:#FBFAF6;}
-  .ov-status-line{font-size:11px; color:var(--slate); margin-bottom:8px; font-style:italic;}
-  .ov-status-line.is-mod{color:var(--mod); font-weight:700; font-style:normal;}
-  .ov-note-field{width:100%; border:1.5px solid #DEDBCF; border-radius:9px; padding:9px 10px; font-size:13px; background:#FBFAF6; margin-bottom:9px; font-family:'Inter';}
-  .ov-note-field:focus{outline:2px solid var(--orange); outline-offset:1px; border-color:var(--orange);}
-  .ov-btn-row{display:flex; gap:7px; margin-bottom:10px;}
-  .ov-btn-row .btn{flex:1;}
-
-  .ov-list-title{font-size:10px; font-weight:700; color:var(--slate); text-transform:uppercase; letter-spacing:.05em; margin:10px 0 6px;}
-  .ov-row{display:flex; align-items:center; gap:8px; padding:7px 0; border-bottom:1px solid #F0EEE4; font-size:11.5px;}
-  .ov-row:last-child{border-bottom:none;}
-  .ov-row-date{font-family:'JetBrains Mono'; font-weight:700; font-size:11px; background:#F5E3FC; color:#8B3AB8; padding:3px 7px; border-radius:6px; white-space:nowrap; flex-shrink:0;}
-  .ov-row-summary{flex:1; min-width:0; color:var(--navy); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-  .ov-row-actions{display:flex; gap:4px; flex-shrink:0;}
-  .ov-row-actions button{border:none; background:#F0EEE4; color:var(--navy); width:26px; height:26px; border-radius:7px; font-size:12px; cursor:pointer;}
-  .ov-row-actions button.del{background:#FBEFEF; color:var(--danger);}
-  .ov-empty-hint{font-size:11.5px; color:var(--slate-light); font-style:italic; padding:4px 0;}
-  .ov-past-details summary{font-size:11px; color:var(--slate); font-weight:700; padding:6px 0;}
-
-  .empty-shift{font-size:12px; color:var(--slate); padding:8px 4px; font-style:italic;}
-  .empty-state{text-align:center; color:var(--slate); font-size:13px; padding:44px 14px; line-height:1.6;}
-
-  /* ---------------- delivery status (checklist result from the delivery boy's phone) ---------------- */
-  .delivery-status-wrap{border-radius:11px; padding:9px 10px; margin-bottom:9px; border:1px solid #E4E1D6; background:#F6F5F0;}
-  .delivery-status-wrap.full{background:#E4F8F3; border-color:#B9E8DC;}
-  .delivery-status-wrap.partial{background:#FFF3E0; border-color:#F5D9A8;}
-  .delivery-status-wrap.missed{background:#FDECE5; border-color:#F5C4B0;}
-  .delivery-status-label{font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-bottom:7px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
-  .delivery-status-chips{display:flex; flex-wrap:wrap; gap:6px;}
-  .dchip{font-size:11px; font-weight:700; padding:4px 9px; border-radius:999px; font-family:'JetBrains Mono';}
-  .dchip.ok{background:#E4F8F3; color:#1D9E86;}
-  .dchip.miss{background:#FDECE5; color:var(--orange-dark); text-decoration:line-through;}
-  .delivery-status-meta{font-size:10.5px; color:var(--slate); margin-top:7px;}
   .stats-mini .miss-stat b{color:var(--danger);}
-  .stats-mini .full-stat b{color:#1D9E86;}
+  .stats-mini .full-stat b{color:var(--mint-dark);}
   .stats-mini .partial-stat b{color:#8A5A0E;}
 
-  .toast{position:fixed; bottom:calc(20px + var(--safe-b)); left:50%; transform:translateX(-50%); background:var(--navy); color:white; padding:11px 18px; border-radius:10px; font-size:13px; font-weight:600; z-index:2200; box-shadow:var(--shadow-lg); display:none; max-width:88vw; text-align:center;}
-  .toast.show{display:block;}
+  /* ---------------- product summary tiles ---------------- */
+  .tiles-row{display:grid; grid-template-columns:repeat(6,1fr); gap:10px; margin-bottom:14px;}
+  @media (max-width:820px){ .tiles-row{grid-template-columns:repeat(3,1fr);} }
+  @media (max-width:420px){ .tiles-row{grid-template-columns:repeat(2,1fr);} }
+  .tile{background:var(--card); border:1.5px solid var(--line); border-radius:var(--radius); padding:14px 10px; text-align:center; box-shadow:var(--shadow-sm);}
+  .tile .tile-label{font-size:10.5px; font-weight:800; letter-spacing:.05em; text-transform:uppercase; margin-bottom:6px;}
+  .tile .tile-val{font-family:'JetBrains Mono'; font-weight:700; font-size:21px; color:var(--ink);}
+  .tile.milk{border-color:#CFE0FB;} .tile.milk .tile-label{color:var(--p-milk);}
+  .tile.paneer{border-color:#C7EBD9;} .tile.paneer .tile-label{color:var(--p-paneer);}
+  .tile.ghee{border-color:#F5E3AE;} .tile.ghee .tile-label{color:var(--p-ghee);}
+  .tile.chach{border-color:#F6D2BC;} .tile.chach .tile-label{color:var(--p-chach);}
+  .tile.butter{border-color:#D7DAE1;} .tile.butter .tile-label{color:var(--p-butter);}
+  .tile.curd{border-color:#E2D4FB;} .tile.curd .tile-label{color:var(--p-curd);}
 
-  /* ---------------- DB storage usage bar ---------------- */
-  .storage-bar{background:var(--card); border:1px solid #E4E1D6; border-radius:14px; padding:11px 12px 10px; margin-bottom:14px; box-shadow:var(--shadow-sm);}
-  .storage-bar-row{display:flex; align-items:center; gap:8px; margin-bottom:8px;}
-  .storage-ic{font-size:14px; flex-shrink:0;}
-  .storage-text{flex:1; min-width:0; font-size:11.5px; color:var(--slate); font-weight:600; line-height:1.4;}
-  .storage-text b{color:var(--navy); font-family:'JetBrains Mono'; font-weight:700;}
-  .storage-refresh{border:none; background:#F0EEE4; color:var(--navy); width:30px; height:30px; border-radius:9px; font-size:14px; cursor:pointer; flex-shrink:0; transition:transform .15s ease;}
-  .storage-refresh:active{transform:scale(.9) rotate(180deg);}
-  .storage-track{height:7px; border-radius:999px; background:#EEECE2; overflow:hidden;}
-  .storage-fill{height:100%; width:0%; background:var(--mint); border-radius:999px; transition:width .5s ease, background .3s ease;}
-  .storage-fill.warn{background:var(--morning);}
-  .storage-fill.danger{background:var(--danger);}
-  .storage-note{font-size:9.5px; color:var(--slate-light); margin-top:7px; line-height:1.45;}
+  /* ---------------- order table ---------------- */
+  .table-scroll{overflow-x:auto; -webkit-overflow-scrolling:touch; background:var(--card); border:1px solid var(--line); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm);}
+  .order-grid{min-width:940px;}
+  .order-head, .order-row{display:grid; grid-template-columns:26px minmax(200px,1.5fr) 116px repeat(6,64px) 14px 150px; align-items:center; gap:8px; padding:11px 14px;}
+  .order-head{font-size:9.5px; font-weight:800; color:var(--ink-mute); text-transform:uppercase; letter-spacing:.04em; border-bottom:1.5px solid var(--line); position:sticky; top:0; background:var(--card); z-index:2;}
+  .order-head span{text-align:center;}
+  .order-head .oh-name{text-align:left;}
+  .order-row{border-bottom:1px solid var(--line); transition:background .15s var(--ease);}
+  .order-row:last-child{border-bottom:none;}
+  .order-row:hover{background:var(--card-2);}
+  .drag-handle{color:var(--slate-light); font-size:14px; cursor:grab; text-align:center; user-select:none;}
+  .row-name-main{font-weight:700; font-size:13.5px; font-family:'Space Grotesk'; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .row-name-sub{font-size:10.5px; color:var(--ink-soft); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .boy-chip{font-size:9.5px; font-weight:800; text-transform:uppercase; letter-spacing:.02em; padding:5px 9px; border-radius:var(--radius-full); border:1.5px solid; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .qty-cell{width:100%; border:1.5px solid transparent; background:var(--card-2); border-radius:9px; text-align:center; font-family:'JetBrains Mono'; font-weight:700; font-size:13px; padding:7px 2px; color:var(--ink); transition:border-color .15s var(--ease), background .15s var(--ease);}
+  .qty-cell::placeholder{color:var(--slate-light); font-weight:700;}
+  .qty-cell:focus{outline:none; border-color:var(--orange); background:white; box-shadow:0 0 0 3px rgba(255,106,61,.12);}
+  .qty-cell.mod-cell{background:#F5E1FF; color:var(--mod-dark);}
+  .row-status-dot{width:9px; height:9px; border-radius:50%; margin:0 auto;}
+  .row-status-dot.ok{background:var(--mint);}
+  .row-status-dot.pending{background:var(--slate-light);}
+  .row-actions{display:flex; gap:6px; justify-content:flex-end;}
+  .ract-btn{width:30px; height:30px; border-radius:9px; border:none; cursor:pointer; font-size:13px; display:flex; align-items:center; justify-content:center; transition:transform .12s var(--ease), filter .12s var(--ease);}
+  .ract-btn:hover{transform:translateY(-1px); filter:brightness(1.05);}
+  .ract-btn.cal{background:#FFE9C7; color:#9A5B00;}
+  .ract-btn.edit{background:#DCE3FF; color:#2F3FA8;}
+  .ract-btn.del{background:#FFDCE1; color:var(--danger-dark);}
+  .ract-btn.del:disabled{background:#F1F2F7; color:var(--slate-light); cursor:default;}
+  .ract-btn.hist{background:#E7E9F3; color:var(--ink-soft);}
+  .empty-state{text-align:center; color:var(--ink-soft); font-size:13.5px; padding:56px 16px; line-height:1.7;}
 
-  /* ---------------- delivery record delete action ---------------- */
-  .delivery-status-actions{margin-top:8px; display:flex; justify-content:flex-end;}
-  .del-dlog-btn{white-space:nowrap;}
+  /* ---------------- toast ---------------- */
+  .toast{position:fixed; bottom:calc(22px + var(--safe-b)); left:50%; transform:translateX(-50%); background:var(--grad-navy); color:white; padding:12px 20px; border-radius:12px; font-size:13px; font-weight:600; z-index:2200; box-shadow:var(--shadow-lg); display:none; max-width:88vw; text-align:center;}
+  .toast.show{display:block; animation:toastIn .22s var(--ease);}
+  @keyframes toastIn{from{opacity:0; transform:translate(-50%,10px);} to{opacity:1; transform:translate(-50%,0);}}
 
-  /* ---------------- per-card top action row ---------------- */
-  .cust-card-actions{margin-bottom:9px;}
-  .cust-card-actions .btn{width:100%;}
-
-  /* ---------------- monthly history modal ---------------- */
+  /* ---------------- generic modal (reused for month-history / default-qty / date-modify) ---------------- */
   body.modal-open{overflow:hidden;}
-  .month-modal-overlay{position:fixed; inset:0; background:rgba(9,13,24,.58); z-index:3000; display:none; align-items:flex-end; justify-content:center; padding:0;}
-  .month-modal-overlay.show{display:flex;}
-  .month-modal{background:var(--paper); width:100%; max-width:640px; max-height:92vh; border-radius:20px 20px 0 0; display:flex; flex-direction:column; overflow:hidden; box-shadow:var(--shadow-lg); animation:mmSlideUp .22s ease;}
-  @keyframes mmSlideUp{from{transform:translateY(24px); opacity:.4;} to{transform:translateY(0); opacity:1;}}
+  .modal-overlay{position:fixed; inset:0; background:rgba(8,11,24,.62); backdrop-filter:blur(2px); z-index:3000; display:none; align-items:flex-end; justify-content:center; padding:0;}
+  .modal-overlay.show{display:flex;}
+  .modal-panel{background:var(--paper); width:100%; max-width:660px; max-height:92vh; border-radius:24px 24px 0 0; display:flex; flex-direction:column; overflow:hidden; box-shadow:var(--shadow-lg); animation:mmSlideUp .26s var(--ease);}
+  @keyframes mmSlideUp{from{transform:translateY(28px); opacity:.3;} to{transform:translateY(0); opacity:1;}}
   @media(min-width:640px){
-    .month-modal-overlay{align-items:center; padding:20px;}
-    .month-modal{border-radius:18px; max-height:88vh;}
+    .modal-overlay{align-items:center; padding:22px;}
+    .modal-panel{border-radius:20px; max-height:88vh;}
   }
-  .month-modal-head{background:var(--navy); color:white; padding:16px 46px 14px 16px; position:relative; flex-shrink:0;}
-  .mm-close{position:absolute; top:12px; right:12px; background:rgba(255,255,255,.12); border:none; color:white; width:32px; height:32px; border-radius:9px; font-size:15px; cursor:pointer;}
-  .mm-close:active{transform:scale(.92);}
-  .mm-title{font-family:'Space Grotesk'; font-weight:700; font-size:17px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-  .mm-sub{font-size:11.5px; color:var(--slate); margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
-  .mm-month-nav{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:11px 14px; background:var(--card); border-bottom:1px solid #EEECE2; flex-shrink:0;}
-  .mm-month-nav button{border:1.5px solid #DEDBCF; background:#FBFAF6; width:36px; height:36px; border-radius:10px; font-size:15px; cursor:pointer; font-weight:700; flex-shrink:0;}
+  .modal-head{background:var(--grad-navy); color:white; padding:18px 48px 16px 18px; position:relative; flex-shrink:0;}
+  .modal-close{position:absolute; top:13px; right:13px; background:rgba(255,255,255,.12); border:none; color:white; width:34px; height:34px; border-radius:10px; font-size:15px; cursor:pointer; transition:background .15s var(--ease);}
+  .modal-close:hover{background:rgba(255,255,255,.22);}
+  .modal-close:active{transform:scale(.92);}
+  .modal-title{font-family:'Space Grotesk'; font-weight:700; font-size:18px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .modal-sub{font-size:11.5px; color:#A9B0CC; margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .modal-body{flex:1; overflow-y:auto; padding:14px 16px calc(18px + var(--safe-b)); -webkit-overflow-scrolling:touch;}
+
+  .product-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:10px;}
+  .product-field{background:var(--card); border:1.5px solid var(--line); border-radius:11px; padding:8px 4px; text-align:center; transition:border-color .15s var(--ease);}
+  .product-field label{display:block; font-size:9px; font-weight:700; color:var(--ink-mute); text-transform:uppercase; letter-spacing:.02em; margin-bottom:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .product-field input{width:100%; border:none; background:transparent; text-align:center; font-size:15px; font-weight:700; font-family:'JetBrains Mono'; padding:2px 0; color:var(--ink);}
+  .product-field input:focus{outline:none;}
+  .product-field .unit{font-size:8px; color:var(--slate-light); margin-top:1px; font-weight:600;}
+
+  .ov-date-row{display:flex; gap:7px; align-items:center; margin-bottom:10px; flex-wrap:wrap;}
+  .ov-date-row input[type=date]{flex:1; min-width:130px; border:1.5px solid var(--line); border-radius:10px; padding:9px 10px; font-size:13.5px; background:var(--card);}
+  .ov-status-line{font-size:11px; color:var(--ink-soft); margin-bottom:9px; font-style:italic;}
+  .ov-status-line.is-mod{color:var(--mod-dark); font-weight:700; font-style:normal;}
+  .ov-note-field{width:100%; border:1.5px solid var(--line); border-radius:10px; padding:10px 11px; font-size:13px; background:var(--card); margin-bottom:10px; font-family:'Inter'; transition:border-color .15s var(--ease), box-shadow .15s var(--ease);}
+  .ov-note-field:focus{outline:none; border-color:var(--orange); box-shadow:0 0 0 4px rgba(255,106,61,.12);}
+  .ov-btn-row{display:flex; gap:8px; margin-bottom:11px;}
+  .ov-btn-row .btn{flex:1;}
+
+  .ov-list-title{font-size:10px; font-weight:700; color:var(--ink-mute); text-transform:uppercase; letter-spacing:.05em; margin:11px 0 7px;}
+  .ov-row{display:flex; align-items:center; gap:8px; padding:8px 0; border-bottom:1px solid var(--line); font-size:11.5px;}
+  .ov-row:last-child{border-bottom:none;}
+  .ov-row-date{font-family:'JetBrains Mono'; font-weight:700; font-size:11px; background:#F5E1FF; color:var(--mod-dark); padding:4px 8px; border-radius:8px; white-space:nowrap; flex-shrink:0;}
+  .ov-row-summary{flex:1; min-width:0; color:var(--ink); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .ov-row-actions{display:flex; gap:5px; flex-shrink:0;}
+  .ov-row-actions button{border:none; background:var(--card-2); color:var(--ink); width:28px; height:28px; border-radius:8px; font-size:12px; cursor:pointer; transition:background .15s var(--ease);}
+  .ov-row-actions button:hover{background:var(--line);}
+  .ov-row-actions button.del{background:#FFEBEE; color:var(--danger);}
+  .ov-row-actions button.del:hover{background:#FFD9DE;}
+  .ov-empty-hint{font-size:11.5px; color:var(--slate-light); font-style:italic; padding:4px 0;}
+  .ov-past-details summary{font-size:11px; color:var(--ink-soft); font-weight:700; padding:7px 0;}
+  .no-order-hint{font-size:12px; color:var(--ink-mute); font-style:italic;}
+
+  .delivery-status-wrap{border-radius:var(--radius); padding:11px 12px; margin-bottom:10px; border:1px solid var(--line); background:var(--card);}
+  .delivery-status-wrap.full{background:linear-gradient(135deg,#E4FBF3,#D6F7EA); border-color:#B9EAD4;}
+  .delivery-status-wrap.partial{background:linear-gradient(135deg,#FFF4E2,#FFECCE); border-color:#F5D8A0;}
+  .delivery-status-wrap.missed{background:linear-gradient(135deg,#FFEDEA,#FFE0DB); border-color:#F7C2B8;}
+  .delivery-status-label{font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+  .delivery-status-chips{display:flex; flex-wrap:wrap; gap:7px;}
+  .dchip{font-size:11px; font-weight:700; padding:5px 10px; border-radius:var(--radius-full); font-family:'JetBrains Mono';}
+  .dchip.ok{background:#D9F7EC; color:var(--mint-dark);}
+  .dchip.miss{background:#FFE3DD; color:var(--orange-dark); text-decoration:line-through;}
+  .delivery-status-meta{font-size:10.5px; color:var(--ink-soft); margin-top:8px;}
+  .delivery-status-actions{margin-top:9px; display:flex; justify-content:flex-end;}
+
+  .modal-section-title{font-size:10px; font-weight:700; color:var(--ink-mute); text-transform:uppercase; letter-spacing:.05em; margin:14px 0 7px;}
+  .modal-section-title:first-child{margin-top:0;}
+  .link-btn{background:none; border:none; color:var(--orange-dark); font-weight:700; font-size:12px; cursor:pointer; padding:4px 0;}
+  .link-btn:hover{text-decoration:underline;}
+
+  /* ---------------- month history modal specifics ---------------- */
+  .mm-month-nav{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 15px; background:var(--card); border-bottom:1px solid var(--line); flex-shrink:0;}
+  .mm-month-nav button{border:1.5px solid var(--line); background:var(--card-2); width:38px; height:38px; border-radius:11px; font-size:15px; cursor:pointer; font-weight:700; flex-shrink:0; transition:all .15s var(--ease);}
+  .mm-month-nav button:hover:not(:disabled){border-color:var(--orange); color:var(--orange-dark);}
   .mm-month-nav button:active{transform:scale(.94);}
-  .mm-month-nav button:disabled{opacity:.35; cursor:default;}
-  .mm-month-label{font-family:'Space Grotesk'; font-weight:700; font-size:14.5px; text-align:center; flex:1;}
-  .mm-stats{display:grid; grid-template-columns:repeat(5,1fr); gap:6px; padding:11px 12px; background:var(--card); border-bottom:1px solid #EEECE2; flex-shrink:0;}
-  .mm-stat{text-align:center; background:#FBFAF6; border-radius:10px; padding:8px 3px;}
-  .mm-stat b{display:block; font-family:'JetBrains Mono'; font-size:15.5px; color:var(--navy); line-height:1.2;}
-  .mm-stat span{font-size:8px; color:var(--slate); text-transform:uppercase; letter-spacing:.01em; display:block; margin-top:2px; line-height:1.3;}
-  .mm-stat.ok b{color:#1D9E86;}
+  .mm-month-nav button:disabled{opacity:.32; cursor:default;}
+  .mm-month-label{font-family:'Space Grotesk'; font-weight:700; font-size:15px; text-align:center; flex:1;}
+  .mm-stats{display:grid; grid-template-columns:repeat(5,1fr); gap:7px; padding:12px 13px; background:var(--card); border-bottom:1px solid var(--line); flex-shrink:0;}
+  .mm-stat{text-align:center; background:var(--card-2); border-radius:12px; padding:9px 3px;}
+  .mm-stat b{display:block; font-family:'JetBrains Mono'; font-size:16px; color:var(--ink); line-height:1.2;}
+  .mm-stat span{font-size:8px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.01em; display:block; margin-top:3px; line-height:1.3; font-weight:600;}
+  .mm-stat.ok b{color:var(--mint-dark);}
   .mm-stat.partial b{color:#8A5A0E;}
   .mm-stat.miss b{color:var(--danger);}
-  .mm-days{flex:1; overflow-y:auto; padding:8px 12px calc(16px + var(--safe-b)); -webkit-overflow-scrolling:touch;}
-  .mm-day-row{display:flex; gap:10px; padding:10px 6px; border-bottom:1px solid #F0EEE4;}
-  .mm-day-row.is-today{background:#FDECE5; border-radius:10px; border-bottom-color:transparent;}
-  .mm-day-row.is-future{opacity:.5;}
-  .mm-day-date{flex-shrink:0; width:36px; text-align:center; font-family:'JetBrains Mono'; font-weight:700; font-size:15px; padding-top:2px; color:var(--navy);}
-  .mm-day-dow{display:block; font-size:8px; font-weight:700; color:var(--slate); text-transform:uppercase; margin-top:1px; letter-spacing:.03em;}
+  .mm-days{flex:1; overflow-y:auto; padding:9px 13px calc(18px + var(--safe-b)); -webkit-overflow-scrolling:touch;}
+  .mm-day-row{display:flex; gap:11px; padding:11px 7px; border-bottom:1px solid var(--line);}
+  .mm-day-row.is-today{background:#FFEEE8; border-radius:12px; border-bottom-color:transparent;}
+  .mm-day-row.is-future{opacity:.48;}
+  .mm-day-date{flex-shrink:0; width:38px; text-align:center; font-family:'JetBrains Mono'; font-weight:700; font-size:15.5px; padding-top:2px; color:var(--ink);}
+  .mm-day-dow{display:block; font-size:8px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; margin-top:1px; letter-spacing:.03em;}
   .mm-day-body{flex:1; min-width:0;}
-  .mm-day-sec{margin-bottom:6px;}
+  .mm-day-sec{margin-bottom:7px;}
   .mm-day-sec:last-child{margin-bottom:0;}
   .mm-day-lbl{font-size:8.5px; font-weight:700; color:var(--slate-light); text-transform:uppercase; letter-spacing:.04em; margin-right:6px;}
-  .mm-chip{display:inline-block; font-size:10px; font-weight:700; padding:3px 7px; border-radius:999px; font-family:'JetBrains Mono'; margin:1px 3px 1px 0;}
-  .mm-chip.ord{background:#EFEFF5; color:#5B6178;}
-  .mm-chip.del-ok{background:#E4F8F3; color:#1D9E86;}
-  .mm-chip.del-miss{background:#FDECE5; color:var(--orange-dark);}
-  .mm-chip.future{background:#EFEFF5; color:var(--slate);}
-  .mm-chip.empty{background:#F6F5F0; color:var(--slate-light);}
-  .mm-note{font-size:10.5px; color:var(--navy); margin-top:4px; font-style:italic;}
-  .mm-empty{text-align:center; color:var(--slate); font-size:12.5px; padding:30px 14px;}
+  .mm-chip{display:inline-block; font-size:10px; font-weight:700; padding:4px 8px; border-radius:var(--radius-full); font-family:'JetBrains Mono'; margin:2px 3px 2px 0;}
+  .mm-chip.ord{background:#EEF0FA; color:#5B6178;}
+  .mm-chip.del-ok{background:#D9F7EC; color:var(--mint-dark);}
+  .mm-chip.del-miss{background:#FFE3DD; color:var(--orange-dark);}
+  .mm-chip.future{background:#EEF0FA; color:var(--ink-mute);}
+  .mm-chip.empty{background:var(--paper); color:var(--slate-light);}
+  .mm-note{font-size:10.5px; color:var(--ink); margin-top:5px; font-style:italic;}
+  .mm-empty{text-align:center; color:var(--ink-soft); font-size:12.5px; padding:32px 15px;}
 
   @media (max-width:480px){
-    .toolbar select{flex:1 1 calc(50% - 4px); min-width:0;}
-    .stats-mini{gap:8px; font-size:10px;}
-    .cust-card{padding:11px;}
-    .mm-stats{grid-template-columns:repeat(5,1fr); gap:4px; padding:9px 8px;}
-    .mm-stat{padding:6px 2px;}
-    .mm-stat b{font-size:13px;}
+    .mm-stats{grid-template-columns:repeat(5,1fr); gap:5px; padding:10px 9px;}
+    .mm-stat{padding:7px 2px;}
+    .mm-stat b{font-size:13.5px;}
     .mm-stat span{font-size:7px;}
-  }
-  @media (max-width:380px){
-    .product-field label{font-size:8px;}
-    .product-field input{font-size:13px;}
-    #topbar .brand{font-size:13px;}
-  }
-  @media (max-width:340px){
-    .product-grid{grid-template-columns:repeat(2,1fr);}
-    #topbar-actions a, #topbar-actions button{padding:7px 8px; font-size:9.5px;}
-    .mm-stats{grid-template-columns:repeat(3,1fr);}
   }
 </style>
 </head>
@@ -283,8 +351,7 @@
   <div class="brand"><span class="dot"></span> RouteBoy <span class="brand-sub">Order Chart</span></div>
   <div id="topbar-actions">
     <a href="./index.html">← Dashboard</a>
-    <button id="downloadAllBtn">⬇️ Full PDF</button>
-    <button id="downloadViewBtn">⬇️ View PDF</button>
+    <button id="downloadAllBtn">⬇️ Full Summary PDF</button>
     <button id="logoutBtn">Logout</button>
   </div>
 </div>
@@ -298,64 +365,86 @@
       <button class="storage-refresh" id="storageRefreshBtn" title="Refresh storage check">⟳</button>
     </div>
     <div class="storage-track"><div class="storage-fill" id="storageFill"></div></div>
-    <div class="storage-note">Estimated from the current size of your database (Firebase's client SDK doesn't expose exact billing figures). Free "Spark" plan limit shown — check the Firebase Console → Usage tab for official numbers.</div>
+    <div class="storage-note">Estimated from the current size of your database. Free "Spark" plan limit shown — check the Firebase Console → Usage tab for official numbers.</div>
   </div>
 
-  <div class="toolbar">
-    <div class="viewdate-row">
-      <label>📅 Chart for</label>
-      <input type="date" id="viewDateInput">
-      <button class="qd-btn" id="qdYesterday">Yesterday</button>
-      <button class="qd-btn" id="qdToday">Today</button>
-      <button class="qd-btn" id="qdTomorrow">Tomorrow</button>
-    </div>
-    <div class="toolbar-row">
-      <div class="search-row">
+  <div class="ctrl-card">
+    <div class="ctrl-row1">
+      <div class="date-field">
+        <label>📅 Date</label>
+        <input type="date" id="viewDateInput">
+      </div>
+      <div class="shift-toggle" id="shiftToggle">
+        <button data-shift="morning">⚙️ Morning</button>
+        <button data-shift="evening">🌙 Evening</button>
+        <button data-shift="all">Both</button>
+      </div>
+      <div class="search-field">
         <span class="search-ic">🔍</span>
-        <input id="searchInput" type="text" placeholder="Search customer, address, phone…">
+        <input id="searchInput" type="text" placeholder="Search Name…">
       </div>
     </div>
-    <div class="toolbar-row">
-      <select id="filterBoy"><option value="all">All delivery boys</option></select>
-      <select id="filterShift">
-        <option value="all">Morning + Evening</option>
-        <option value="morning">🌅 Morning</option>
-        <option value="evening">🌆 Evening</option>
-      </select>
-      <select id="filterZone"><option value="all">All zones</option></select>
-      <select id="filterMod">
-        <option value="all">All customers</option>
-        <option value="mod">📅 Modified this date only</option>
-        <option value="unset">⚠️ No quantities set</option>
-      </select>
+
+    <div class="boy-tabs" id="boyTabs">
+      <button class="boy-tab all-tab active" data-boy="all">All Boys</button>
     </div>
-    <div class="toolbar-row">
-      <div class="stats-mini">
-        <span><b id="statTotal">0</b> shown</span>
-        <span class="mod-stat"><b id="statMod">0</b> modified this date</span>
-        <span><b id="statUnset">0</b> not set up</span>
+
+    <div class="summary-row">
+      <div class="total-load">Total Load: <span class="total-load-badge"><b id="totalLoadNum">0</b> Orders</span></div>
+      <div class="summary-actions">
+        <button class="act-btn save" id="saveRecordBtn">💾 Save Record</button>
+        <button class="act-btn pdf" id="getPdfBtn">📄 Get PDF</button>
       </div>
     </div>
-    <div class="toolbar-row">
-      <div class="stats-mini">
-        <span class="full-stat">✅ <b id="statDeliveredFull">0</b> fully delivered</span>
-        <span class="partial-stat">⚠️ <b id="statDeliveredPartial">0</b> partially delivered</span>
-        <span class="miss-stat">❌ <b id="statMissed">0</b> fully missed</span>
-        <span>➖ <b id="statNoRecord">0</b> no record</span>
+
+    <details class="more-filters">
+      <summary>⚙️ More filters &amp; stats <span class="chev">▸</span></summary>
+      <div class="more-filters-body">
+        <div class="filter-row">
+          <select id="filterZone"><option value="all">All zones</option></select>
+          <select id="filterMod">
+            <option value="all">All customers</option>
+            <option value="mod">📅 Modified this date only</option>
+            <option value="unset">⚠️ No quantities set</option>
+          </select>
+        </div>
+        <div class="filter-row">
+          <div class="stats-mini">
+            <span><b id="statTotal">0</b> shown</span>
+            <span class="mod-stat"><b id="statMod">0</b> modified this date</span>
+            <span><b id="statUnset">0</b> not set up</span>
+          </div>
+        </div>
+        <div class="filter-row">
+          <div class="stats-mini">
+            <span class="full-stat">✅ <b id="statDeliveredFull">0</b> fully delivered</span>
+            <span class="partial-stat">⚠️ <b id="statDeliveredPartial">0</b> partially delivered</span>
+            <span class="miss-stat">❌ <b id="statMissed">0</b> fully missed</span>
+            <span>➖ <b id="statNoRecord">0</b> no record</span>
+          </div>
+        </div>
       </div>
-    </div>
+    </details>
   </div>
 
-  <div id="chartWrap"></div>
+  <div class="tiles-row" id="tilesRow"></div>
+
+  <div class="table-scroll">
+    <div class="order-grid">
+      <div class="order-head" id="orderHead"></div>
+      <div id="chartWrap"></div>
+    </div>
+  </div>
 
 </div>
 
-<div class="month-modal-overlay" id="monthModalOverlay">
-  <div class="month-modal">
-    <div class="month-modal-head">
-      <button class="mm-close" id="mmCloseBtn">✕</button>
-      <div class="mm-title" id="mmCustName">Customer</div>
-      <div class="mm-sub" id="mmCustMeta"></div>
+<!-- month history modal -->
+<div class="modal-overlay" id="monthModalOverlay">
+  <div class="modal-panel">
+    <div class="modal-head">
+      <button class="modal-close" id="mmCloseBtn">✕</button>
+      <div class="modal-title" id="mmCustName">Customer</div>
+      <div class="modal-sub" id="mmCustMeta"></div>
     </div>
     <div class="mm-month-nav">
       <button id="mmPrevBtn">◂</button>
@@ -364,6 +453,37 @@
     </div>
     <div class="mm-stats" id="mmStats"></div>
     <div class="mm-days" id="mmDays"></div>
+  </div>
+</div>
+
+<!-- default (recurring) quantities modal -->
+<div class="modal-overlay" id="defaultModalOverlay">
+  <div class="modal-panel">
+    <div class="modal-head">
+      <button class="modal-close" id="defCloseBtn">✕</button>
+      <div class="modal-title" id="defCustName">Customer</div>
+      <div class="modal-sub">✏️ Set daily default (recurring) quantities</div>
+    </div>
+    <div class="modal-body">
+      <div class="product-grid" id="defGrid"></div>
+      <div class="field" style="margin:0 0 10px;">
+        <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-mute);margin-bottom:7px;display:block;">Default note (e.g. "leave near gate")</label>
+        <input type="text" class="ov-note-field" id="defNote" style="margin-bottom:0;">
+      </div>
+      <button class="btn btn-mint save-def-btn" id="defSaveBtn" style="width:100%;">💾 Save defaults</button>
+    </div>
+  </div>
+</div>
+
+<!-- date-specific modify / delivery-status modal -->
+<div class="modal-overlay" id="dateModalOverlay">
+  <div class="modal-panel">
+    <div class="modal-head">
+      <button class="modal-close" id="dateCloseBtn">✕</button>
+      <div class="modal-title" id="dateCustName">Customer</div>
+      <div class="modal-sub" id="dateCustMeta"></div>
+    </div>
+    <div class="modal-body" id="dateModalBody"></div>
   </div>
 </div>
 
@@ -377,9 +497,6 @@ import {
   getDatabase, ref, set, update, remove, onValue, get
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-// Same Firebase project as index.html — adds "defaultProducts" (daily
-// standing quantities) and "overrides" (date-specific one-off quantities)
-// fields onto each existing customer record.
 const firebaseConfig = {
   apiKey: "AIzaSyA4q2qD7K7o5yN5v9H9jSIvWsTPWlAvurY",
   authDomain: "delivry-tracking-system.firebaseapp.com",
@@ -395,14 +512,15 @@ const db = getDatabase(app);
 
 const ADMIN_PASSWORD = 'admin123';
 
-// Fixed product list. "note" is handled separately as free text, not a quantity.
+// Fixed product list — order matches the summary tiles (Milk, Paneer, Ghee, Chaach, Butter, Curd).
+// Keys are unchanged from the original data model so existing Firebase records keep working.
 const PRODUCTS = [
-  { key:'milk',   label:'Milk',   unit:'Ltr', short:'L' },
-  { key:'chach',  label:'Chaas',  unit:'Ltr', short:'L' },
-  { key:'butter', label:'Butter', unit:'Kg',  short:'kg' },
-  { key:'paneer', label:'Paneer', unit:'Kg',  short:'kg' },
-  { key:'curd',   label:'Curd',   unit:'Kg',  short:'kg' },
-  { key:'ghee',   label:'Ghee',   unit:'Ltr', short:'L' }
+  { key:'milk',   label:'Milk',   unit:'Ltr', short:'L',  css:'milk'   },
+  { key:'paneer', label:'Paneer', unit:'Kg',  short:'kg', css:'paneer' },
+  { key:'ghee',   label:'Ghee',   unit:'Ltr', short:'L',  css:'ghee'   },
+  { key:'chach',  label:'Chaach', unit:'Ltr', short:'L',  css:'chach'  },
+  { key:'butter', label:'Butter', unit:'Kg',  short:'kg', css:'butter' },
+  { key:'curd',   label:'Curd',   unit:'Kg',  short:'kg', css:'curd'   }
 ];
 
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
@@ -465,7 +583,6 @@ function hasAnyQty(vals){ return PRODUCTS.some(p => (vals[p.key]||0) > 0); }
 function getDeliveryLog(c, dstr){
   return (c.deliveryByDate && c.deliveryByDate[dstr]) || null;
 }
-// Classifies a delivery log for stats/coloring: 'full' | 'partial' | 'missed' | 'no-order' | null(no record)
 function classifyDeliveryLog(dlog){
   if (!dlog) return null;
   if (!dlog.hasOrder) return 'no-order';
@@ -514,12 +631,6 @@ function enterChart(){
 }
 
 /* ---------------- database storage usage (estimated) ---------------- */
-// Firebase Realtime Database's client SDK does not expose an official
-// storage-quota API — the exact billing figure only lives in the Firebase
-// Console's Usage tab. As the closest accurate proxy available from the
-// browser, we pull the entire database tree once and measure its real
-// serialized byte size, then compare that against the Spark (free) plan's
-// 1 GiB Realtime Database storage limit.
 const STORAGE_LIMIT_BYTES = 1024 * 1024 * 1024; // 1 GiB — Firebase Spark plan RTDB limit
 function formatBytes(bytes){
   if (bytes < 1024) return bytes + ' B';
@@ -556,20 +667,33 @@ let deliveryBoys = [];
 let zones = [];
 let searchTerm = '';
 let filtBoy = 'all';
-let filtShift = 'all';
+let filtShift = 'morning';
 let filtZone = 'all';
 let filtMod = 'all';
 let viewDate = dateStr();
 
-onValue(ref(db, 'customers'), (snap)=>{ customers = toArray(snap.val()); renderAll(); });
+onValue(ref(db, 'customers'), (snap)=>{
+  customers = toArray(snap.val());
+  renderAll();
+  if (defaultModalCustId) renderDefaultModal();
+  if (dateModalCustId) renderDateModal();
+  if (monthModalCustId) renderMonthModal();
+});
 onValue(ref(db, 'deliveryBoys'), (snap)=>{ deliveryBoys = toArray(snap.val()); populateFilterDropdowns(); renderAll(); });
 onValue(ref(db, 'zones'), (snap)=>{ zones = toArray(snap.val()); populateFilterDropdowns(); renderAll(); });
 
 function populateFilterDropdowns(){
-  const boySel = document.getElementById('filterBoy');
-  const prevBoy = boySel.value;
-  boySel.innerHTML = `<option value="all">All delivery boys</option>` + deliveryBoys.map(b=>`<option value="${b.id}">${escapeHtml(b.name)}</option>`).join('');
-  if (Array.from(boySel.options).some(o=>o.value===prevBoy)) boySel.value = prevBoy;
+  const boyTabs = document.getElementById('boyTabs');
+  boyTabs.innerHTML = `<button class="boy-tab all-tab ${filtBoy==='all'?'active':''}" data-boy="all">All Boys</button>` +
+    deliveryBoys.map(b=>`<button class="boy-tab ${filtBoy===b.id?'active':''}" data-boy="${b.id}" style="background:${b.color}">${escapeHtml(b.name)}</button>`).join('');
+  boyTabs.querySelectorAll('.boy-tab').forEach(btn=>{
+    btn.onclick = ()=>{
+      filtBoy = btn.dataset.boy;
+      boyTabs.querySelectorAll('.boy-tab').forEach(x=>x.classList.remove('active'));
+      btn.classList.add('active');
+      renderAll();
+    };
+  });
 
   const zoneSel = document.getElementById('filterZone');
   const prevZone = zoneSel.value;
@@ -580,38 +704,21 @@ function populateFilterDropdowns(){
 document.getElementById('viewDateInput').value = viewDate;
 document.getElementById('viewDateInput').addEventListener('change', (e)=>{
   viewDate = e.target.value || dateStr();
-  updateQuickDateBtns();
   renderAll();
 });
-document.getElementById('qdYesterday').onclick = ()=>{
-  viewDate = addDays(dateStr(), -1);
-  document.getElementById('viewDateInput').value = viewDate;
-  updateQuickDateBtns();
-  renderAll();
-};
-document.getElementById('qdToday').onclick = ()=>{
-  viewDate = dateStr();
-  document.getElementById('viewDateInput').value = viewDate;
-  updateQuickDateBtns();
-  renderAll();
-};
-document.getElementById('qdTomorrow').onclick = ()=>{
-  viewDate = addDays(dateStr(), 1);
-  document.getElementById('viewDateInput').value = viewDate;
-  updateQuickDateBtns();
-  renderAll();
-};
-function updateQuickDateBtns(){
-  document.getElementById('qdYesterday').classList.toggle('active', viewDate === addDays(dateStr(),-1));
-  document.getElementById('qdToday').classList.toggle('active', viewDate === dateStr());
-  document.getElementById('qdTomorrow').classList.toggle('active', viewDate === addDays(dateStr(),1));
-}
-updateQuickDateBtns();
 
-['filterBoy','filterShift','filterZone','filterMod'].forEach(id=>{
+document.querySelectorAll('#shiftToggle button').forEach(btn=>{
+  if (btn.dataset.shift === filtShift) btn.classList.add('active');
+  btn.onclick = ()=>{
+    filtShift = btn.dataset.shift;
+    document.querySelectorAll('#shiftToggle button').forEach(x=>x.classList.remove('active'));
+    btn.classList.add('active');
+    renderAll();
+  };
+});
+
+['filterZone','filterMod'].forEach(id=>{
   document.getElementById(id).addEventListener('change', (e)=>{
-    if(id==='filterBoy') filtBoy = e.target.value;
-    if(id==='filterShift') filtShift = e.target.value;
     if(id==='filterZone') filtZone = e.target.value;
     if(id==='filterMod') filtMod = e.target.value;
     renderAll();
@@ -634,151 +741,84 @@ function matchesFilters(c){
   return true;
 }
 
-/* ---------------- UI state preservation across re-renders ---------------- */
-function captureUiState(){
-  const openKeys = new Set();
-  document.querySelectorAll('details.editor-block[open]').forEach(d=>{
-    if (d.dataset.key) openKeys.add(d.dataset.key);
-  });
-  const ovDates = {};
-  document.querySelectorAll('.ov-date-input').forEach(inp=>{
-    ovDates[inp.dataset.cust] = inp.value;
-  });
-  return { scrollY: window.scrollY, openKeys, ovDates };
+function getFilteredList(){
+  const shiftsToShow = filtShift === 'all' ? ['morning','evening'] : [filtShift];
+  return customers.filter(c=>{
+    if (filtBoy !== 'all' && c.assignedTo !== filtBoy) return false;
+    if (!shiftsToShow.includes(custShift(c))) return false;
+    if (!matchesFilters(c)) return false;
+    return true;
+  }).sort((a,b)=>(a.name||'').localeCompare(b.name||''));
 }
-function restoreUiState(stateObj){
-  document.querySelectorAll('details.editor-block').forEach(d=>{
-    if (d.dataset.key && stateObj.openKeys.has(d.dataset.key)) d.open = true;
+
+/* ---------------- rendering: header row ---------------- */
+function renderOrderHead(){
+  document.getElementById('orderHead').innerHTML = `
+    <span></span><span class="oh-name">Customer</span><span>Boy</span>
+    ${PRODUCTS.map(p=>`<span>${p.label}</span>`).join('')}
+    <span></span><span>Actions</span>`;
+}
+renderOrderHead();
+
+/* ---------------- product totals ---------------- */
+function computeProductTotals(list){
+  const totals = {};
+  PRODUCTS.forEach(p => totals[p.key] = 0);
+  list.forEach(c=>{
+    const eff = effectiveFor(c, viewDate);
+    PRODUCTS.forEach(p => totals[p.key] += (eff[p.key]||0));
   });
-  Object.keys(stateObj.ovDates).forEach(custId=>{
-    const inp = document.querySelector(`.ov-date-input[data-cust="${custId}"]`);
-    if (inp && stateObj.ovDates[custId]){
-      inp.value = stateObj.ovDates[custId];
-      refillOverrideFields(custId, inp.value);
-    }
-  });
-  window.scrollTo(0, stateObj.scrollY);
+  PRODUCTS.forEach(p => totals[p.key] = Math.round(totals[p.key]*100)/100);
+  return totals;
 }
 
 /* ---------------- rendering ---------------- */
 function renderAll(){
   const wrap = document.getElementById('chartWrap');
-  const uiState = captureUiState();
-
-  const boysToShow = filtBoy === 'all' ? deliveryBoys : deliveryBoys.filter(b=>b.id===filtBoy);
-  const shiftsToShow = filtShift === 'all' ? ['morning','evening'] : [filtShift];
-
-  let totalShown = 0, modCount = 0, unsetCount = 0;
-  let deliveredFullCount = 0, deliveredPartialCount = 0, missedCount = 0, noRecordCount = 0;
-  let html = '';
+  const scrollY = window.scrollY;
 
   if (!deliveryBoys.length){
     wrap.innerHTML = `<div class="empty-state">No delivery boys added yet. Go to the main dashboard's Team tab to add your team first.</div>`;
+    document.getElementById('tilesRow').innerHTML = '';
     updateStats(0,0,0,0,0,0,0);
+    document.getElementById('totalLoadNum').textContent = '0';
     return;
   }
 
-  boysToShow.forEach(b=>{
-    const boyAllCustomers = customers.filter(c=>c.assignedTo===b.id);
-    if (!boyAllCustomers.length) return;
+  const list = getFilteredList();
 
-    let boyHtml = '';
-    let boyCustCountShown = 0;
+  let modCount = 0, unsetCount = 0;
+  let deliveredFullCount = 0, deliveredPartialCount = 0, missedCount = 0, noRecordCount = 0;
 
-    shiftsToShow.forEach(shift=>{
-      const shiftCustomersBase = boyAllCustomers.filter(c=>custShift(c)===shift);
-      if (!shiftCustomersBase.length) return;
-      const shiftCustomers = shiftCustomersBase.filter(matchesFilters);
+  const rowsHtml = list.map(c=>{
+    const boy = deliveryBoys.find(b=>b.id===c.assignedTo) || null;
+    const eff = effectiveFor(c, viewDate);
+    if (eff.isOverride) modCount++;
+    if (!hasAnyQty(eff) && !eff.note) unsetCount++;
+    const dCls = classifyDeliveryLog(getDeliveryLog(c, viewDate));
+    if (dCls === 'full') deliveredFullCount++;
+    else if (dCls === 'partial') deliveredPartialCount++;
+    else if (dCls === 'missed') missedCount++;
+    else if (dCls === null) noRecordCount++;
+    return renderOrderRow(c, boy, eff);
+  }).join('');
 
-      boyHtml += `<div class="shift-block">
-        <div class="shift-block-head ${shift}">
-          <span class="lbl">${shift==='evening'?'🌆 Evening':'🌅 Morning'}</span>
-          <span class="cnt">${shiftCustomers.length} / ${shiftCustomersBase.length}</span>
-        </div>`;
+  wrap.innerHTML = rowsHtml || `<div class="empty-state">No customers match the current search/filter for this date.</div>`;
 
-      if (!shiftCustomers.length){
-        boyHtml += `<div class="empty-shift">No customers match the current search/filter in this shift.</div>`;
-      } else {
-        shiftCustomers.forEach(c=>{
-          boyCustCountShown++; totalShown++;
-          const eff = effectiveFor(c, viewDate);
-          if (eff.isOverride) modCount++;
-          if (!hasAnyQty(eff) && !eff.note) unsetCount++;
-          const dCls = classifyDeliveryLog(getDeliveryLog(c, viewDate));
-          if (dCls === 'full') deliveredFullCount++;
-          else if (dCls === 'partial') deliveredPartialCount++;
-          else if (dCls === 'missed') missedCount++;
-          else if (dCls === null) noRecordCount++;
-          const z = zones.find(zz=>zz.id===c.zone);
-          boyHtml += renderCustomerCard(c, z, eff);
-        });
-      }
-      boyHtml += `</div>`;
-    });
+  // product summary tiles
+  const totals = computeProductTotals(list);
+  document.getElementById('tilesRow').innerHTML = PRODUCTS.map(p=>`
+    <div class="tile ${p.css}">
+      <div class="tile-label">${p.label}</div>
+      <div class="tile-val">${totals[p.key].toFixed(2)}</div>
+    </div>`).join('');
 
-    html += `<div class="boy-section">
-      <div class="boy-section-head">
-        <span class="boy-swatch-lg" style="background:${b.color}"></span>
-        <span class="boy-section-title">${escapeHtml(b.name)}</span>
-        <span class="boy-section-count">${boyCustCountShown} shown</span>
-        <button class="btn btn-ghost btn-sm boy-section-pdf" data-boy-pdf="${b.id}">⬇️ PDF</button>
-      </div>
-      ${boyHtml}
-    </div>`;
-  });
+  const totalLoad = PRODUCTS.reduce((s,p)=>s+totals[p.key],0);
+  document.getElementById('totalLoadNum').textContent = (Math.round(totalLoad*100)/100).toString();
 
-  const unassignedBase = customers.filter(c=>!c.assignedTo || !deliveryBoys.find(b=>b.id===c.assignedTo));
-  if (unassignedBase.length && filtBoy === 'all'){
-    let unassignedHtml = '';
-    let unassignedShown = 0;
-    shiftsToShow.forEach(shift=>{
-      const shiftBase = unassignedBase.filter(c=>custShift(c)===shift);
-      if (!shiftBase.length) return;
-      const shiftFiltered = shiftBase.filter(matchesFilters);
-      unassignedHtml += `<div class="shift-block">
-        <div class="shift-block-head ${shift}">
-          <span class="lbl">${shift==='evening'?'🌆 Evening':'🌅 Morning'}</span>
-          <span class="cnt">${shiftFiltered.length} / ${shiftBase.length}</span>
-        </div>`;
-      if (!shiftFiltered.length){
-        unassignedHtml += `<div class="empty-shift">No customers match the current search/filter in this shift.</div>`;
-      } else {
-        shiftFiltered.forEach(c=>{
-          unassignedShown++; totalShown++;
-          const eff = effectiveFor(c, viewDate);
-          if (eff.isOverride) modCount++;
-          if (!hasAnyQty(eff) && !eff.note) unsetCount++;
-          const dCls = classifyDeliveryLog(getDeliveryLog(c, viewDate));
-          if (dCls === 'full') deliveredFullCount++;
-          else if (dCls === 'partial') deliveredPartialCount++;
-          else if (dCls === 'missed') missedCount++;
-          else if (dCls === null) noRecordCount++;
-          const z = zones.find(zz=>zz.id===c.zone);
-          unassignedHtml += renderCustomerCard(c, z, eff);
-        });
-      }
-      unassignedHtml += `</div>`;
-    });
-    if (unassignedShown > 0){
-      html += `<div class="boy-section">
-        <div class="boy-section-head">
-          <span class="boy-swatch-lg" style="background:#8891A3"></span>
-          <span class="boy-section-title">Unassigned</span>
-          <span class="boy-section-count">${unassignedShown} shown</span>
-        </div>
-        ${unassignedHtml}
-      </div>`;
-    }
-  }
-
-  wrap.innerHTML = html || `<div class="empty-state">No customers match the current search/filter for this date.</div>`;
-
-  wrap.querySelectorAll('[data-boy-pdf]').forEach(btn=>{
-    btn.onclick = ()=> downloadPdf({ boyId: btn.dataset.boyPdf });
-  });
-  wireCardEditors();
-  restoreUiState(uiState);
-  updateStats(totalShown, modCount, unsetCount, deliveredFullCount, deliveredPartialCount, missedCount, noRecordCount);
+  wireRowActions();
+  window.scrollTo(0, scrollY);
+  updateStats(list.length, modCount, unsetCount, deliveredFullCount, deliveredPartialCount, missedCount, noRecordCount);
 }
 
 function updateStats(total, mod, unset, deliveredFull, deliveredPartial, missed, noRecord){
@@ -791,11 +831,74 @@ function updateStats(total, mod, unset, deliveredFull, deliveredPartial, missed,
   document.getElementById('statNoRecord').textContent = noRecord;
 }
 
+function renderOrderRow(c, boy, eff){
+  const ov = getOverride(c, viewDate);
+  const boyColor = boy ? boy.color : '#8891A3';
+  const shiftIcon = filtShift === 'all' ? (custShift(c)==='evening' ? '🌙 ' : '⚙️ ') : '';
+  return `
+  <div class="order-row" data-cust-id="${c.id}">
+    <span class="drag-handle">⠿</span>
+    <div class="row-name">
+      <div class="row-name-main">${escapeHtml(c.name)}</div>
+      <div class="row-name-sub">${shiftIcon}${escapeHtml(c.address || c.name || '')}</div>
+    </div>
+    <span class="boy-chip" style="background:${boyColor}1F; color:${boyColor}; border-color:${boyColor}66;">${boy ? escapeHtml(boy.name) : 'Unassigned'}</span>
+    ${PRODUCTS.map(p=>`<input type="number" inputmode="decimal" min="0" step="0.25" class="qty-cell ${eff.isOverride?'mod-cell':''}" data-cust="${c.id}" data-key="${p.key}" value="${eff[p.key] ? eff[p.key] : ''}" placeholder="-">`).join('')}
+    <span class="row-status-dot ${c.status==='completed'?'ok':'pending'}" title="${c.status==='completed'?'Delivered':'Pending'}"></span>
+    <div class="row-actions">
+      <button class="ract-btn cal" data-open-date="${c.id}" title="Modify a specific date">📅</button>
+      <button class="ract-btn edit" data-open-default="${c.id}" title="Edit default quantities">✏️</button>
+      <button class="ract-btn del" data-clear-today="${c.id}" title="${ov?'Remove modification for '+formatDateLabel(viewDate):'No modification to remove for this date'}" ${ov?'':'disabled'}>🗑️</button>
+      <button class="ract-btn hist" data-open-hist="${c.id}" title="Full month history">📊</button>
+    </div>
+  </div>`;
+}
+
+function wireRowActions(){
+  document.querySelectorAll('.qty-cell').forEach(inp=>{
+    inp.addEventListener('change', async ()=>{
+      const custId = inp.dataset.cust;
+      const key = inp.dataset.key;
+      const value = Math.max(0, parseFloat(inp.value) || 0);
+      try{
+        await update(ref(db, `customers/${custId}/overrides/${viewDate}`), { [key]: value, updatedAt: Date.now() });
+      }catch(e){ console.error(e); showToast('Could not save — check your internet connection'); }
+    });
+  });
+  document.querySelectorAll('[data-open-date]').forEach(btn=>{
+    btn.onclick = ()=> openDateModal(btn.dataset.openDate, viewDate);
+  });
+  document.querySelectorAll('[data-open-default]').forEach(btn=>{
+    btn.onclick = ()=> openDefaultModal(btn.dataset.openDefault);
+  });
+  document.querySelectorAll('[data-open-hist]').forEach(btn=>{
+    btn.onclick = ()=> openMonthHistory(btn.dataset.openHist);
+  });
+  document.querySelectorAll('[data-clear-today]').forEach(btn=>{
+    if (btn.disabled) return;
+    btn.onclick = async ()=>{
+      const custId = btn.dataset.clearToday;
+      if (!confirm(`Remove the modification for ${formatDateLabel(viewDate)}? This will revert to default quantities.`)) return;
+      try{
+        await remove(ref(db, `customers/${custId}/overrides/${viewDate}`));
+        showToast('Modification removed — back to default');
+      }catch(e){ console.error(e); showToast('Could not remove — check your internet connection'); }
+    };
+  });
+}
+
+document.getElementById('saveRecordBtn').onclick = ()=>{
+  const active = document.activeElement;
+  if (active && active.classList && active.classList.contains('qty-cell')) active.blur();
+  showToast('✅ Record saved');
+};
+
+/* ---------------- delivery status block (reused inside the date modal) ---------------- */
 function renderDeliveryStatusBlock(c, dstr){
   const dlog = getDeliveryLog(c, dstr);
   const isFuture = dstr > dateStr();
   if (!dlog){
-    if (isFuture) return ''; // nothing to show for a date that hasn't happened yet
+    if (isFuture) return '';
     return `<div class="delivery-status-wrap">
       <div class="delivery-status-label">DELIVERY STATUS · ${formatDateLabel(dstr)}</div>
       <div class="no-order-hint">➖ No delivery record for this date — boy didn't mark this stop delivered.</div>
@@ -825,89 +928,7 @@ function renderDeliveryStatusBlock(c, dstr){
   </div>`;
 }
 
-function renderCustomerCard(c, zone, eff){
-  const def = getDefaults(c);
-  const ov = getOverride(c, viewDate);
-  const chips = PRODUCTS.filter(p => (eff[p.key]||0) > 0)
-    .map(p => `<span class="chip ${eff.isOverride?'chip-mod':'chip-def'}">${p.label} · ${eff[p.key]}${p.short}</span>`).join('');
-
-  return `
-  <div class="cust-card" data-cust-id="${c.id}">
-    <div class="cust-card-top">
-      <div class="cust-name-block">
-        <div class="name">${escapeHtml(c.name)}</div>
-        <div class="meta">${escapeHtml(c.address||'No address noted')}${c.phone ? ' · 📞 '+escapeHtml(c.phone) : ''}</div>
-        ${zone ? `<span class="zone-tag"><span class="sw" style="background:${zone.color}"></span>${escapeHtml(zone.name)}</span>` : ''}
-      </div>
-      <span class="status-tag ${c.status==='completed'?'done':'pending'}">${c.status==='completed'?'DELIVERED':'PENDING'}</span>
-    </div>
-
-    <div class="cust-card-actions">
-      <button class="btn btn-ghost btn-sm" data-month-hist="${c.id}">📊 Full month history</button>
-    </div>
-
-    ${renderDeliveryStatusBlock(c, viewDate)}
-
-    <div class="today-order-wrap ${eff.isOverride?'has-mod':''}">
-      <div class="today-order-label">
-        ORDER FOR ${formatDateLabel(viewDate)}
-        ${eff.isOverride ? `<span class="mod-badge">📅 MODIFIED</span>` : ''}
-        <span class="save-flash" data-flash="${c.id}">Saved ✓</span>
-      </div>
-      ${chips ? `<div class="today-chips">${chips}</div>` : `<div class="no-order-hint">No quantities set — tap "Set daily defaults" below.</div>`}
-      ${eff.note ? `<div class="today-note">📝 ${escapeHtml(eff.note)}</div>` : ''}
-    </div>
-
-    <details class="editor-block" data-key="${c.id}-def">
-      <summary>⚙️ Set daily default quantities <span class="chev">▸</span></summary>
-      <div class="editor-body">
-        <div class="product-grid">
-          ${PRODUCTS.map(p => `
-            <div class="product-field">
-              <label>${p.label}</label>
-              <input type="number" inputmode="decimal" min="0" step="0.25" value="${def[p.key]}" data-default-field="${p.key}" data-cust="${c.id}">
-              <div class="unit">${p.unit}</div>
-            </div>
-          `).join('')}
-        </div>
-        <div class="field" style="margin:0 0 10px;">
-          <label>Default note (e.g. "leave near gate")</label>
-          <input type="text" class="ov-note-field" style="margin-bottom:0;" value="${escapeHtml(def.note)}" data-default-note data-cust="${c.id}">
-        </div>
-        <button class="btn btn-mint btn-sm save-def-btn" data-cust="${c.id}" style="width:100%;">💾 Save defaults</button>
-      </div>
-    </details>
-
-    <details class="editor-block" data-key="${c.id}-ov">
-      <summary>📅 Modify quantity for a specific date <span class="chev">▸</span></summary>
-      <div class="editor-body">
-        <div class="ov-date-row">
-          <input type="date" class="ov-date-input" data-cust="${c.id}" value="${viewDate}">
-          <button class="qd-btn ov-qd-today" data-cust="${c.id}">Today</button>
-          <button class="qd-btn ov-qd-tmrw" data-cust="${c.id}">Tomorrow</button>
-        </div>
-        <div class="ov-status-line ${ov?'is-mod':''}" data-ov-status="${c.id}">${ov ? '📅 Editing an existing modification for this date' : 'No modification for this date yet — will use defaults'}</div>
-        <div class="product-grid ov-grid" data-ov-grid="${c.id}">
-          ${PRODUCTS.map(p => `
-            <div class="product-field">
-              <label>${p.label}</label>
-              <input type="number" inputmode="decimal" min="0" step="0.25" value="${(ov?ov[p.key]:def[p.key])||0}" data-ov-field="${p.key}" data-cust="${c.id}">
-              <div class="unit">${p.unit}</div>
-            </div>
-          `).join('')}
-        </div>
-        <input type="text" class="ov-note-field" placeholder="Note for this date (optional)" value="${escapeHtml(ov?(ov.note||''):def.note)}" data-ov-note data-cust="${c.id}">
-        <div class="ov-btn-row">
-          <button class="btn btn-mint btn-sm save-ov-btn" data-cust="${c.id}">💾 Save for this date</button>
-          <button class="btn btn-danger btn-sm del-ov-btn" data-cust="${c.id}" style="${ov?'':'display:none;'}">🗑️ Remove</button>
-        </div>
-        ${renderOverridesList(c)}
-      </div>
-    </details>
-  </div>`;
-}
-
-function renderOverridesList(c){
+function renderOverridesList(c, onEdit){
   const all = c.overrides ? Object.keys(c.overrides).sort() : [];
   if (!all.length) return `<div class="ov-list-title">All modifications</div><div class="ov-empty-hint">No modifications added yet for this customer.</div>`;
   const today = dateStr();
@@ -937,172 +958,160 @@ function renderOverridesList(c){
   return html;
 }
 
-function flashSaved(custId){
-  const flash = document.querySelector(`[data-flash="${custId}"]`);
-  if (!flash) return;
-  flash.classList.add('show');
-  clearTimeout(flash._t);
-  flash._t = setTimeout(()=> flash.classList.remove('show'), 1400);
+/* ---------------- default quantities modal ---------------- */
+let defaultModalCustId = null;
+function openDefaultModal(custId){
+  defaultModalCustId = custId;
+  document.getElementById('defaultModalOverlay').classList.add('show');
+  document.body.classList.add('modal-open');
+  renderDefaultModal();
 }
-
-function refillOverrideFields(custId, dstr){
-  const c = customers.find(x=>x.id===custId);
-  if (!c) return;
-  const ov = getOverride(c, dstr);
+function closeDefaultModal(){
+  document.getElementById('defaultModalOverlay').classList.remove('show');
+  document.body.classList.remove('modal-open');
+  defaultModalCustId = null;
+}
+function renderDefaultModal(){
+  const c = customers.find(x=>x.id===defaultModalCustId);
+  if (!c){ closeDefaultModal(); return; }
+  document.getElementById('defCustName').textContent = c.name || 'Customer';
   const def = getDefaults(c);
-  const grid = document.querySelector(`[data-ov-grid="${custId}"]`);
-  if (!grid) return;
-  PRODUCTS.forEach(p=>{
-    const inp = grid.querySelector(`input[data-ov-field="${p.key}"]`);
-    if (inp) inp.value = (ov ? ov[p.key] : def[p.key]) || 0;
-  });
-  const noteInp = document.querySelector(`input[data-ov-note][data-cust="${custId}"]`);
-  if (noteInp) noteInp.value = ov ? (ov.note||'') : def.note;
-  const statusEl = document.querySelector(`[data-ov-status="${custId}"]`);
-  if (statusEl){
-    statusEl.textContent = ov ? '📅 Editing an existing modification for this date' : 'No modification for this date yet — will use defaults';
-    statusEl.classList.toggle('is-mod', !!ov);
-  }
-  const delBtn = document.querySelector(`.del-ov-btn[data-cust="${custId}"]`);
-  if (delBtn) delBtn.style.display = ov ? '' : 'none';
+  document.getElementById('defGrid').innerHTML = PRODUCTS.map(p=>`
+    <div class="product-field">
+      <label>${p.label}</label>
+      <input type="number" inputmode="decimal" min="0" step="0.25" value="${def[p.key]}" data-def-field="${p.key}">
+      <div class="unit">${p.unit}</div>
+    </div>`).join('');
+  document.getElementById('defNote').value = def.note;
 }
+document.getElementById('defCloseBtn').onclick = closeDefaultModal;
+document.getElementById('defaultModalOverlay').addEventListener('click', (e)=>{
+  if (e.target.id === 'defaultModalOverlay') closeDefaultModal();
+});
+document.getElementById('defSaveBtn').onclick = async ()=>{
+  const custId = defaultModalCustId;
+  if (!custId) return;
+  const obj = {};
+  PRODUCTS.forEach(p=>{
+    const inp = document.querySelector(`#defGrid input[data-def-field="${p.key}"]`);
+    obj[p.key] = Math.max(0, parseFloat(inp.value) || 0);
+    inp.value = obj[p.key];
+  });
+  obj.note = document.getElementById('defNote').value;
+  try{
+    await update(ref(db, `customers/${custId}/defaultProducts`), obj);
+    showToast('Default quantities saved');
+  }catch(e){ console.error(e); showToast('Could not save — check your internet connection'); }
+};
 
-function wireCardEditors(){
-  // default quantity fields — save on change (blur / enter / arrow-commit),
-  // never on every keystroke, so re-renders never steal focus mid-typing.
-  document.querySelectorAll('[data-default-field]').forEach(inp=>{
-    inp.addEventListener('change', async ()=>{
-      const custId = inp.dataset.cust;
-      const field = inp.dataset.defaultField;
-      const value = Math.max(0, parseFloat(inp.value) || 0);
-      inp.value = value;
-      try{
-        await update(ref(db, `customers/${custId}/defaultProducts`), { [field]: value });
-        flashSaved(custId);
-      }catch(e){ console.error(e); showToast('Could not save — check your internet connection'); }
+/* ---------------- date-specific modify modal ---------------- */
+let dateModalCustId = null;
+let dateModalDate = null;
+function openDateModal(custId, dstr){
+  dateModalCustId = custId;
+  dateModalDate = dstr || viewDate;
+  document.getElementById('dateModalOverlay').classList.add('show');
+  document.body.classList.add('modal-open');
+  renderDateModal();
+}
+function closeDateModal(){
+  document.getElementById('dateModalOverlay').classList.remove('show');
+  document.body.classList.remove('modal-open');
+  dateModalCustId = null;
+  dateModalDate = null;
+}
+function renderDateModal(){
+  const c = customers.find(x=>x.id===dateModalCustId);
+  if (!c){ closeDateModal(); return; }
+  document.getElementById('dateCustName').textContent = c.name || 'Customer';
+  document.getElementById('dateCustMeta').textContent = `${c.address || 'No address noted'}${c.phone ? ' · ' + c.phone : ''}`;
+
+  const ov = getOverride(c, dateModalDate);
+  const def = getDefaults(c);
+
+  document.getElementById('dateModalBody').innerHTML = `
+    <div class="modal-section-title">Modify quantity for a specific date</div>
+    <div class="ov-date-row">
+      <input type="date" id="dmDateInput" value="${dateModalDate}">
+      <button class="qd-btn btn btn-ghost btn-sm" id="dmToday">Today</button>
+      <button class="qd-btn btn btn-ghost btn-sm" id="dmTomorrow">Tomorrow</button>
+    </div>
+    <div class="ov-status-line ${ov?'is-mod':''}" id="dmStatusLine">${ov ? '📅 Editing an existing modification for this date' : 'No modification for this date yet — will use defaults'}</div>
+    <div class="product-grid" id="dmGrid">
+      ${PRODUCTS.map(p => `
+        <div class="product-field">
+          <label>${p.label}</label>
+          <input type="number" inputmode="decimal" min="0" step="0.25" value="${(ov?ov[p.key]:def[p.key])||0}" data-dm-field="${p.key}">
+          <div class="unit">${p.unit}</div>
+        </div>`).join('')}
+    </div>
+    <input type="text" class="ov-note-field" id="dmNote" placeholder="Note for this date (optional)" value="${escapeHtml(ov?(ov.note||''):def.note)}">
+    <div class="ov-btn-row">
+      <button class="btn btn-mint btn-sm" id="dmSaveBtn">💾 Save for this date</button>
+      <button class="btn btn-danger btn-sm" id="dmRemoveBtn" style="${ov?'':'display:none;'}">🗑️ Remove</button>
+    </div>
+    <button class="link-btn" id="dmMonthLink">📊 View full month history →</button>
+
+    <div class="modal-section-title">Delivery status</div>
+    ${renderDeliveryStatusBlock(c, dateModalDate) || '<div class="no-order-hint">Nothing to show yet for this date.</div>'}
+
+    <div class="modal-section-title" style="margin-top:16px;">All modifications</div>
+    ${renderOverridesList(c)}
+  `;
+  wireDateModal();
+}
+function wireDateModal(){
+  document.getElementById('dmDateInput').addEventListener('change', (e)=>{
+    dateModalDate = e.target.value || viewDate;
+    renderDateModal();
+  });
+  document.getElementById('dmToday').onclick = ()=>{ dateModalDate = dateStr(); renderDateModal(); };
+  document.getElementById('dmTomorrow').onclick = ()=>{ dateModalDate = addDays(dateStr(),1); renderDateModal(); };
+  document.getElementById('dmSaveBtn').onclick = async ()=>{
+    const custId = dateModalCustId;
+    const d = dateModalDate;
+    if (!d) return showToast('Please pick a date first');
+    const obj = {};
+    PRODUCTS.forEach(p=>{
+      const inp = document.querySelector(`#dmGrid input[data-dm-field="${p.key}"]`);
+      obj[p.key] = Math.max(0, parseFloat(inp.value) || 0);
     });
-  });
-  document.querySelectorAll('[data-default-note]').forEach(inp=>{
-    inp.addEventListener('change', async ()=>{
-      const custId = inp.dataset.cust;
-      try{
-        await update(ref(db, `customers/${custId}/defaultProducts`), { note: inp.value });
-        flashSaved(custId);
-      }catch(e){ console.error(e); showToast('Could not save — check your internet connection'); }
-    });
-  });
-
-  // date picker inside the modification editor
-  document.querySelectorAll('.ov-date-input').forEach(inp=>{
-    inp.addEventListener('change', ()=> refillOverrideFields(inp.dataset.cust, inp.value || viewDate));
-  });
-  document.querySelectorAll('.ov-qd-today').forEach(btn=>{
-    btn.onclick = ()=>{
-      const custId = btn.dataset.cust;
-      const dInp = document.querySelector(`.ov-date-input[data-cust="${custId}"]`);
-      const t = dateStr();
-      dInp.value = t;
-      refillOverrideFields(custId, t);
-    };
-  });
-  document.querySelectorAll('.ov-qd-tmrw').forEach(btn=>{
-    btn.onclick = ()=>{
-      const custId = btn.dataset.cust;
-      const dInp = document.querySelector(`.ov-date-input[data-cust="${custId}"]`);
-      const t = addDays(dateStr(),1);
-      dInp.value = t;
-      refillOverrideFields(custId, t);
-    };
-  });
-
-  document.querySelectorAll('.save-ov-btn').forEach(btn=>{
-    btn.onclick = async ()=>{
-      const custId = btn.dataset.cust;
-      const dInp = document.querySelector(`.ov-date-input[data-cust="${custId}"]`);
-      const d = dInp.value;
-      if (!d) return showToast('Please pick a date first');
-      const grid = document.querySelector(`[data-ov-grid="${custId}"]`);
-      const obj = {};
-      PRODUCTS.forEach(p=>{
-        const inp = grid.querySelector(`input[data-ov-field="${p.key}"]`);
-        obj[p.key] = Math.max(0, parseFloat(inp.value) || 0);
-      });
-      const noteInp = document.querySelector(`input[data-ov-note][data-cust="${custId}"]`);
-      obj.note = noteInp ? noteInp.value : '';
-      obj.updatedAt = Date.now();
-      try{
-        await set(ref(db, `customers/${custId}/overrides/${d}`), obj);
-        showToast(`Modification saved for ${formatDateLabel(d)}`);
-      }catch(e){ console.error(e); showToast('Could not save — check your internet connection'); }
-    };
-  });
-
-  document.querySelectorAll('.del-ov-btn').forEach(btn=>{
-    btn.onclick = async ()=>{
-      const custId = btn.dataset.cust;
-      const dInp = document.querySelector(`.ov-date-input[data-cust="${custId}"]`);
-      const d = dInp.value;
-      if (!d) return;
-      try{
-        await remove(ref(db, `customers/${custId}/overrides/${d}`));
-        showToast('Modification removed — back to default');
-      }catch(e){ console.error(e); showToast('Could not remove — check your internet connection'); }
-    };
-  });
-
-  // explicit "Save defaults" button — saves all default fields for a customer in one shot
-  document.querySelectorAll('.save-def-btn').forEach(btn=>{
-    btn.onclick = async ()=>{
-      const custId = btn.dataset.cust;
-      const card = document.querySelector(`.cust-card[data-cust-id="${custId}"]`);
-      if (!card) return;
-      const obj = {};
-      PRODUCTS.forEach(p=>{
-        const inp = card.querySelector(`input[data-default-field="${p.key}"]`);
-        obj[p.key] = Math.max(0, parseFloat(inp.value) || 0);
-        if (inp) inp.value = obj[p.key];
-      });
-      const noteInp = card.querySelector(`input[data-default-note][data-cust="${custId}"]`);
-      obj.note = noteInp ? noteInp.value : '';
-      try{
-        await update(ref(db, `customers/${custId}/defaultProducts`), obj);
-        flashSaved(custId);
-        showToast('Default quantities saved');
-      }catch(e){ console.error(e); showToast('Could not save — check your internet connection'); }
-    };
-  });
-
-  // delete a completed delivery record from the chart
-  document.querySelectorAll('.del-dlog-btn').forEach(btn=>{
-    btn.onclick = async ()=>{
-      const custId = btn.dataset.cust;
-      const d = btn.dataset.date;
+    obj.note = document.getElementById('dmNote').value;
+    obj.updatedAt = Date.now();
+    try{
+      await set(ref(db, `customers/${custId}/overrides/${d}`), obj);
+      showToast(`Modification saved for ${formatDateLabel(d)}`);
+    }catch(e){ console.error(e); showToast('Could not save — check your internet connection'); }
+  };
+  document.getElementById('dmRemoveBtn').onclick = async ()=>{
+    const custId = dateModalCustId;
+    const d = dateModalDate;
+    if (!d) return;
+    try{
+      await remove(ref(db, `customers/${custId}/overrides/${d}`));
+      showToast('Modification removed — back to default');
+    }catch(e){ console.error(e); showToast('Could not remove — check your internet connection'); }
+  };
+  document.getElementById('dmMonthLink').onclick = ()=>{
+    const custId = dateModalCustId;
+    closeDateModal();
+    openMonthHistory(custId);
+  };
+  const delDlogBtn = document.querySelector('.del-dlog-btn');
+  if (delDlogBtn){
+    delDlogBtn.onclick = async ()=>{
+      const custId = delDlogBtn.dataset.cust;
+      const d = delDlogBtn.dataset.date;
       if (!confirm('Delete this delivery record? This cannot be undone.')) return;
       try{
         await remove(ref(db, `customers/${custId}/deliveryByDate/${d}`));
         showToast('Delivery record deleted');
       }catch(e){ console.error(e); showToast('Could not delete — check your internet connection'); }
     };
-  });
-
-  // open the full-month history modal for a customer
-  document.querySelectorAll('[data-month-hist]').forEach(btn=>{
-    btn.onclick = ()=> openMonthHistory(btn.dataset.monthHist);
-  });
-
+  }
   document.querySelectorAll('[data-edit-ov]').forEach(btn=>{
-    btn.onclick = ()=>{
-      const custId = btn.dataset.cust;
-      const d = btn.dataset.editOv;
-      const details = document.querySelector(`details[data-key="${custId}-ov"]`);
-      if (details) details.open = true;
-      const dInp = document.querySelector(`.ov-date-input[data-cust="${custId}"]`);
-      if (dInp){ dInp.value = d; }
-      refillOverrideFields(custId, d);
-      if (details) details.scrollIntoView({ behavior:'smooth', block:'center' });
-    };
+    btn.onclick = ()=>{ dateModalDate = btn.dataset.editOv; renderDateModal(); };
   });
-
   document.querySelectorAll('[data-del-ov-row]').forEach(btn=>{
     btn.onclick = async ()=>{
       const custId = btn.dataset.cust;
@@ -1114,129 +1123,94 @@ function wireCardEditors(){
     };
   });
 }
+document.getElementById('dateCloseBtn').onclick = closeDateModal;
+document.getElementById('dateModalOverlay').addEventListener('click', (e)=>{
+  if (e.target.id === 'dateModalOverlay') closeDateModal();
+});
 
-/* ---------------- PDF export ---------------- */
+/* ---------------- PDF export — delivery-boy summary only, no customer names ---------------- */
 function jsPDFReady(){ return !!(window.jspdf && window.jspdf.jsPDF); }
 
-function computeProductTotals(list){
-  const totals = {};
-  PRODUCTS.forEach(p => totals[p.key] = 0);
-  list.forEach(c=>{
-    const eff = effectiveFor(c, viewDate);
-    PRODUCTS.forEach(p => totals[p.key] += (eff[p.key]||0));
-  });
-  // round off floating point noise from 0.25-step quantities
-  PRODUCTS.forEach(p => totals[p.key] = Math.round(totals[p.key]*100)/100);
-  return totals;
-}
-
-function buildBoyShiftSection(doc, boyName, shift, list, isFirstSectionOnPage){
-  if (!isFirstSectionOnPage) doc.addPage();
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const marginX = 14;
-
-  // header banner
-  doc.setFillColor(14,21,38);
-  doc.roundedRect(marginX, 10, pageWidth - marginX*2, 13, 2, 2, 'F');
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(13);
-  doc.setTextColor(255,255,255);
-  doc.text(`${boyName}  ·  ${shift==='evening'?'Evening Shift':'Morning Shift'}`, marginX + 4, 18.5);
-  doc.setFont('helvetica','normal');
-  doc.setFontSize(9);
-  doc.setTextColor(255,196,150);
-  doc.text(formatDateLabel(viewDate), pageWidth - marginX - 4, 18.5, { align:'right' });
-
-  doc.setFontSize(8.5);
-  doc.setTextColor(110);
-  doc.text(`${list.length} customer${list.length!==1?'s':''} on this run  ·  Generated ${new Date().toLocaleString('en-IN')}`, marginX, 28);
-  doc.setTextColor(0);
-
-  const totals = computeProductTotals(list);
-
-  const rows = list.map((c,i)=>{
-    const eff = effectiveFor(c, viewDate);
-    const row = [i+1, c.name || '', `${c.address||'-'}${c.phone?('\n'+c.phone):''}`];
-    PRODUCTS.forEach(p => row.push(eff[p.key] > 0 ? `${eff[p.key]}${p.short}` : '-'));
-    row.push(eff.note || '-');
-    row.push(eff.isOverride ? '📅 Modified' : '');
-    return row;
-  });
-
-  const totalRow = [
-    '', 'SHIFT TOTAL', `${list.length} stop${list.length!==1?'s':''}`,
-    ...PRODUCTS.map(p => totals[p.key] > 0 ? `${totals[p.key]}${p.short}` : '-'),
-    '', ''
-  ];
-
-  doc.autoTable({
-    startY: 33,
-    head: [['#','Customer','Address / Phone', ...PRODUCTS.map(p=>p.label), 'Note', 'Status']],
-    body: rows,
-    foot: [totalRow],
-    showFoot: 'lastPage',
-    styles: { fontSize: 7.8, cellPadding: 2.6, overflow:'linebreak', valign:'middle', lineColor:[225,222,207], lineWidth:0.2 },
-    headStyles: { fillColor:[14,21,38], textColor:255, fontSize:7.8, halign:'center' },
-    footStyles: { fillColor:[255,238,214], textColor:[20,25,40], fontStyle:'bold', fontSize:8.4, halign:'center' },
-    alternateRowStyles: { fillColor:[250,249,244] },
-    columnStyles: {
-      0:{cellWidth:8, halign:'center'},
-      1:{cellWidth:36},
-      2:{cellWidth:50},
-      3:{cellWidth:18, halign:'center'}, 4:{cellWidth:18, halign:'center'}, 5:{cellWidth:18, halign:'center'},
-      6:{cellWidth:18, halign:'center'}, 7:{cellWidth:18, halign:'center'}, 8:{cellWidth:18, halign:'center'},
-      9:{cellWidth:38}, 10:{cellWidth:21, halign:'center'}
-    },
-    didParseCell: (data)=>{
-      if (data.section === 'body' && data.column.index === 10 && data.cell.raw === '📅 Modified'){
-        data.cell.styles.textColor = [139,58,184];
-        data.cell.styles.fontStyle = 'bold';
-      }
-      if (data.section === 'foot' && data.column.index === 1){
-        data.cell.styles.halign = 'left';
-      }
-    }
-  });
-}
-
-// Highlighted "day total to carry" block — appended after a delivery boy's
-// last shift section on their PDF, combining morning + evening quantities
-// so it's immediately clear how much total milk / other products to send
-// out with them for the whole day.
-function buildBoyGrandTotal(doc, boyName, boySections){
-  const allList = [].concat(...boySections.map(s=>s.list));
-  if (!allList.length) return;
-  const totals = computeProductTotals(allList);
+function buildSummaryPdf(doc, sections){
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const marginX = 14;
-  let y = (doc.lastAutoTable ? doc.lastAutoTable.finalY : 30) + 10;
-  if (y > pageHeight - 55){ doc.addPage(); y = 20; }
 
-  doc.setFillColor(255,140,66);
-  doc.roundedRect(marginX, y, pageWidth - marginX*2, 10, 2, 2, 'F');
-  doc.setFont('helvetica','bold');
-  doc.setFontSize(11);
-  doc.setTextColor(255,255,255);
-  doc.text(`📦 DAY TOTAL TO CARRY — ${boyName}  ·  ${formatDateLabel(viewDate)}`, marginX + 4, y + 7);
-  doc.setFont('helvetica','normal');
+  doc.setFillColor(14,21,38);
+  doc.rect(0, 0, pageWidth, 28, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(16); doc.setTextColor(255,255,255);
+  doc.text('RouteBoy — Delivery Summary Report', marginX, 14);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(255,196,150);
+  doc.text(`${formatDateLabel(viewDate)}   ·   Generated ${new Date().toLocaleString('en-IN')}`, marginX, 21);
   doc.setTextColor(0);
 
-  const shiftNote = boySections.map(s=>`${s.shift==='evening'?'Evening':'Morning'}: ${s.list.length} stop${s.list.length!==1?'s':''}`).join('  ·  ');
+  const boyKeys = [...new Set(sections.map(s=>s.boyKey))];
+  const body = [];
+  const grandTotals = {}; PRODUCTS.forEach(p=>grandTotals[p.key]=0);
+  let grandStops = 0;
 
-  doc.autoTable({
-    startY: y + 13,
-    head: [['Total stops', ...PRODUCTS.map(p=>`${p.label} (${p.unit})`)]],
-    body: [[String(allList.length), ...PRODUCTS.map(p=> totals[p.key] > 0 ? String(totals[p.key]) : '0')]],
-    styles: { fontSize: 10.5, cellPadding: 5, halign:'center', valign:'middle', lineColor:[225,222,207], lineWidth:0.2 },
-    headStyles: { fillColor:[255,238,214], textColor:[139,74,10], fontStyle:'bold', fontSize:8.5 },
-    bodyStyles: { fontStyle:'bold', fontSize:13, textColor:[14,21,38], fillColor:[255,247,230] },
+  boyKeys.forEach(bk=>{
+    const boySecs = sections.filter(s=>s.boyKey===bk);
+    const boyName = boySecs[0].boyName;
+    const boyTotals = {}; PRODUCTS.forEach(p=>boyTotals[p.key]=0);
+    let boyStops = 0;
+
+    boySecs.forEach(sec=>{
+      const totals = computeProductTotals(sec.list);
+      PRODUCTS.forEach(p=> boyTotals[p.key] += totals[p.key]);
+      boyStops += sec.list.length;
+      body.push([
+        boyName,
+        sec.shift === 'evening' ? 'Evening' : 'Morning',
+        String(sec.list.length),
+        ...PRODUCTS.map(p => totals[p.key] > 0 ? String(totals[p.key]) : '-')
+      ]);
+    });
+
+    PRODUCTS.forEach(p=> grandTotals[p.key] += boyTotals[p.key]);
+    grandStops += boyStops;
+
+    body.push([
+      `${boyName} — Day Total`,
+      'Both shifts',
+      String(boyStops),
+      ...PRODUCTS.map(p => boyTotals[p.key] > 0 ? String(Math.round(boyTotals[p.key]*100)/100) : '-')
+    ]);
   });
 
-  doc.setFontSize(8);
-  doc.setTextColor(130);
-  doc.text(shiftNote, marginX, doc.lastAutoTable.finalY + 5);
+  doc.autoTable({
+    startY: 34,
+    head: [['Delivery Boy','Shift','Stops', ...PRODUCTS.map(p=>`${p.label} (${p.unit})`)]],
+    body,
+    styles: { fontSize: 9.5, cellPadding: 4.2, halign:'center', valign:'middle', lineColor:[225,222,207], lineWidth:0.2 },
+    headStyles: { fillColor:[14,21,38], textColor:255, fontStyle:'bold', fontSize:9.5 },
+    alternateRowStyles: { fillColor:[250,249,244] },
+    columnStyles: { 0:{ halign:'left', fontStyle:'bold', cellWidth:46 }, 1:{ cellWidth:26 } },
+    didParseCell: (data)=>{
+      if (data.section === 'body' && String(data.row.raw[1]) === 'Both shifts'){
+        data.cell.styles.fillColor = [255,238,214];
+        data.cell.styles.fontStyle = 'bold';
+        data.cell.styles.textColor = [139,74,10];
+      }
+    }
+  });
+
+  let y = doc.lastAutoTable.finalY + 10;
+  if (y > pageHeight - 42){ doc.addPage(); y = 20; }
+
+  doc.setFillColor(255,106,61);
+  doc.roundedRect(marginX, y, pageWidth - marginX*2, 11, 2, 2, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(255,255,255);
+  doc.text(`OVERALL TOTAL — ${grandStops} stop${grandStops!==1?'s':''} across ${boyKeys.length} delivery boy${boyKeys.length!==1?'s':''}`, marginX + 4, y + 7.5);
   doc.setTextColor(0);
+
+  doc.autoTable({
+    startY: y + 15,
+    head: [PRODUCTS.map(p=>`${p.label} (${p.unit})`)],
+    body: [PRODUCTS.map(p=> grandTotals[p.key] > 0 ? String(Math.round(grandTotals[p.key]*100)/100) : '0')],
+    styles: { fontSize: 12, cellPadding: 6, halign:'center', fontStyle:'bold', textColor:[14,21,38], lineColor:[225,222,207], lineWidth:0.2 },
+    headStyles: { fillColor:[255,238,214], textColor:[139,74,10], fontStyle:'bold', fontSize:9.5 }
+  });
 }
 
 function addPdfFooters(doc){
@@ -1248,29 +1222,22 @@ function addPdfFooters(doc){
     doc.setFont('helvetica','normal');
     doc.setFontSize(7.5);
     doc.setTextColor(150);
-    doc.text('RouteBoy — Delivery Order Chart', 14, pageHeight - 7);
+    doc.text('RouteBoy — Delivery Order Chart · Delivery boy summary (no customer data)', 14, pageHeight - 7);
     doc.text(`Page ${i} of ${pageCount}`, pageWidth - 14, pageHeight - 7, { align:'right' });
     doc.setTextColor(0);
   }
 }
 
-function downloadPdf(opts){
-  opts = opts || {};
-  if (!jsPDFReady()){ showToast('PDF library still loading — try again in a moment'); return; }
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: 'landscape' });
-
+function buildPdfSections({ boyId, all }){
   let sections = [];
-
-  if (opts.boyId){
-    const b = deliveryBoys.find(x=>x.id===opts.boyId);
-    if (!b) return;
+  if (boyId){
+    const b = deliveryBoys.find(x=>x.id===boyId);
+    if (!b) return [];
     ['morning','evening'].forEach(shift=>{
       const list = customers.filter(c=>c.assignedTo===b.id && custShift(c)===shift);
       if (list.length) sections.push({ boyName: b.name, shift, list, boyKey: b.id });
     });
-    if (!sections.length){ showToast('No customers assigned to ' + b.name); return; }
-  } else if (opts.all){
+  } else if (all){
     deliveryBoys.forEach(b=>{
       ['morning','evening'].forEach(shift=>{
         const list = customers.filter(c=>c.assignedTo===b.id && custShift(c)===shift);
@@ -1282,7 +1249,6 @@ function downloadPdf(opts){
       const list = unassigned.filter(c=>custShift(c)===shift);
       if (list.length) sections.push({ boyName: 'Unassigned', shift, list, boyKey: 'unassigned' });
     });
-    if (!sections.length){ showToast('No customers to export yet'); return; }
   } else {
     const boysToShow = filtBoy === 'all' ? deliveryBoys : deliveryBoys.filter(b=>b.id===filtBoy);
     const shiftsToShow = filtShift === 'all' ? ['morning','evening'] : [filtShift];
@@ -1299,34 +1265,34 @@ function downloadPdf(opts){
         if (list.length) sections.push({ boyName: 'Unassigned', shift, list, boyKey: 'unassigned' });
       });
     }
-    if (!sections.length){ showToast('No customers match the current filters'); return; }
   }
+  return sections;
+}
 
-  sections.forEach((sec, idx)=>{
-    buildBoyShiftSection(doc, sec.boyName, sec.shift, sec.list, idx===0);
-    const nextSec = sections[idx+1];
-    const isLastSectionForThisBoy = !nextSec || nextSec.boyKey !== sec.boyKey;
-    if (isLastSectionForThisBoy){
-      const boySections = sections.filter(s=>s.boyKey===sec.boyKey);
-      buildBoyGrandTotal(doc, sec.boyName, boySections);
-    }
-  });
+function downloadPdf(opts){
+  opts = opts || {};
+  if (!jsPDFReady()){ showToast('PDF library still loading — try again in a moment'); return; }
+  const sections = buildPdfSections(opts);
+  if (!sections.length){ showToast('No customers to summarize for this selection'); return; }
 
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait' });
+  buildSummaryPdf(doc, sections);
   addPdfFooters(doc);
 
   const filenameBase = opts.boyId
-    ? ((deliveryBoys.find(b=>b.id===opts.boyId)||{}).name || 'delivery_chart') + '_' + viewDate
-    : (opts.all ? 'All_Delivery_Chart_' + viewDate : 'Filtered_Delivery_Chart_' + viewDate);
+    ? ((deliveryBoys.find(b=>b.id===opts.boyId)||{}).name || 'delivery_summary') + '_' + viewDate
+    : (opts.all ? 'All_Delivery_Boys_Summary_' + viewDate : 'Filtered_Delivery_Summary_' + viewDate);
   doc.save(filenameBase.replace(/[^a-z0-9]+/gi,'_') + '.pdf');
 }
 
 document.getElementById('downloadAllBtn').onclick = ()=> downloadPdf({ all:true });
-document.getElementById('downloadViewBtn').onclick = ()=> downloadPdf({});
+document.getElementById('getPdfBtn').onclick = ()=> downloadPdf({});
 
 /* ---------------- monthly customer history modal ---------------- */
 let monthModalCustId = null;
 let monthViewYear = null;
-let monthViewMonth = null; // 0-indexed
+let monthViewMonth = null;
 
 function openMonthHistory(custId){
   const c = customers.find(x=>x.id===custId);
