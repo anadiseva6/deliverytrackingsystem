@@ -170,6 +170,21 @@
   .stop-body .addr{font-size:12.5px; color:var(--slate); margin-top:2px; line-height:1.4;}
   .stop-body .phn{font-size:12px; color:var(--navy); margin-top:4px; font-family:'JetBrains Mono';}
   .stop-meta{display:flex; align-items:center; gap:6px; margin-top:8px; flex-wrap:wrap;}
+  .stop-items{font-size:12px; color:var(--navy); background:#FFF6F3; border:1px solid #FFE0D4; border-radius:9px; padding:8px 10px; margin-top:6px; line-height:1.5; font-weight:600; display:flex; align-items:center; gap:7px; flex-wrap:wrap;}
+  .mod-today-badge{font-size:9px; font-weight:700; background:#B25BE0; color:white; padding:2px 7px; border-radius:999px; letter-spacing:.02em; white-space:nowrap;}
+  .stop-note{font-size:11.5px; color:var(--navy); margin-top:5px; background:white; border:1px dashed #DEDBCF; border-radius:8px; padding:6px 9px; line-height:1.4;}
+
+  /* ---------------- Today's product totals (admin overview) ---------------- */
+  .prod-totals-grid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:16px;}
+  .prod-total-card{background:var(--navy); color:white; border-radius:12px; padding:11px 10px; text-align:center;}
+  .prod-total-card .pnum{font-family:'JetBrains Mono'; font-size:17px; font-weight:600;}
+  .prod-total-card .plabel{font-size:9.5px; color:var(--slate); text-transform:uppercase; letter-spacing:.04em; margin-top:2px;}
+  .boy-prod-card{background:#FBFAF6; border:1px solid #EEECE2; border-radius:13px; padding:12px 13px; margin-bottom:9px;}
+  .boy-prod-card .head{display:flex; align-items:center; gap:8px; font-weight:700; font-size:13.5px; margin-bottom:8px;}
+  .boy-prod-card .head .cnt{margin-left:auto; font-size:10.5px; color:var(--slate); font-family:'JetBrains Mono'; font-weight:600;}
+  .boy-prod-chips{display:flex; flex-wrap:wrap; gap:6px;}
+  .boy-prod-chip{font-size:11.5px; font-weight:700; padding:5px 10px; border-radius:999px; background:#E4F8F3; color:#1D9E86; font-family:'JetBrains Mono';}
+  .boy-prod-chip.empty{background:#F0EEE4; color:var(--slate); font-weight:600; font-family:'Inter';}
   .badge{font-size:10.5px; font-family:'JetBrains Mono'; padding:4px 9px; border-radius:6px; font-weight:600;}
   .badge.pending{background:#FDECE5; color:var(--orange-dark);}
   .badge.done{background:#E4F8F3; color:#1D9E86;}
@@ -262,6 +277,16 @@
   .photo-thumb-link{display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; color:var(--mint-dark); background:#E4F8F3; padding:5px 10px; border-radius:999px; text-decoration:none; margin-top:6px;}
   .photo-thumb-link img{width:20px; height:20px; border-radius:5px; object-fit:cover;}
   .mini-stop-photo{width:26px; height:26px; border-radius:6px; object-fit:cover; flex-shrink:0;}
+
+  /* ---------------- delivery checklist (before camera) ---------------- */
+  .checklist-grid{display:flex; flex-direction:column; gap:8px; margin:12px 0;}
+  .checklist-item{display:flex; align-items:center; gap:11px; padding:12px 14px; border:1.5px solid #EEECE2; border-radius:12px; background:#F4FBF8; cursor:pointer; font-weight:600; font-size:13.5px; transition:background .12s ease, border-color .12s ease;}
+  .checklist-item input[type=checkbox]{width:21px; height:21px; accent-color:var(--mint); flex-shrink:0;}
+  .checklist-item b{font-family:'JetBrains Mono'; margin-left:4px; color:var(--navy);}
+  .checklist-item.unchecked{background:#FFF3F3; border-color:#F3D3D3;}
+  .checklist-item.unchecked b{color:var(--danger); text-decoration:line-through;}
+  .checklist-all-row{display:flex; gap:8px; margin-bottom:4px;}
+  .checklist-all-row button{flex:1; border:1.5px solid #DEDBCF; background:#FBFAF6; color:var(--navy); font-size:11.5px; font-weight:700; padding:8px 6px; border-radius:9px; cursor:pointer;}
 
   .zone-row{display:flex; align-items:center; justify-content:space-between; background:#FBFAF6; border:1px solid #EEECE2; border-radius:12px; padding:11px 13px; margin-bottom:9px;}
   .zone-row .left{display:flex; align-items:center; gap:9px; font-size:13.5px; font-weight:600;}
@@ -446,6 +471,12 @@
           <div class="stat-card"><div class="num" id="ovOnline">0/0</div><div class="label">Boys online</div></div>
           <div class="stat-card"><div class="num" id="ovUnassigned">0</div><div class="label">Unassigned</div></div>
         </div>
+        <div class="section-title">Today's total order — all customers</div>
+        <div class="prod-totals-grid" id="productTotalsOverall"></div>
+
+        <div class="section-title">Today's total — per delivery boy</div>
+        <div id="productTotalsByBoy"></div>
+
         <div class="section-title">Team status — tap a boy for full status</div>
         <div id="overviewBoyList"></div>
       </div>
@@ -689,6 +720,10 @@
   <div class="modal" id="photoModalContent"></div>
 </div>
 
+<div class="modal-backdrop" id="deliveryChecklistModal">
+  <div class="modal" id="checklistModalContent"></div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -721,6 +756,17 @@ const DELIVERY_PASSWORD = '123';
 const GOOGLE_MAPS_API_KEY = 'AIzaSyCdJWu6gsjXhC1qmz9O6y6U5f7pC3ucC6E';
 const NEW_BADGE_DURATION_MS = 24 * 60 * 60 * 1000; // "new customer" badge stays up for 24 hours
 
+// Same fixed product list as deliverychart.html — keep these two in sync.
+// "note" is handled separately as free text, not a quantity.
+const PRODUCTS = [
+  { key:'milk',   label:'Milk',   unit:'Ltr', short:'L' },
+  { key:'chach',  label:'Chaas',  unit:'Ltr', short:'L' },
+  { key:'butter', label:'Butter', unit:'Kg',  short:'kg' },
+  { key:'paneer', label:'Paneer', unit:'Kg',  short:'kg' },
+  { key:'curd',   label:'Curd',   unit:'Kg',  short:'kg' },
+  { key:'ghee',   label:'Ghee',   unit:'Ltr', short:'L' }
+];
+
 // Delivery-proof photo storage (Cloudinary — free plan, no card required).
 // Only the resulting photo URL is ever written to Firebase; the actual image
 // bytes live on Cloudinary's CDN, so the Realtime Database itself never gets
@@ -732,6 +778,46 @@ const PHOTO_JPEG_QUALITY = 0.72;   // keeps proof photos readable at ~80-150KB e
 
 /* ---------------- helpers ---------------- */
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+/* ---------------- today's order (default + override), same model as deliverychart.html ---------------- */
+function todayStr(){
+  const dt = new Date();
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth()+1).padStart(2,'0');
+  const day = String(dt.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+function getDefaultProducts(c){
+  const d = c.defaultProducts || {};
+  const out = {};
+  PRODUCTS.forEach(p => out[p.key] = d[p.key] != null ? d[p.key] : 0);
+  out.note = d.note || '';
+  return out;
+}
+function getOverrideFor(c, dstr){
+  return (c.overrides && c.overrides[dstr]) || null;
+}
+function effectiveOrderFor(c, dstr){
+  const ov = getOverrideFor(c, dstr);
+  if (ov){
+    const out = {};
+    PRODUCTS.forEach(p => out[p.key] = ov[p.key] != null ? ov[p.key] : 0);
+    out.note = ov.note != null ? ov.note : '';
+    out.isOverride = true;
+    return out;
+  }
+  const def = getDefaultProducts(c);
+  def.isOverride = false;
+  return def;
+}
+function itemsChipHtml(c){
+  const eff = effectiveOrderFor(c, todayStr());
+  const items = PRODUCTS.filter(p => (eff[p.key]||0) > 0);
+  if (!items.length && !eff.note) return '';
+  const txt = items.map(p => `${p.label} × ${eff[p.key]}${p.unit?(' '+p.unit):''}`).join(', ');
+  const modBadge = eff.isOverride ? '<span class="mod-today-badge">Modified today</span>' : '';
+  const noteHtml = eff.note ? `<div class="stop-note">📝 ${escapeHtml(eff.note)}</div>` : '';
+  return `<div class="stop-items">🛒 ${txt || 'No items'} ${modBadge}</div>${noteHtml}`;
+}
 function distanceKm(lat1, lon1, lat2, lon2){
   // NOTE: this is a straight-line ("as the crow flies") Haversine distance.
   // It ignores actual roads/turns, so it will always be <= the real driving
@@ -1723,6 +1809,7 @@ function updateWhoami(){
     document.getElementById('whoami').innerHTML = `<span class="badge-color" style="background:${color}"></span><b>${escapeHtml(name)}</b><span class="hide-mobile">${tracking?'<span class="live-dot"></span>':''}</span><button id="logoutBtn">Logout</button>`;
   }
   document.getElementById('logoutBtn').onclick = ()=> confirmAction("Log out?" + (role==='delivery' ? " This will stop sharing your live location." : ""), logout);
+  
 }
 
 /* ================= FIREBASE REALTIME DATABASE LISTENERS ================= */
@@ -1891,6 +1978,92 @@ document.getElementById('addZoneBtn').onclick = withBtnLoading(document.getEleme
   showToast("Zone added!");
 });
 
+/* ---------------- Delivery checklist (shown BEFORE camera opens) ----------------
+   Delivery boy sees today's effective order for this customer as checkboxes
+   (all pre-checked = fully delivered). He unchecks anything that was NOT
+   delivered. The result travels through to the camera step and finally gets
+   written to customers/{id}/deliveryByDate/{today} so the admin can audit,
+   for any date, exactly what was and wasn't delivered — see deliverychart.html. */
+function openDeliveryChecklist(custId){
+  const c = customers.find(x=>x.id===custId);
+  if (!c) return;
+  const eff = effectiveOrderFor(c, todayStr());
+  const items = PRODUCTS.filter(p => (eff[p.key]||0) > 0);
+
+  document.getElementById('checklistModalContent').innerHTML = `
+    <h3>✅ Delivery checklist</h3>
+    <p class="sub">${escapeHtml(c.name)} — aaj ka order confirm karo. Jo item deliver NAHI hua uska ✓ hata do.</p>
+    ${eff.note ? `<div class="today-note">📝 ${escapeHtml(eff.note)}</div>` : ''}
+    ${items.length ? `
+      <div class="checklist-all-row">
+        <button type="button" id="checkAllBtn">✓ Select all</button>
+        <button type="button" id="checkNoneBtn">✕ Clear all</button>
+      </div>
+      <div class="checklist-grid" id="checklistGrid">
+        ${items.map(p => `
+          <label class="checklist-item" data-check-key="${p.key}">
+            <input type="checkbox" checked data-check-key="${p.key}">
+            <span>${p.label} <b>${fmtQty(eff[p.key])}${p.unit}</b></span>
+          </label>
+        `).join('')}
+      </div>
+    ` : `<div class="empty-state">Aaj is customer ke liye koi product order set nahi hai — phir bhi delivered mark kar sakte ho.</div>`}
+    <div class="btn-row" style="margin-top:14px;">
+      <button class="btn btn-ghost" id="checklistCancelBtn">Cancel</button>
+      <button class="btn btn-primary" id="checklistContinueBtn" style="flex:1.4;">Continue → Camera</button>
+    </div>
+  `;
+
+  const syncItemStyle = (input)=>{
+    const label = input.closest('.checklist-item');
+    if (label) label.classList.toggle('unchecked', !input.checked);
+  };
+  document.querySelectorAll('#checklistGrid input[type=checkbox]').forEach(inp=>{
+    inp.addEventListener('change', ()=> syncItemStyle(inp));
+  });
+  const checkAllBtn = document.getElementById('checkAllBtn');
+  const checkNoneBtn = document.getElementById('checkNoneBtn');
+  if (checkAllBtn) checkAllBtn.onclick = ()=> document.querySelectorAll('#checklistGrid input[type=checkbox]').forEach(inp=>{ inp.checked = true; syncItemStyle(inp); });
+  if (checkNoneBtn) checkNoneBtn.onclick = ()=> document.querySelectorAll('#checklistGrid input[type=checkbox]').forEach(inp=>{ inp.checked = false; syncItemStyle(inp); });
+
+  document.getElementById('checklistCancelBtn').onclick = ()=> closeModal('deliveryChecklistModal');
+  document.getElementById('checklistContinueBtn').onclick = ()=>{
+    const checklist = { ordered:{}, items:{} };
+    items.forEach(p => checklist.ordered[p.key] = eff[p.key]);
+    document.querySelectorAll('#checklistGrid input[type=checkbox]').forEach(inp=>{
+      checklist.items[inp.dataset.checkKey] = inp.checked;
+    });
+    closeModal('deliveryChecklistModal');
+    renderPhotoModal(custId, checklist);
+    openModal('photoModal');
+  };
+}
+
+/* Builds the customers/{id}/deliveryByDate/{today} payload from a checklist
+   captured by openDeliveryChecklist(). Kept separate from the photo flow so
+   it gets written the moment the boy confirms the checklist, regardless of
+   whether the proof photo upload is still finishing in the background. */
+function buildDeliveryLogPayload(checklist){
+  const boy = myBoyId ? deliveryBoys.find(b=>b.id===myBoyId) : null;
+  const items = {};
+  let allDelivered = true;
+  const ordered = (checklist && checklist.ordered) || {};
+  const checked = (checklist && checklist.items) || {};
+  Object.keys(ordered).forEach(key=>{
+    const delivered = !!checked[key];
+    items[key] = { ordered: ordered[key], delivered };
+    if (!delivered) allDelivered = false;
+  });
+  return {
+    boyId: myBoyId || null,
+    boyName: boy ? boy.name : '',
+    items,
+    hasOrder: Object.keys(items).length > 0,
+    allDelivered,
+    ts: Date.now()
+  };
+}
+
 /* ---------------- Delivery proof photo capture + upload ---------------- */
 let pendingDeliveryCustId = null;
 
@@ -1938,10 +2111,13 @@ async function uploadDeliveryPhoto(blob, custId){
   return { url: data.secure_url, bytes: data.bytes || blob.size || null };
 }
 
-async function finalizeDelivery(custId, photoUrl, photoBytes){
+async function finalizeDelivery(custId, photoUrl, photoBytes, checklist){
   const now = Date.now();
   const updates = { status: 'completed', completedAt: serverTimestamp() };
   if (photoUrl) { updates.deliveryPhotoUrl = photoUrl; updates.deliveryPhotoAt = now; }
+  // Date-scoped delivery log — lets deliverychart.html show, for ANY date,
+  // exactly which products were delivered vs missed for this customer.
+  if (checklist) updates['deliveryByDate/' + todayStr()] = buildDeliveryLogPayload(checklist);
   const tasks = [ update(ref(db, 'customers/' + custId), updates) ];
   if (photoUrl){
     // customers/{id}.deliveryPhotoUrl only ever holds the LATEST photo — it
@@ -1974,7 +2150,7 @@ async function finalizeDelivery(custId, photoUrl, photoBytes){
    compress+upload+log work continues silently in the background. A small
    floating badge shows how many photos are still finishing up, and failed
    uploads auto-retry (and can be retried by hand) without losing the photo. */
-const bgUploadQueue = []; // {id, custId, custName, file, status: 'pending'|'uploading'|'failed'|'done', error}
+const bgUploadQueue = []; // {id, custId, custName, file, checklist, status: 'pending'|'uploading'|'failed'|'done', error}
 let bgUploadIdSeq = 1;
 
 function bgQueueBadgeEl(){ return document.getElementById('bgUploadBadge'); }
@@ -2009,7 +2185,7 @@ async function processBgUpload(task){
   try{
     const blob = await compressImageToJpegBlob(task.file);
     const { url, bytes } = await uploadDeliveryPhoto(blob, task.custId);
-    await finalizeDelivery(task.custId, url, bytes);
+    await finalizeDelivery(task.custId, url, bytes, task.checklist);
     task.status = 'done';
     showToast(`📷 Proof photo saved — ${task.custName}`);
   }catch(err){
@@ -2023,9 +2199,9 @@ async function processBgUpload(task){
   renderBgUploadBadge();
 }
 
-function queueDeliveryPhoto(custId, file){
+function queueDeliveryPhoto(custId, file, checklist){
   const c = customers.find(x=>x.id===custId);
-  const task = { id: bgUploadIdSeq++, custId, custName: c ? c.name : 'Customer', file, status: 'pending' };
+  const task = { id: bgUploadIdSeq++, custId, custName: c ? c.name : 'Customer', file, checklist, status: 'pending' };
   bgUploadQueue.push(task);
   renderBgUploadBadge();
   processBgUpload(task);
@@ -2036,7 +2212,7 @@ window.addEventListener('online', ()=>{
   bgUploadQueue.filter(t=>t.status==='failed').forEach(t => processBgUpload(t));
 });
 
-function renderPhotoModal(custId){
+function renderPhotoModal(custId, checklist){
   const c = customers.find(x=>x.id===custId);
   document.getElementById('photoModalContent').innerHTML = `
     <h3>📷 Delivery proof photo</h3>
@@ -2083,7 +2259,9 @@ function renderPhotoModal(custId){
     // processBgUpload() above.
     (async ()=>{
       try{
-        await update(ref(db, 'customers/' + custId), { status: 'completed', completedAt: serverTimestamp() });
+        const updates = { status: 'completed', completedAt: serverTimestamp() };
+        if (checklist) updates['deliveryByDate/' + todayStr()] = buildDeliveryLogPayload(checklist);
+        await update(ref(db, 'customers/' + custId), updates);
       }catch(err){
         console.error('Instant mark-complete failed:', err);
         showToast('Could not mark delivered — check your internet connection');
@@ -2091,7 +2269,7 @@ function renderPhotoModal(custId){
         setBusy(false);
         return;
       }
-      queueDeliveryPhoto(custId, file);
+      queueDeliveryPhoto(custId, file, checklist);
       showToast('Delivered! Photo uploading in background…');
       closeModal('photoModal');
     })();
@@ -2100,14 +2278,14 @@ function renderPhotoModal(custId){
   document.getElementById('photoCancelBtn').onclick = ()=> closeModal('photoModal');
   document.getElementById('photoSkipBtn').onclick = ()=>{
     closeModal('photoModal');
-    confirmAction("Bina photo ke deliver mark karein? Billing proof nahi rahega.", ()=> finalizeDelivery(custId, null));
+    confirmAction("Bina photo ke deliver mark karein? Billing proof nahi rahega.", ()=> finalizeDelivery(custId, null, null, checklist));
   };
 }
 
 window.markComplete = (id) => {
   pendingDeliveryCustId = id;
-  renderPhotoModal(id);
-  openModal('photoModal');
+  openDeliveryChecklist(id);
+  openModal('deliveryChecklistModal');
 };
 window.deliverFromMap = (id) => { infoWindow.close(); openInfoFor = null; markComplete(id); };
 window.reassignCustomer = async (id, bId) => { await update(ref(db, 'customers/' + id), { assignedTo: bId || null }); };
@@ -2407,7 +2585,57 @@ function populateDropdowns(){
     setSelectOptionsPreserveValue('boyZone', zOpts);
 }
 
+function computeProductTotals(list){
+  const totals = {};
+  PRODUCTS.forEach(p => totals[p.key] = 0);
+  const today = todayStr();
+  list.forEach(c => {
+    const eff = effectiveOrderFor(c, today);
+    PRODUCTS.forEach(p => totals[p.key] += (eff[p.key] || 0));
+  });
+  return totals;
+}
+function fmtQty(n){
+  // trims trailing .0 but keeps meaningful decimals (e.g. 1.5 Ltr)
+  return (Math.round(n * 100) / 100).toString();
+}
+function renderProductTotals(){
+    const overallTotals = computeProductTotals(customers);
+    document.getElementById('productTotalsOverall').innerHTML = PRODUCTS.map(p => `
+        <div class="prod-total-card">
+            <div class="pnum">${fmtQty(overallTotals[p.key])}${overallTotals[p.key] ? ' <span style="font-size:11px;font-weight:500;">'+p.unit+'</span>' : ''}</div>
+            <div class="plabel">${p.label}</div>
+        </div>
+    `).join('');
+
+    const boysHtml = deliveryBoys.map(b => {
+        const mine = customers.filter(c => c.assignedTo === b.id);
+        const totals = computeProductTotals(mine);
+        const chips = PRODUCTS.filter(p => totals[p.key] > 0)
+          .map(p => `<span class="boy-prod-chip">${p.label} ${fmtQty(totals[p.key])}${p.unit}</span>`).join('');
+        return `<div class="boy-prod-card">
+            <div class="head"><span class="boy-swatch" style="background:${b.color}"></span>${escapeHtml(b.name)}<span class="cnt">${mine.length} customer${mine.length!==1?'s':''}</span></div>
+            <div class="boy-prod-chips">${chips || '<span class="boy-prod-chip empty">No order today</span>'}</div>
+        </div>`;
+    }).join('');
+
+    const unassigned = customers.filter(c => !c.assignedTo || !deliveryBoys.find(b=>b.id===c.assignedTo));
+    let unassignedHtml = '';
+    if (unassigned.length){
+        const totals = computeProductTotals(unassigned);
+        const chips = PRODUCTS.filter(p => totals[p.key] > 0)
+          .map(p => `<span class="boy-prod-chip">${p.label} ${fmtQty(totals[p.key])}${p.unit}</span>`).join('');
+        unassignedHtml = `<div class="boy-prod-card">
+            <div class="head"><span class="boy-swatch" style="background:var(--slate-light)"></span>Unassigned<span class="cnt">${unassigned.length} customer${unassigned.length!==1?'s':''}</span></div>
+            <div class="boy-prod-chips">${chips || '<span class="boy-prod-chip empty">No order today</span>'}</div>
+        </div>`;
+    }
+
+    document.getElementById('productTotalsByBoy').innerHTML = (boysHtml + unassignedHtml) || '<div class="empty-state">No delivery boys added yet.</div>';
+}
+
 function renderAdminOverview(){
+    renderProductTotals();
     document.getElementById('ovDone').textContent = customers.filter(c=>c.status==='completed').length;
     document.getElementById('ovPending').textContent = customers.filter(c=>c.status!=='completed').length;
     document.getElementById('ovOnline').textContent = `${deliveryBoys.filter(b=>isOnline(b)).length}/${deliveryBoys.length}`;
@@ -2754,7 +2982,8 @@ function renderDeliveryList(){
             <div class="stop-body">
                 <div class="name">${escapeHtml(c.name)}${i===0?' · Next stop':''} <span class="shift-badge ${activeShift}" style="padding:1px 7px; font-size:9.5px;">${activeShift==='evening'?'🌆':'🌅'}</span>${isNewCustomer(c) ? ' <span class="badge new">🆕 NEW</span>' : ''}</div>
                 <div class="addr">${escapeHtml(c.address || '')}</div>
-                ${c.phone ? `<div class="phn">📞 ${escapeHtml(c.phone)}</div>` : ''}
+                                ${c.phone ? `<div class="phn">📞 ${escapeHtml(c.phone)}</div>` : ''}
+                ${itemsChipHtml(c)}
                 <div class="stop-meta">
                     <span class="badge dist">${c._dist!=null ? fmtDist(c._dist) : 'Turn on GPS'}</span>
                     ${c._dist!=null ? `<span class="badge eta">~${fmtEtaMinutes(c._dist)}</span>` : ''}
