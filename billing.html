@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>AdminOS | Billing (Auto + Manual)</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<script>
+  tailwind.config = {
+    theme: {
+      fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+      extend: { colors: { brand: '#4338ca', darkBlue: '#111827', bg: '#f3f4f6' } }
+    }
+  }
+</script>
+<style>
+  body{ background:#f3f4f6; }
+  .no-scrollbar::-webkit-scrollbar{ display:none; }
+  .no-scrollbar{ -ms-overflow-style:none; scrollbar-width:none; }
+  .fade-in{ animation: fadeIn .25s ease-out; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+  ::-webkit-scrollbar{ width:7px; } ::-webkit-scrollbar-thumb{ background:#cbd5e1; border-radius:4px; }
+
+  /* ---------------- LOGIN GATE ---------------- */
+  #loginScreen{ position:fixed; inset:0; z-index:2000; display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(circle at 20% 15%, #1e293b 0%, #0f172a 55%, #020617 100%); padding:16px; }
+  .login-card{ background:white; width:100%; max-width:360px; border-radius:20px; padding:26px 22px; box-shadow:0 30px 70px rgba(0,0,0,.45); }
+
+  .cart-scroll{ max-height: 46vh; overflow-y:auto; }
+</style>
+</head>
+
+<body class="h-screen flex bg-bg text-slate-700 overflow-hidden">
+
+<!-- LOGIN GATE -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="flex items-center gap-2 font-bold text-xl mb-1"><i class="fa-solid fa-cube text-brand"></i> AdminOS Billing</div>
+    <p class="text-xs text-slate-400 mb-5">Enter admin password to continue</p>
+    <input type="password" id="adminPass" placeholder="Password" class="w-full border rounded-xl px-4 py-3 mb-2 outline-none focus:border-brand">
+    <p id="adminErr" class="text-xs text-red-500 font-bold mb-2 hidden">Wrong password, try again.</p>
+    <button id="adminLoginBtn" class="w-full bg-brand text-white font-bold py-3 rounded-xl shadow-lg hover:bg-indigo-800 transition">Enter</button>
+  </div>
+</div>
+
+<div id="toast-container" class="fixed top-5 right-5 z-[70] flex flex-col gap-2"></div>
+<div id="sidebar-backdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden"></div>
+
+<!-- SIDEBAR -->
+<aside id="sidebar" class="fixed inset-y-0 left-0 w-64 bg-white border-r border-slate-200 z-50 transform -translate-x-full transition-transform duration-300 lg:static lg:translate-x-0 flex flex-col">
+  <div class="h-16 flex items-center px-6 border-b border-slate-100 font-bold text-xl tracking-tight text-brand">
+    <i class="fa-solid fa-cube mr-2"></i> AdminOS
+  </div>
+  <nav class="flex-1 p-4 space-y-1">
+    <button onclick="router('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-brand font-medium transition">
+      <i class="fa-solid fa-chart-pie w-5"></i> Dashboard
+    </button>
+    <button onclick="router('billing')" id="nav-billing" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-brand font-medium transition">
+      <i class="fa-solid fa-file-invoice w-5"></i> Billing
+    </button>
+    <button onclick="router('delivery')" id="nav-delivery" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-brand font-medium transition">
+      <i class="fa-solid fa-truck-fast w-5"></i> Delivery Chart
+    </button>
+    <button onclick="router('inventory')" id="nav-inventory" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-brand font-medium transition">
+      <i class="fa-solid fa-tags w-5"></i> Rates / Inventory
+    </button>
+    <button onclick="router('history')" id="nav-history" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-brand font-medium transition">
+      <i class="fa-solid fa-clock-rotate-left w-5"></i> History
+    </button>
+    <button onclick="router('share')" id="nav-share" class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-brand font-medium transition">
+      <i class="fa-solid fa-qrcode w-5"></i> Share / Storage
+    </button>
+  </nav>
+  <div class="p-4 border-t border-slate-100 space-y-2">
+    <div id="autobill-badge" class="hidden text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 flex items-center gap-1.5">
+      <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span></span>
+      Auto-billing active — keep this tab open
+    </div>
+    <button id="logoutBtn" class="w-full text-xs font-bold text-slate-400 hover:text-red-500 transition py-2"><i class="fa-solid fa-right-from-bracket mr-1"></i> Logout</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="flex-1 flex flex-col h-full relative overflow-hidden">
+  <header class="lg:hidden h-14 bg-white border-b flex items-center justify-between px-4 z-30 shrink-0">
+    <button onclick="toggleSidebar()" class="text-slate-600"><i class="fa-solid fa-bars text-xl"></i></button>
+    <h1 class="font-bold text-slate-800" id="page-title-mob">Dashboard</h1>
+    <div class="w-6"></div>
+  </header>
+
+  <!-- ============ DASHBOARD ============ -->
+  <section id="view-dashboard" class="flex-1 overflow-y-auto p-4 lg:p-6 fade-in">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+      <div>
+        <h2 class="text-xl font-bold text-slate-800">Dashboard</h2>
+        <p class="text-xs text-slate-400" id="dash-today-date">-</p>
+      </div>
+      <div class="flex gap-2">
+        <input type="date" id="filter-start" class="border rounded-xl px-3 py-2 text-sm bg-white">
+        <input type="date" id="filter-end" class="border rounded-xl px-3 py-2 text-sm bg-white">
+        <button onclick="Dashboard.applyFilter()" class="bg-slate-800 text-white px-4 py-2 rounded-xl text-sm font-bold">Go</button>
+        <button onclick="Dashboard.downloadRangePDF()" class="bg-red-100 text-red-700 px-3 py-2 rounded-xl text-sm font-bold"><i class="fa-solid fa-file-pdf"></i></button>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white p-4 rounded-2xl border shadow-sm">
+        <p class="text-xs text-slate-400 font-bold uppercase">Total Sales</p>
+        <p class="text-2xl font-bold text-slate-800 mt-1">₹<span id="dash-sales">0</span></p>
+      </div>
+      <div class="bg-white p-4 rounded-2xl border shadow-sm">
+        <p class="text-xs text-slate-400 font-bold uppercase">Total Bills</p>
+        <p class="text-2xl font-bold text-slate-800 mt-1" id="dash-orders">0</p>
+      </div>
+      <div class="bg-white p-4 rounded-2xl border shadow-sm">
+        <p class="text-xs text-slate-400 font-bold uppercase">Today</p>
+        <p class="text-2xl font-bold text-emerald-600 mt-1">₹<span id="dash-today">0</span></p>
+      </div>
+      <div class="bg-white p-4 rounded-2xl border shadow-sm">
+        <p class="text-xs text-slate-400 font-bold uppercase" id="dash-month-name">This Month</p>
+        <p class="text-2xl font-bold text-brand mt-1">₹<span id="dash-month">0</span></p>
+      </div>
+    </div>
+
+    <div class="bg-white p-4 rounded-2xl border shadow-sm mb-3 flex flex-wrap items-center gap-2 justify-between">
+      <span class="text-xs font-bold text-slate-400 uppercase">Range Result</span>
+      <span class="font-bold text-lg text-emerald-600">₹<span id="filter-result">0.00</span></span>
+    </div>
+
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="font-bold text-slate-700">Product-wise Sales</h3>
+      <div class="flex gap-2">
+        <input type="month" id="dash-prod-month" class="border rounded-xl px-3 py-2 text-sm bg-white" onchange="Dashboard.renderProductStats()">
+        <button onclick="Dashboard.downloadProductStatsPDF()" class="bg-red-100 text-red-700 px-3 py-2 rounded-xl text-sm font-bold"><i class="fa-solid fa-file-pdf"></i></button>
+      </div>
+    </div>
+    <div id="dash-prod-stats" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-8"></div>
+  </section>
+
+  <!-- FLOATING QUICK ACTION -->
+  <div class="fixed bottom-6 left-4 right-4 md:left-72 md:right-8 z-40 flex gap-3" id="dash-fab">
+    <button onclick="Dashboard.openQuickAction()" class="flex-1 bg-slate-900 text-white p-4 rounded-2xl shadow-2xl flex items-center justify-between border border-slate-700 active:scale-95 transition">
+      <div class="flex items-center gap-3">
+        <div class="bg-emerald-500 w-10 h-10 rounded-full flex items-center justify-center text-white"><i class="fa-solid fa-list-check text-xl"></i></div>
+        <div class="text-left">
+          <p class="font-bold text-sm">Customer Ledger</p>
+          <p class="text-[10px] text-slate-400">Month totals per customer</p>
+        </div>
+      </div>
+      <i class="fa-solid fa-chevron-up text-slate-400"></i>
+    </button>
+  </div>
+
+  <div id="quick-modal" class="fixed inset-0 bg-black/80 z-[60] hidden backdrop-blur-sm flex items-end md:items-center justify-center fade-in">
+    <div class="bg-white w-full md:w-[520px] h-[85vh] md:h-[620px] rounded-t-3xl md:rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+      <div class="bg-slate-50 p-4 border-b flex justify-between items-center shrink-0">
+        <div>
+          <h3 class="font-bold text-slate-800 text-lg">Customer Ledger</h3>
+          <p class="text-xs text-slate-500">Total billed per customer</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="Dashboard.downloadLedgerPDF()" class="bg-red-100 text-red-700 px-3 py-2 rounded-lg text-xs font-bold"><i class="fa-solid fa-file-pdf"></i></button>
+          <button onclick="Dashboard.downloadLedgerExcel()" class="bg-emerald-100 text-emerald-700 px-3 py-2 rounded-lg text-xs font-bold"><i class="fa-solid fa-file-excel"></i></button>
+          <button onclick="document.getElementById('quick-modal').classList.add('hidden')" class="bg-white p-2 rounded-full text-slate-500 shadow-sm border"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      </div>
+      <div class="p-4 bg-white border-b flex flex-col sm:flex-row gap-2 shrink-0">
+        <input type="text" id="quick-search-input" onkeyup="Dashboard.filterQuickList()" placeholder="Search Name or Phone..." class="flex-1 px-4 py-2.5 bg-slate-100 rounded-xl text-sm font-bold outline-none">
+        <input type="month" id="quick-month-filter" onchange="Dashboard.calculateCustomerTotals()" class="bg-slate-100 rounded-xl px-4 py-2.5 text-sm font-bold outline-none">
+      </div>
+      <div id="quick-list-body" class="flex-1 overflow-y-auto p-2 space-y-1 bg-slate-50 pb-6"></div>
+    </div>
+  </div>
+
+  <!-- ============ BILLING ============ -->
+  <section id="view-billing" class="flex-1 overflow-y-auto p-4 lg:p-6 fade-in hidden">
+    <div class="flex flex-col xl:flex-row gap-6">
+      <div class="flex-1 flex flex-col gap-4">
+
+        <!-- Customer picker -->
+        <div class="bg-white p-5 rounded-2xl border shadow-sm">
+          <label class="text-xs font-bold text-slate-400 uppercase ml-1">Customer</label>
+          <div class="relative mt-1">
+            <select id="pos-customer-select" onchange="Billing.selectCustomer(this.value)" class="w-full pl-4 pr-4 py-3 rounded-xl bg-slate-50 border focus:bg-white focus:border-brand outline-none font-semibold appearance-none">
+              <option value="">Select customer...</option>
+            </select>
+          </div>
+          <div id="cust-display" class="hidden text-xs text-brand font-bold mt-2 ml-1">Selected: <span id="cust-name"></span> · Rate source: <span id="cust-rate-source"></span></div>
+        </div>
+
+        <!-- Mode -->
+        <div class="bg-white p-5 rounded-2xl border shadow-sm">
+          <div class="flex gap-2 mb-4">
+            <button id="mode-auto-btn" onclick="Billing.setMode('auto')" class="flex-1 py-2.5 rounded-xl font-bold text-sm bg-brand text-white">📦 Auto (from Delivered)</button>
+            <button id="mode-manual-btn" onclick="Billing.setMode('manual')" class="flex-1 py-2.5 rounded-xl font-bold text-sm bg-slate-100 text-slate-600">✍️ Manual Add</button>
+          </div>
+
+          <!-- AUTO PANEL -->
+          <div id="auto-panel">
+            <p class="text-xs text-slate-400 mb-2">Delivery boy ne jo mark kiya "Delivered" hai, usi se bill banega. Already-billed dates dobara count nahi hongi.</p>
+            <div class="grid grid-cols-2 gap-3 mb-2">
+              <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase">From</label>
+                <input type="date" id="auto-from" class="w-full border rounded-xl px-3 py-2.5 text-sm bg-slate-50">
+              </div>
+              <div>
+                <label class="text-[10px] font-bold text-slate-400 uppercase">To</label>
+                <input type="date" id="auto-to" class="w-full border rounded-xl px-3 py-2.5 text-sm bg-slate-50">
+              </div>
+            </div>
+            <div class="flex gap-2 mb-3 flex-wrap">
+              <button onclick="Billing.quickRange('this')" class="qd-btn text-xs font-bold border rounded-lg px-3 py-1.5 bg-slate-50">This month</button>
+              <button onclick="Billing.quickRange('last')" class="qd-btn text-xs font-bold border rounded-lg px-3 py-1.5 bg-slate-50">Last month</button>
+              <label class="text-xs font-bold text-slate-500 flex items-center gap-1.5 ml-auto"><input type="checkbox" id="auto-include-billed"> include already-billed dates</label>
+            </div>
+            <button onclick="Billing.loadDelivered()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl transition"><i class="fa-solid fa-bolt mr-1"></i> Load Delivered Items into Cart</button>
+            <div id="auto-debug" class="mt-3 text-[11px] font-mono bg-slate-50 border rounded-xl p-3 max-h-48 overflow-y-auto hidden"></div>
+          </div>
+
+          <!-- MANUAL PANEL -->
+          <div id="manual-panel" class="hidden">
+            <div class="flex flex-col md:flex-row gap-3 items-end">
+              <div class="w-full md:flex-[2]">
+                <label class="text-[10px] font-bold text-slate-400 uppercase">Product</label>
+                <select id="pos-product-select" onchange="Billing.updatePrice()" class="w-full px-4 py-3 rounded-xl bg-slate-50 border font-semibold h-[48px]">
+                  <option value="">Select Product...</option>
+                  <option value="__custom__">+ Custom / One-off item</option>
+                </select>
+              </div>
+              <div class="w-full md:flex-1">
+                <label class="text-[10px] font-bold text-slate-400 uppercase">Rate ₹</label>
+                <input type="number" id="pos-price" placeholder="Rate" class="w-full px-4 py-3 rounded-xl bg-white border h-[48px] font-bold">
+              </div>
+              <div class="w-full md:flex-1">
+                <label class="text-[10px] font-bold text-slate-400 uppercase">Qty</label>
+                <input type="number" id="pos-qty" value="1" min="0.25" step="0.25" class="w-full text-center px-4 py-3 rounded-xl bg-slate-50 border h-[48px] font-bold">
+              </div>
+              <button onclick="Billing.addItemManual()" class="w-full md:w-[48px] h-[48px] bg-brand hover:bg-indigo-800 text-white rounded-xl shadow-lg flex items-center justify-center transition active:scale-95">
+                <i class="fa-solid fa-plus"></i>
+              </button>
+            </div>
+            <input type="text" id="pos-custom-name" placeholder="Custom item name" class="w-full mt-3 px-4 py-3 rounded-xl bg-slate-50 border hidden">
+          </div>
+        </div>
+
+        <!-- Cart -->
+        <div class="bg-white rounded-2xl border shadow-sm flex-1 flex flex-col min-h-[260px]">
+          <div class="p-4 border-b flex justify-between items-center">
+            <h3 class="font-bold text-slate-700">Bill Items</h3>
+            <button onclick="Billing.clearCart()" class="text-xs font-bold text-red-500 bg-red-50 px-3 py-1.5 rounded-lg">CLEAR</button>
+          </div>
+          <div class="flex-1 overflow-y-auto p-2 cart-scroll" id="cart-list">
+            <div class="h-full flex flex-col items-center justify-center text-slate-300 py-10">
+              <i class="fa-solid fa-basket-shopping text-5xl mb-3 opacity-20"></i>
+              <p class="text-sm font-medium">No items yet</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Summary -->
+      <div class="w-full xl:w-[380px] shrink-0">
+        <div class="sticky top-4 space-y-4">
+          <div class="bg-[#111827] text-white p-6 rounded-2xl shadow-xl">
+            <h3 class="text-xs font-bold text-slate-400 uppercase mb-6 tracking-widest">Invoice Summary</h3>
+            <div class="space-y-4 mb-8">
+              <div class="flex justify-between items-center"><span class="text-slate-400 text-sm">Items</span><span class="font-bold" id="summ-count">0</span></div>
+              <div class="flex justify-between items-center"><span class="text-slate-400 text-sm">Dates covered</span><span class="font-bold" id="summ-dates">0</span></div>
+              <div class="h-px bg-slate-700 my-2"></div>
+              <div class="flex justify-between items-center text-xl"><span class="font-bold">Total</span><span class="font-bold text-emerald-400 text-2xl">₹<span id="summ-total">0.00</span></span></div>
+            </div>
+            <input type="text" id="bill-note" placeholder="Note (optional)" class="w-full mb-3 px-3 py-2.5 rounded-xl bg-white/10 text-white placeholder-slate-400 text-sm outline-none">
+            <button onclick="Billing.generateBill()" class="w-full bg-white text-slate-900 py-4 rounded-xl font-bold hover:bg-slate-100 transition shadow-lg flex items-center justify-center gap-2 active:scale-95">
+              <i class="fa-solid fa-receipt"></i> Generate Bill
+            </button>
+          </div>
+          <div class="bg-white rounded-2xl border shadow-sm p-4">
+            <h4 class="font-bold text-slate-700 text-sm mb-3"><i class="fa-regular fa-clock mr-1"></i> Recent bills for this customer</h4>
+            <div id="pos-recent-history" class="space-y-2 text-xs"><div class="text-slate-400 italic">Select a customer</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ DELIVERY CHART (embedded, unchanged tool) ============ -->
+  <section id="view-delivery" class="flex-1 overflow-hidden fade-in hidden relative">
+    <iframe id="delivery-iframe" src="" class="w-full h-full border-0" title="Delivery Chart"></iframe>
+  </section>
+
+  <!-- ============ INVENTORY / RATES ============ -->
+  <section id="view-inventory" class="flex-1 overflow-y-auto p-4 lg:p-6 fade-in hidden">
+    <h2 class="text-xl font-bold text-slate-800 mb-4">Rates / Inventory</h2>
+
+    <div class="bg-white p-5 rounded-2xl border shadow-sm mb-6">
+      <h3 class="font-bold text-slate-700 mb-1">Global Default Rates</h3>
+      <p class="text-xs text-slate-400 mb-4">Ye default rate hai — jis customer ka apna custom rate set na ho, uske liye ye rate use hoga.</p>
+      <div id="global-rates-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4"></div>
+      <button onclick="Inventory.saveGlobalRates()" class="bg-brand text-white font-bold px-5 py-2.5 rounded-xl">💾 Save Global Rates</button>
+    </div>
+
+    <div class="bg-white p-5 rounded-2xl border shadow-sm mb-6">
+      <h3 class="font-bold text-slate-700 mb-1">Add Customer</h3>
+      <p class="text-xs text-slate-400 mb-3">Naya customer yahan se bhi add ho sakta hai (Delivery Chart tab me bhi manage ho sakta hai).</p>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+        <input id="inv-new-name" placeholder="Name" class="border rounded-xl px-3 py-2.5 text-sm">
+        <input id="inv-new-phone" placeholder="Phone" class="border rounded-xl px-3 py-2.5 text-sm">
+        <input id="inv-new-address" placeholder="Address" class="border rounded-xl px-3 py-2.5 text-sm">
+        <select id="inv-new-shift" class="border rounded-xl px-3 py-2.5 text-sm">
+          <option value="morning">Morning</option>
+          <option value="evening">Evening</option>
+        </select>
+      </div>
+      <button onclick="Inventory.addCustomer()" class="mt-3 bg-emerald-600 text-white font-bold px-5 py-2.5 rounded-xl">+ Add Customer</button>
+    </div>
+
+    <div class="bg-white rounded-2xl border shadow-sm">
+      <div class="p-4 border-b flex flex-wrap items-center justify-between gap-2">
+        <h3 class="font-bold text-slate-700">Per-Customer Custom Rates</h3>
+        <input type="text" id="inv-search" oninput="Inventory.renderCustomerRates()" placeholder="Search customer..." class="border rounded-xl px-3 py-2 text-sm bg-slate-50">
+      </div>
+      <div id="inv-customer-rates" class="p-3 space-y-2"></div>
+    </div>
+  </section>
+
+  <!-- ============ HISTORY ============ -->
+  <section id="view-history" class="flex-1 overflow-y-auto p-4 lg:p-6 fade-in hidden">
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+      <h2 class="text-xl font-bold text-slate-800">Billing History</h2>
+      <div class="flex gap-2 flex-wrap">
+        <input type="text" id="hist-search" oninput="History.render()" placeholder="Search customer/phone..." class="border rounded-xl px-3 py-2 text-sm bg-white">
+        <input type="month" id="hist-month" onchange="History.render()" class="border rounded-xl px-3 py-2 text-sm bg-white">
+        <button onclick="History.downloadPDF()" class="bg-red-100 text-red-700 px-3 py-2 rounded-xl text-sm font-bold"><i class="fa-solid fa-file-pdf"></i></button>
+        <button onclick="History.downloadExcel()" class="bg-emerald-100 text-emerald-700 px-3 py-2 rounded-xl text-sm font-bold"><i class="fa-solid fa-file-excel"></i></button>
+      </div>
+    </div>
+    <div class="bg-white rounded-2xl border shadow-sm overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-xs uppercase text-slate-500 font-bold">
+          <tr>
+            <th class="p-3 text-left">Customer</th>
+            <th class="p-3 text-left">Date / Period</th>
+            <th class="p-3 text-left">Items</th>
+            <th class="p-3 text-left">Type</th>
+            <th class="p-3 text-right">Amount</th>
+            <th class="p-3 text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="hist-body"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- EDIT BILL MODAL -->
+  <div id="edit-modal" class="fixed inset-0 bg-black/60 z-[80] hidden backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
+      <div class="bg-slate-50 p-4 border-b flex justify-between items-center">
+        <h3 class="font-bold text-slate-800">Edit Bill</h3>
+        <button onclick="History.closeModal()" class="text-slate-400"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+      <div class="p-6 space-y-4">
+        <input type="hidden" id="edit-bill-custid">
+        <input type="hidden" id="edit-bill-id">
+        <div><label class="text-xs font-bold text-slate-500 uppercase">Customer Name</label>
+          <input id="edit-name" class="w-full p-3 border rounded-xl mt-1 font-bold" readonly></div>
+        <div><label class="text-xs font-bold text-slate-500 uppercase">Total Amount (₹)</label>
+          <input type="number" id="edit-amount" class="w-full p-3 border rounded-xl mt-1 font-bold text-emerald-600"></div>
+        <div><label class="text-xs font-bold text-slate-500 uppercase">Note</label>
+          <input type="text" id="edit-note" class="w-full p-3 border rounded-xl mt-1 text-sm"></div>
+        <button onclick="History.saveUpdate()" class="w-full bg-brand text-white py-3 rounded-xl font-bold mt-2">Update Bill</button>
+        <button onclick="History.deleteBillFromModal()" class="w-full bg-red-50 text-red-600 py-2.5 rounded-xl font-bold text-sm">🗑️ Delete Bill</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SHARE / STORAGE ============ -->
+  <section id="view-share" class="flex-1 overflow-y-auto p-4 lg:p-6 fade-in hidden">
+    <h2 class="text-xl font-bold text-slate-800 mb-4">Share / Database Storage</h2>
+
+    <div class="bg-white p-5 rounded-2xl border shadow-sm mb-6 max-w-lg">
+      <h3 class="font-bold text-slate-700 mb-2">Customer Portal Link (optional)</h3>
+      <p class="text-xs text-slate-400 mb-3">Agar aapke paas customer-facing bill-view page hai to uska link yahan daal ke QR bana sakte ho.</p>
+      <div class="flex gap-2 mb-4">
+        <input id="portal-url" placeholder="https://..." class="flex-1 border rounded-xl px-3 py-2.5 text-sm">
+        <button onclick="ShareTab.save()" class="bg-brand text-white px-4 py-2.5 rounded-xl text-sm font-bold">Save</button>
+      </div>
+      <div id="qrcode-box" class="flex justify-center py-4"></div>
+    </div>
+
+    <div class="bg-white rounded-3xl shadow-sm border overflow-hidden max-w-lg p-6">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-database text-brand"></i> Database Storage</h3>
+          <p class="text-xs text-slate-400 mt-1">Estimated usage of your Firebase Realtime Database</p>
+        </div>
+        <button onclick="StorageMonitor.init()" class="text-slate-400 hover:text-brand p-2"><i class="fa-solid fa-rotate"></i></button>
+      </div>
+      <div class="w-full bg-slate-100 rounded-full h-4 overflow-hidden">
+        <div id="storage-bar" class="h-full rounded-full bg-emerald-500 transition-all duration-500" style="width:0%"></div>
+      </div>
+      <div class="flex flex-wrap justify-between gap-2 items-center mt-3 text-xs md:text-sm">
+        <span class="text-slate-500">Used: <strong id="storage-used-text" class="text-slate-800">--</strong></span>
+        <span class="text-slate-500">Usage: <strong id="storage-pct-text" class="text-brand">--</strong></span>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getDatabase, ref, set, update, remove, push, onValue, get, runTransaction
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+// Same Firebase project used by deliverychart.html (delivry-tracking-system)
+const firebaseConfig = {
+  apiKey: "AIzaSyA4q2qD7K7o5yN5v9H9jSIvWsTPWlAvurY",
+  authDomain: "delivry-tracking-system.firebaseapp.com",
+  databaseURL: "https://delivry-tracking-system-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "delivry-tracking-system",
+  storageBucket: "delivry-tracking-system.firebasestorage.app",
+  messagingSenderId: "181704924735",
+  appId: "1:181704924735:web:7c57448137e91b745ca28a",
+  measurementId: "G-43WG6FFZVC"
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+const ADMIN_PASSWORD = 'admin123';
+
+const PRODUCTS = [
+  { key:'milk',   label:'Milk',   unit:'Ltr' },
+  { key:'chach',  label:'Chaas',  unit:'Ltr' },
+  { key:'butter', label:'Butter', unit:'Kg'  },
+  { key:'paneer', label:'Paneer', unit:'Kg'  },
+  { key:'curd',   label:'Curd',   unit:'Kg'  },
+  { key:'ghee',   label:'Ghee',   unit:'Ltr' }
+];
+const DEFAULT_RATES = { milk:60, chach:30, butter:500, paneer:400, curd:60, ghee:800 };
+
+function escapeHtml(s){ return (s==null?'':String(s)).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function toArray(val){ if(!val) return []; return Object.keys(val).map(id => ({ id, ...val[id] })); }
+function dateStr(d){ const dt = d || new Date(); return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`; }
+function fmtMoney(n){ return (n||0).toLocaleString('en-IN', { minimumFractionDigits:2, maximumFractionDigits:2 }); }
+window.Toast = (msg, type='success') => {
+  const c = document.getElementById('toast-container'); if(!c) return;
+  const el = document.createElement('div');
+  el.className = `p-4 rounded-xl shadow-lg border-l-4 bg-white flex items-center gap-2 ${type==='error'?'border-red-500 text-red-600':'border-emerald-500 text-slate-800'}`;
+  el.innerHTML = `<i class="fa-solid ${type==='error'?'fa-circle-exclamation':'fa-circle-check'}"></i><span class="font-bold text-sm">${escapeHtml(msg)}</span>`;
+  c.appendChild(el); setTimeout(()=>el.remove(), 2600);
+};
+
+/* ---------------- session / login ---------------- */
+function isSessionValid(){ try{ return sessionStorage.getItem('billing_admin')==='1'; }catch(e){ return false; } }
+function setSessionValid(){ try{ sessionStorage.setItem('billing_admin','1'); }catch(e){} }
+document.getElementById('adminLoginBtn').onclick = ()=>{
+  const val = document.getElementById('adminPass').value;
+  if(val === ADMIN_PASSWORD){ setSessionValid(); enterApp(); }
+  else document.getElementById('adminErr').classList.remove('hidden');
+};
+document.getElementById('adminPass').addEventListener('keydown', e=>{ if(e.key==='Enter') document.getElementById('adminLoginBtn').click(); });
+document.getElementById('logoutBtn').onclick = ()=>{ try{sessionStorage.removeItem('billing_admin');}catch(e){} location.reload(); };
+function enterApp(){
+  document.getElementById('loginScreen').style.display='none';
+  window.router('dashboard');
+}
+
+/* ---------------- global state ---------------- */
+const State = { customers: [], productRates: {...DEFAULT_RATES}, bills: [], cart: [], currentCustomer: null, mode: 'auto', portalUrl:'' };
+
+onValue(ref(db, 'customers'), snap=>{
+  State.customers = toArray(snap.val());
+  populateCustomerDatalist();
+  Inventory.renderCustomerRates();
+  Dashboard.calculateCustomerTotals();
+  AutoBill.ensureListeners();
+});
+onValue(ref(db, 'productRates'), snap=>{
+  State.productRates = { ...DEFAULT_RATES, ...(snap.val()||{}) };
+  Inventory.renderGlobalRatesForm();
+});
+onValue(ref(db, 'bills'), snap=>{
+  const data = snap.val() || {};
+  const all = [];
+  for(const custId in data){
+    for(const billId in data[custId]){
+      all.push({ ...data[custId][billId], custId, billId });
+    }
+  }
+  all.sort((a,b)=> (b.createdAt||0) - (a.createdAt||0));
+  State.bills = all;
+  Dashboard.calculateStats();
+  Dashboard.renderProductStats();
+  Dashboard.calculateCustomerTotals();
+  History.render();
+});
+get(ref(db,'settings/customerPortalUrl')).then(s=>{
+  State.portalUrl = s.val() || '';
+  document.getElementById('portal-url').value = State.portalUrl;
+});
+
+function populateCustomerDatalist(){
+  const sel = document.getElementById('pos-customer-select');
+  if(!sel) return;
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">Select customer...</option>' +
+    State.customers.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||'')).map(c =>
+      `<option value="${c.id}">${escapeHtml(c.name)}${c.phone ? ' — '+escapeHtml(c.phone) : ''}</option>`
+    ).join('');
+  if(State.customers.some(c=>c.id===prev)) sel.value = prev;
+}
+
+/* ---------------- router ---------------- */
+window.toggleSidebar = ()=>{
+  document.getElementById('sidebar').classList.toggle('-translate-x-full');
+  document.getElementById('sidebar-backdrop').classList.toggle('hidden');
+};
+window.router = (view)=>{
+  document.getElementById('edit-modal').classList.add('hidden');
+  document.getElementById('quick-modal').classList.add('hidden');
+  document.querySelectorAll('section[id^="view-"]').forEach(e=>e.classList.add('hidden'));
+  document.getElementById('view-'+view).classList.remove('hidden');
+  document.getElementById('dash-fab').style.display = (view==='dashboard') ? 'flex' : 'none';
+
+  document.querySelectorAll('.nav-item').forEach(b=>{
+    b.className = "nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-500 hover:bg-slate-50 hover:text-brand font-medium transition";
+  });
+  const active = document.getElementById('nav-'+view);
+  if(active) active.className = "nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-brand/10 text-brand font-bold shadow-sm transition";
+
+  if(window.innerWidth < 1024){
+    document.getElementById('sidebar').classList.add('-translate-x-full');
+    document.getElementById('sidebar-backdrop').classList.add('hidden');
+  }
+  const titles = { dashboard:'Dashboard', billing:'Billing', delivery:'Delivery Chart', inventory:'Rates / Inventory', history:'History', share:'Share' };
+  document.getElementById('page-title-mob').innerText = titles[view] || 'AdminOS';
+
+  if(view === 'dashboard') Dashboard.init();
+  if(view === 'billing') Billing.init();
+  if(view === 'inventory'){ Inventory.renderGlobalRatesForm(); Inventory.renderCustomerRates(); }
+  if(view === 'history') History.render();
+  if(view === 'share') { StorageMonitor.init(); ShareTab.renderQr(); }
+  if(view === 'delivery'){
+    const f = document.getElementById('delivery-iframe');
+    if(!f.src || f.src === 'about:blank') f.src = 'deliverychart.html';
+  }
+};
+
+/* ================= AUTO-BILL ENGINE ================= */
+// Watches every customer's deliveryByDate in realtime. The moment a date is
+// marked delivered (with product quantities + delivered flags) AND it hasn't
+// been billed yet, this generates the bill automatically — no manual
+// "Load Delivered Items into Cart" step needed. Requires this tab (billing.html)
+// to stay open somewhere in the browser, since it's a client-side listener.
+window.AutoBill = {
+  _attached: new Set(),
+  _unsub: {},
+  _statusEl: null,
+
+  ensureListeners(){
+    State.customers.forEach(c=>{
+      if(this._attached.has(c.id)) return;
+      this._attached.add(c.id);
+      const unsub = onValue(ref(db, `customers/${c.id}/deliveryByDate`), snap=>{
+        const data = snap.val() || {};
+        Object.keys(data).forEach(dstr => this.tryBillDate(c.id, dstr, data[dstr]));
+      });
+      this._unsub[c.id] = unsub;
+    });
+    this.updateStatusBadge();
+  },
+
+  // Stops watching a customer's delivery data — call this right after a
+  // customer is permanently deleted so no stray listener/write can touch them again.
+  detach(custId){
+    if(this._unsub[custId]){ try{ this._unsub[custId](); }catch(e){} delete this._unsub[custId]; }
+    this._attached.delete(custId);
+  },
+
+  rateForCustomer(c, key){
+    if(c && c.rates && c.rates[key] != null && c.rates[key] !== '') return parseFloat(c.rates[key]);
+    return parseFloat(State.productRates[key] ?? DEFAULT_RATES[key] ?? 0);
+  },
+
+  async tryBillDate(custId, dstr, dlog){
+    if(!dlog || !dlog.hasOrder) return;                          // not marked delivered
+    if(!dlog.items || !Object.keys(dlog.items).length) return;   // delivered but no qty set — nothing to bill yet
+    if(dlog.billed) return;                                      // already billed / claim in progress
+
+    const toBill = [];
+    PRODUCTS.forEach(p=>{
+      const it = dlog.items[p.key];
+      if(it && (it.delivered === true || it.delivered === 'true') && parseFloat(it.ordered||0) > 0){
+        toBill.push({ key:p.key, name:p.label, unit:p.unit, qty: parseFloat(it.ordered) });
+      }
+    });
+    if(!toBill.length) return; // fully missed delivery, nothing delivered to bill
+
+    // Atomically claim this date so this never double-bills (e.g. two tabs open)
+    const billedRef = ref(db, `customers/${custId}/deliveryByDate/${dstr}/billed`);
+    let claim;
+    try{
+      claim = await runTransaction(billedRef, current => current ? undefined : 'AUTO_PENDING');
+    }catch(e){ console.error('Auto-bill claim failed', e); return; }
+    if(!claim.committed || claim.snapshot.val() !== 'AUTO_PENDING') return; // someone else already handling this date
+
+    try{
+      let c = State.customers.find(x=>x.id===custId) || { id: custId };
+      try{
+        const fresh = await get(ref(db, `customers/${custId}`));
+        if(fresh.exists()) c = { id: custId, ...fresh.val() };
+      }catch(e){ /* fall back to cached */ }
+
+      const billItems = toBill.map(t=>{
+        const price = this.rateForCustomer(c, t.key);
+        return { key:t.key, name:t.name, unit:t.unit, qty:t.qty, price, total: price*t.qty };
+      });
+      const total = billItems.reduce((s,i)=>s+i.total, 0);
+
+      const bill = {
+        customerName: c.name || 'Customer',
+        phone: c.phone || '',
+        items: billItems,
+        totalAmount: total,
+        dates: [dstr],
+        periodLabel: dstr,
+        type: 'auto',
+        note: 'Auto-generated on delivery mark',
+        createdAt: Date.now()
+      };
+
+      const newRef = push(ref(db, `bills/${custId}`));
+      await set(newRef, bill);
+      await set(billedRef, newRef.key); // finalize claim with the real bill id
+      window.Toast(`Auto-bill: ${c.name || 'Customer'} — ₹${fmtMoney(total)} (${dstr})`);
+    }catch(err){
+      console.error('Auto-bill failed', err);
+      try{ await set(billedRef, null); }catch(e){} // release the claim so it can retry later
+    }
+  },
+
+  updateStatusBadge(){
+    const el = document.getElementById('autobill-badge');
+    if(el) el.classList.remove('hidden');
+  }
+};
+
+/* ================= BILLING ================= */
+window.Billing = {
+  init(){
+    if(!document.getElementById('auto-from').value){
+      const t = dateStr();
+      document.getElementById('auto-from').value = t.slice(0,8)+'01';
+      document.getElementById('auto-to').value = t;
+    }
+    this.populateProductDropdown();
+    this.renderCart();
+  },
+  populateProductDropdown(){
+    const sel = document.getElementById('pos-product-select');
+    sel.innerHTML = '<option value="">Select Product...</option>' +
+      PRODUCTS.map(p=>`<option value="${p.key}">${p.label} (${p.unit})</option>`).join('') +
+      '<option value="__custom__">+ Custom / One-off item</option>';
+  },
+  setMode(m){
+    this.mode = m;
+    document.getElementById('mode-auto-btn').className = 'flex-1 py-2.5 rounded-xl font-bold text-sm ' + (m==='auto'?'bg-brand text-white':'bg-slate-100 text-slate-600');
+    document.getElementById('mode-manual-btn').className = 'flex-1 py-2.5 rounded-xl font-bold text-sm ' + (m==='manual'?'bg-brand text-white':'bg-slate-100 text-slate-600');
+    document.getElementById('auto-panel').classList.toggle('hidden', m!=='auto');
+    document.getElementById('manual-panel').classList.toggle('hidden', m!=='manual');
+  },
+  selectCustomer(custId){
+    if(!custId){ State.currentCustomer = null; document.getElementById('cust-display').classList.add('hidden'); return; }
+    const c = State.customers.find(x => x.id === custId);
+    if(!c) return;
+    State.currentCustomer = c;
+    document.getElementById('cust-name').innerText = c.name;
+    document.getElementById('cust-display').classList.remove('hidden');
+    document.getElementById('cust-rate-source').innerText = (c.rates && Object.keys(c.rates).length) ? 'Custom rate set' : 'Global default';
+    document.getElementById('auto-debug').classList.add('hidden');
+    this.loadRecentHistory(c.id);
+  },
+  rateFor(key){
+    const c = State.currentCustomer;
+    if(c && c.rates && c.rates[key] != null && c.rates[key] !== '') return parseFloat(c.rates[key]);
+    return parseFloat(State.productRates[key] ?? 0);
+  },
+  quickRange(which){
+    const now = new Date();
+    let y = now.getFullYear(), m = now.getMonth();
+    if(which === 'last'){ m -= 1; if(m<0){ m=11; y-=1; } }
+    const from = new Date(y, m, 1);
+    const to = new Date(y, m+1, 0);
+    document.getElementById('auto-from').value = dateStr(from);
+    document.getElementById('auto-to').value = dateStr(to);
+  },
+  async loadDelivered(){
+    const dbg = document.getElementById('auto-debug');
+    dbg.classList.remove('hidden');
+    if(!State.currentCustomer){ dbg.innerHTML = '⚠️ Pehle customer select karo.'; return window.Toast('Pehle customer select karo', 'error'); }
+    const from = document.getElementById('auto-from').value;
+    const to = document.getElementById('auto-to').value;
+    if(!from || !to){ dbg.innerHTML = '⚠️ From/To date select karo.'; return window.Toast('From/To date select karo', 'error'); }
+    const includeBilled = document.getElementById('auto-include-billed').checked;
+
+    // re-fetch this customer fresh (in case local cache is stale)
+    let c = State.customers.find(x=>x.id === State.currentCustomer.id) || State.currentCustomer;
+    try{
+      const fresh = await get(ref(db, `customers/${c.id}`));
+      if(fresh.exists()) c = { id: c.id, ...fresh.val() };
+    }catch(e){ /* ignore, use cached */ }
+
+    const dByDate = c.deliveryByDate || {};
+    const totals = {}; PRODUCTS.forEach(p=>totals[p.key]=0);
+    const coveredDates = [];
+    const dbgLines = [];
+
+    let d = new Date(from), end = new Date(to);
+    while(d <= end){
+      const dstr = dateStr(d);
+      const dlog = dByDate[dstr];
+      if(!dlog){
+        dbgLines.push(`${dstr}: <span class="text-slate-400">no record</span>`);
+      } else if(!dlog.hasOrder){
+        dbgLines.push(`${dstr}: <span class="text-slate-400">hasOrder=false</span>`);
+      } else if(!dlog.items || !Object.keys(dlog.items).length){
+        dbgLines.push(`${dstr}: <span class="text-amber-600">delivered but no items set</span>`);
+      } else if(dlog.billed && !includeBilled){
+        dbgLines.push(`${dstr}: <span class="text-purple-600">already billed (billId: ${dlog.billed})</span>`);
+      } else {
+        let any = false;
+        const parts = [];
+        PRODUCTS.forEach(p=>{
+          const it = dlog.items[p.key];
+          if(it){
+            parts.push(`${p.key}: ordered=${it.ordered} delivered=${it.delivered}`);
+            if((it.delivered === true || it.delivered === 'true') && parseFloat(it.ordered||0) > 0){
+              totals[p.key] += parseFloat(it.ordered);
+              any = true;
+            }
+          }
+        });
+        dbgLines.push(`${dstr}: ${parts.join(', ') || '<span class="text-slate-400">no items</span>'} ${any?'✅':''}`);
+        if(any) coveredDates.push(dstr);
+      }
+      d.setDate(d.getDate()+1);
+    }
+    dbg.innerHTML = dbgLines.join('<br>');
+
+    if(!coveredDates.length){ window.Toast('Is range me koi naya delivered record nahi mila — neeche debug list dekho', 'error'); return; }
+
+    PRODUCTS.forEach(p=>{
+      if(totals[p.key] > 0){
+        const rate = this.rateFor(p.key);
+        const existing = State.cart.find(i=>i.key===p.key && i.autoSource);
+        if(existing){ existing.qty = totals[p.key]; existing.total = existing.qty*existing.price; }
+        else State.cart.push({ key:p.key, name:p.label, unit:p.unit, price:rate, qty:totals[p.key], total: totals[p.key]*rate, autoSource:true });
+      }
+    });
+    State.cart._coveredDates = Array.from(new Set([...(State.cart._coveredDates||[]), ...coveredDates]));
+    this.renderCart();
+    window.Toast(`${coveredDates.length} din ka delivered data load ho gaya`);
+  },
+  updatePrice(){
+    const sel = document.getElementById('pos-product-select');
+    const priceInput = document.getElementById('pos-price');
+    const customName = document.getElementById('pos-custom-name');
+    if(sel.value === '__custom__'){
+      customName.classList.remove('hidden'); priceInput.value = '';
+      return;
+    }
+    customName.classList.add('hidden');
+    if(sel.value) priceInput.value = this.rateFor(sel.value);
+    else priceInput.value = '';
+  },
+  addItemManual(){
+    const sel = document.getElementById('pos-product-select');
+    const qty = parseFloat(document.getElementById('pos-qty').value);
+    const price = parseFloat(document.getElementById('pos-price').value);
+    if(!sel.value) return window.Toast('Product select karo', 'error');
+    if(isNaN(price) || price < 0) return window.Toast('Valid rate daalo', 'error');
+    if(isNaN(qty) || qty <= 0) return window.Toast('Valid quantity daalo', 'error');
+
+    let key, name, unit;
+    if(sel.value === '__custom__'){
+      name = document.getElementById('pos-custom-name').value.trim();
+      if(!name) return window.Toast('Custom item ka naam daalo', 'error');
+      key = 'custom_'+Date.now(); unit = '';
+    } else {
+      const p = PRODUCTS.find(x=>x.key===sel.value);
+      key = p.key; name = p.label; unit = p.unit;
+    }
+    State.cart.push({ key, name, unit, price, qty, total: price*qty, autoSource:false });
+    this.renderCart();
+    window.Toast('Item added');
+    document.getElementById('pos-qty').value = 1;
+  },
+  removeItem(idx){ State.cart.splice(idx,1); this.renderCart(); },
+  clearCart(){
+    if(!State.cart.length) return;
+    if(confirm('Cart khali kar dein?')){ State.cart = []; State.cart._coveredDates = []; this.renderCart(); }
+  },
+  renderCart(){
+    const list = document.getElementById('cart-list');
+    if(!State.cart.length){
+      list.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-slate-300 py-10"><i class="fa-solid fa-basket-shopping text-5xl mb-3 opacity-20"></i><p class="text-sm font-medium">No items yet</p></div>`;
+      document.getElementById('summ-count').innerText='0'; document.getElementById('summ-total').innerText='0.00'; document.getElementById('summ-dates').innerText='0';
+      return;
+    }
+    let total=0, count=0;
+    list.innerHTML = State.cart.map((i,idx)=>{
+      total += i.total; count += i.qty;
+      return `<div class="flex justify-between items-center p-3 mb-2 bg-slate-50 border rounded-xl">
+        <div>
+          <div class="font-bold text-slate-800 text-sm">${escapeHtml(i.name)} ${i.autoSource?'<span class=\"text-[9px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full ml-1\">AUTO</span>':''}</div>
+          <div class="text-xs text-slate-400 font-medium">₹${i.price} x ${i.qty}${i.unit?(' '+i.unit):''}</div>
+        </div>
+        <div class="font-bold text-slate-700 text-right">
+          <div>₹${i.total.toFixed(2)}</div>
+          <button onclick="Billing.removeItem(${idx})" class="text-[10px] text-red-500 uppercase mt-1">Remove</button>
+        </div>
+      </div>`;
+    }).join('');
+    document.getElementById('summ-count').innerText = count;
+    document.getElementById('summ-total').innerText = total.toFixed(2);
+    document.getElementById('summ-dates').innerText = (State.cart._coveredDates||[]).length;
+  },
+  async loadRecentHistory(custId){
+    const container = document.getElementById('pos-recent-history');
+    container.innerHTML = '<div class="text-slate-400 italic">Loading...</div>';
+    const bills = State.bills.filter(b=>b.custId===custId).slice(0,5);
+    if(!bills.length){ container.innerHTML = '<div class="text-slate-400 italic">No previous bills</div>'; return; }
+    container.innerHTML = bills.map(b=>`
+      <div class="border-b last:border-0 pb-2">
+        <div class="flex justify-between"><span class="font-bold text-slate-600">${b.periodLabel||b.dates?.join(', ')||'-'}</span><span class="font-bold text-emerald-600">₹${fmtMoney(b.totalAmount)}</span></div>
+      </div>`).join('');
+  },
+  async generateBill(){
+    if(!State.currentCustomer) return window.Toast('Customer select karo', 'error');
+    if(!State.cart.length) return window.Toast('Cart khali hai', 'error');
+    const c = State.currentCustomer;
+    const total = State.cart.reduce((s,i)=>s+i.total,0);
+    const dates = (State.cart._coveredDates||[]).slice().sort();
+    const periodLabel = dates.length ? (dates.length===1 ? dates[0] : `${dates[0]} → ${dates[dates.length-1]}`) : 'Manual';
+    const bill = {
+      customerName: c.name,
+      phone: c.phone || '',
+      items: State.cart.map(i=>({ key:i.key, name:i.name, unit:i.unit||'', qty:i.qty, price:i.price, total:i.total })),
+      totalAmount: total,
+      dates,
+      periodLabel,
+      type: dates.length ? 'auto' : 'manual',
+      note: document.getElementById('bill-note').value.trim(),
+      createdAt: Date.now()
+    };
+    try{
+      const newRef = push(ref(db, `bills/${c.id}`));
+      await set(newRef, bill);
+      if(dates.length){
+        const updates = {};
+        dates.forEach(dstr => { updates[`customers/${c.id}/deliveryByDate/${dstr}/billed`] = newRef.key; });
+        await update(ref(db), updates);
+      }
+      window.Toast(`Bill generated: ₹${fmtMoney(total)}`);
+      State.cart = []; State.cart._coveredDates = [];
+      document.getElementById('bill-note').value='';
+      this.renderCart();
+      this.loadRecentHistory(c.id);
+    }catch(err){
+      console.error(err);
+      window.Toast('Bill save karne me error aayi', 'error');
+    }
+  }
+};
+
+/* ================= INVENTORY (rates) ================= */
+window.Inventory = {
+  renderGlobalRatesForm(){
+    const grid = document.getElementById('global-rates-grid');
+    grid.innerHTML = PRODUCTS.map(p=>`
+      <div class="bg-slate-50 border rounded-xl p-3 text-center">
+        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">${p.label}</label>
+        <input type="number" step="0.5" min="0" id="grate-${p.key}" value="${State.productRates[p.key] ?? DEFAULT_RATES[p.key]}" class="w-full text-center border rounded-lg py-2 font-bold font-mono">
+        <div class="text-[9px] text-slate-400 mt-1">₹ / ${p.unit}</div>
+      </div>`).join('');
+  },
+  saveGlobalRates(){
+    const payload = {};
+    PRODUCTS.forEach(p=>{ payload[p.key] = parseFloat(document.getElementById(`grate-${p.key}`).value)||0; });
+    set(ref(db, 'productRates'), payload).then(()=>window.Toast('Global rates saved'));
+  },
+  addCustomer(){
+    const name = document.getElementById('inv-new-name').value.trim();
+    const phone = document.getElementById('inv-new-phone').value.trim();
+    const address = document.getElementById('inv-new-address').value.trim();
+    const shift = document.getElementById('inv-new-shift').value;
+    if(!name) return window.Toast('Naam daalo', 'error');
+    const newRef = push(ref(db, 'customers'));
+    const payload = { name, phone, address, shift, status:'pending', defaultProducts:{ note:'' } };
+    PRODUCTS.forEach(p=>payload.defaultProducts[p.key]=0);
+    set(newRef, payload).then(()=>{
+      window.Toast('Customer added');
+      document.getElementById('inv-new-name').value='';
+      document.getElementById('inv-new-phone').value='';
+      document.getElementById('inv-new-address').value='';
+    });
+  },
+  renderCustomerRates(){
+    const wrap = document.getElementById('inv-customer-rates');
+    if(!wrap) return;
+    const term = (document.getElementById('inv-search')?.value||'').toLowerCase();
+    const list = State.customers.filter(c => !term || (c.name||'').toLowerCase().includes(term) || (c.phone||'').includes(term));
+    if(!list.length){ wrap.innerHTML = '<div class="text-center text-slate-400 italic py-6 text-sm">No customers</div>'; return; }
+    wrap.innerHTML = list.map(c=>{
+      const r = c.rates || {};
+      return `<div class="border rounded-xl p-3">
+        <div class="flex items-center justify-between mb-2">
+          <div class="font-bold text-slate-700 text-sm">${escapeHtml(c.name)} <span class="text-xs text-slate-400 font-normal">${escapeHtml(c.phone||'')}</span></div>
+          <div class="flex gap-2">
+            <button onclick="Inventory.saveCustomerRates('${c.id}')" class="text-xs font-bold bg-brand text-white px-3 py-1.5 rounded-lg">Save</button>
+            <button onclick="Inventory.deleteCustomer('${c.id}')" title="Permanently delete this customer and all their data" class="text-xs font-bold bg-red-50 text-red-600 px-3 py-1.5 rounded-lg"><i class="fa-solid fa-trash"></i></button>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 md:grid-cols-6 gap-2">
+          ${PRODUCTS.map(p=>`
+            <div>
+              <label class="block text-[9px] font-bold text-slate-400 uppercase">${p.label}</label>
+              <input type="number" step="0.5" min="0" placeholder="${State.productRates[p.key]??''}" id="crate-${c.id}-${p.key}" value="${r[p.key] ?? ''}" class="w-full border rounded-lg py-1.5 px-1 text-center text-xs font-mono font-bold">
+            </div>`).join('')}
+        </div>
+      </div>`;
+    }).join('');
+  },
+  saveCustomerRates(custId){
+    const payload = {};
+    PRODUCTS.forEach(p=>{
+      const v = document.getElementById(`crate-${custId}-${p.key}`).value;
+      if(v !== '') payload[p.key] = parseFloat(v);
+    });
+    set(ref(db, `customers/${custId}/rates`), payload).then(()=>window.Toast('Custom rate saved'));
+  },
+  // Permanently removes a customer AND everything tied to them: their profile,
+  // custom rates, delivery/override history, and every bill ever generated for
+  // them. This is a hard delete straight from the database — irreversible.
+  deleteCustomer(custId){
+    const c = State.customers.find(x=>x.id===custId);
+    const name = (c && c.name) ? c.name : 'this customer';
+    const typed = prompt(`⚠️ Ye "${name}" ko aur unki SAARI bills + delivery history ko PERMANENTLY delete kar dega. Ye wapas nahi ho sakta.\n\nConfirm karne ke liye customer ka naam exactly type karo:\n"${name}"`);
+    if(typed === null) return; // cancelled
+    if(typed.trim().toLowerCase() !== name.trim().toLowerCase()){
+      return window.Toast('Naam match nahi hua — delete cancel ho gaya', 'error');
+    }
+    const updates = {};
+    updates[`customers/${custId}`] = null; // profile, rates, deliveryByDate, overrides, defaultProducts
+    updates[`bills/${custId}`] = null;      // every bill for this customer
+    update(ref(db), updates).then(()=>{
+      window.AutoBill.detach(custId);
+      window.Toast(`${name} permanently deleted`);
+    }).catch(err=>{
+      console.error(err);
+      window.Toast('Delete karne me error aayi — internet check karo', 'error');
+    });
+  }
+};
+
+/* ================= DASHBOARD ================= */
+window.Dashboard = {
+  customerTotals: [],
+  init(){
+    const now = new Date();
+    document.getElementById('dash-today-date').innerText = now.toLocaleDateString(undefined,{weekday:'long', day:'numeric', month:'short', year:'numeric'});
+    document.getElementById('dash-month-name').innerText = now.toLocaleDateString(undefined,{month:'long', year:'numeric'});
+    const pm = document.getElementById('dash-prod-month');
+    if(!pm.value) pm.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    this.calculateStats();
+    this.renderProductStats();
+  },
+  calculateStats(){
+    const now = new Date();
+    const today = dateStr(now);
+    const curYM = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    let total=0, todaySales=0, monthSales=0;
+    State.bills.forEach(b=>{
+      const amt = parseFloat(b.totalAmount||0);
+      total += amt;
+      const d = new Date(b.createdAt||0);
+      if(dateStr(d) === today) todaySales += amt;
+      const ym = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      if(ym === curYM) monthSales += amt;
+    });
+    document.getElementById('dash-sales').innerText = fmtMoney(total);
+    document.getElementById('dash-orders').innerText = State.bills.length;
+    document.getElementById('dash-today').innerText = fmtMoney(todaySales);
+    document.getElementById('dash-month').innerText = fmtMoney(monthSales);
+  },
+  applyFilter(){
+    const s = document.getElementById('filter-start').value, e = document.getElementById('filter-end').value;
+    if(!s || !e) return window.Toast('Start/End date select karo', 'error');
+    const sT = new Date(s).getTime();
+    const eD = new Date(e); eD.setHours(23,59,59,999); const eT = eD.getTime();
+    let sum=0, count=0;
+    State.bills.forEach(b=>{ if((b.createdAt||0)>=sT && (b.createdAt||0)<=eT){ sum += parseFloat(b.totalAmount||0); count++; } });
+    document.getElementById('filter-result').innerText = fmtMoney(sum);
+    window.Toast(`${count} bills found`);
+  },
+  downloadRangePDF(){
+    const s = document.getElementById('filter-start').value, e = document.getElementById('filter-end').value;
+    if(!s || !e) return window.Toast('Start/End date select karo', 'error');
+    const sT = new Date(s).getTime(); const eD = new Date(e); eD.setHours(23,59,59,999); const eT = eD.getTime();
+    const filtered = State.bills.filter(b => (b.createdAt||0)>=sT && (b.createdAt||0)<=eT);
+    if(!filtered.length) return window.Toast('No bills in range', 'error');
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p','mm','a4');
+    doc.setFontSize(18); doc.text('SALES SUMMARY REPORT', 14, 15);
+    doc.setFontSize(10); doc.setTextColor(100); doc.text(`Range: ${s} to ${e}`, 14, 22);
+    let grand = 0;
+    const rows = filtered.map(b=>{ grand += parseFloat(b.totalAmount||0);
+      return [b.customerName, b.periodLabel||'-', (b.items||[]).map(i=>`${i.name} x${i.qty}`).join(', '), `Rs. ${fmtMoney(b.totalAmount)}`]; });
+    doc.autoTable({ head:[['Customer','Period','Items','Amount']], body: rows, startY:30, theme:'grid', headStyles:{fillColor:[51,65,85]}, styles:{fontSize:8},
+      foot:[[{content:'GRAND TOTAL', colSpan:3, styles:{halign:'right', fontStyle:'bold'}}, `Rs. ${fmtMoney(grand)}`]] });
+    doc.save(`Sales_Summary_${s}.pdf`);
+  },
+  renderProductStats(){
+    const grid = document.getElementById('dash-prod-stats');
+    const monthFilter = document.getElementById('dash-prod-month').value;
+    let fy=null, fm=null; if(monthFilter) [fy,fm]=monthFilter.split('-');
+    const stats = {}; PRODUCTS.forEach(p=>stats[p.label]={qty:0,revenue:0});
+    State.bills.forEach(b=>{
+      if(fm && fy){ const d=new Date(b.createdAt||0); const ym=`${d.getFullYear()}`,mm=String(d.getMonth()+1).padStart(2,'0'); if(ym!==fy||mm!==fm) return; }
+      (b.items||[]).forEach(it=>{
+        const label = it.name;
+        if(!stats[label]) stats[label]={qty:0,revenue:0};
+        stats[label].qty += parseFloat(it.qty||0);
+        stats[label].revenue += parseFloat(it.total||0);
+      });
+    });
+    this.currentProductStats = { monthFilter, stats };
+    grid.innerHTML = Object.keys(stats).map(name=>{
+      const d = stats[name];
+      const dim = d.qty>0 ? '' : 'opacity-50';
+      return `<div class="${dim} bg-white p-3 rounded-xl border shadow-sm text-center">
+        <div class="text-xs font-bold text-slate-700">${escapeHtml(name)}</div>
+        <div class="text-lg font-bold text-slate-800 mt-1">${d.qty.toFixed(2)}</div>
+        <div class="text-xs font-bold text-emerald-500">₹${fmtMoney(d.revenue)}</div>
+      </div>`;
+    }).join('');
+  },
+  downloadProductStatsPDF(){
+    if(!this.currentProductStats) return window.Toast('No data', 'error');
+    const { jsPDF } = window.jspdf; const doc = new jsPDF();
+    doc.setFontSize(16); doc.text('PRODUCT SALES REPORT', 14, 18);
+    const rows = Object.entries(this.currentProductStats.stats).filter(([,d])=>d.qty>0)
+      .sort((a,b)=>b[1].revenue-a[1].revenue)
+      .map(([name,d],i)=>[i+1, name, d.qty.toFixed(2), `Rs. ${fmtMoney(d.revenue)}`]);
+    doc.autoTable({ head:[['#','Product','Qty','Revenue']], body: rows, startY:26, theme:'grid', headStyles:{fillColor:[67,56,202]} });
+    doc.save('Product_Sales.pdf');
+  },
+  openQuickAction(){
+    const now = new Date();
+    document.getElementById('quick-month-filter').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+    document.getElementById('quick-search-input').value='';
+    this.calculateCustomerTotals();
+    document.getElementById('quick-modal').classList.remove('hidden');
+  },
+  calculateCustomerTotals(){
+    const monthFilter = document.getElementById('quick-month-filter')?.value;
+    let fy=null, fm=null; if(monthFilter) [fy,fm]=monthFilter.split('-');
+    const totals = {};
+    State.customers.forEach(c=>totals[c.id]={ name:c.name, phone:c.phone||'', total:0, orders:0 });
+    State.bills.forEach(b=>{
+      if(fm && fy){ const d=new Date(b.createdAt||0); const ym=`${d.getFullYear()}`,mm=String(d.getMonth()+1).padStart(2,'0'); if(ym!==fy||mm!==fm) return; }
+      if(!totals[b.custId]) totals[b.custId] = { name:b.customerName, phone:b.phone||'', total:0, orders:0 };
+      totals[b.custId].total += parseFloat(b.totalAmount||0);
+      totals[b.custId].orders += 1;
+    });
+    this.customerTotals = Object.values(totals).sort((a,b)=>b.total-a.total);
+    this.filterQuickList();
+  },
+  filterQuickList(){
+    const term = (document.getElementById('quick-search-input')?.value||'').toLowerCase();
+    const list = this.customerTotals.filter(c => !term || c.name.toLowerCase().includes(term) || c.phone.includes(term));
+    const body = document.getElementById('quick-list-body');
+    if(!list.length){ body.innerHTML = '<div class="text-center text-slate-400 italic py-8">No customers</div>'; return; }
+    body.innerHTML = list.map(c=>`
+      <div class="bg-white p-3 rounded-xl border flex justify-between items-center">
+        <div><div class="font-bold text-sm text-slate-800">${escapeHtml(c.name)}</div><div class="text-xs text-slate-400">${escapeHtml(c.phone)} · ${c.orders} bills</div></div>
+        <div class="font-bold text-emerald-600">₹${fmtMoney(c.total)}</div>
+      </div>`).join('');
+  },
+  downloadLedgerPDF(){
+    if(!this.customerTotals.length) return window.Toast('No data', 'error');
+    const { jsPDF } = window.jspdf; const doc = new jsPDF();
+    doc.setFontSize(16); doc.text('CUSTOMER LEDGER', 14, 18);
+    const rows = this.customerTotals.map((c,i)=>[i+1, c.name, c.phone, c.orders, `Rs. ${fmtMoney(c.total)}`]);
+    doc.autoTable({ head:[['#','Name','Phone','Bills','Total']], body: rows, startY:26, theme:'grid', headStyles:{fillColor:[67,56,202]} });
+    doc.save('Customer_Ledger.pdf');
+  },
+  downloadLedgerExcel(){
+    if(!this.customerTotals.length) return window.Toast('No data', 'error');
+    const ws = XLSX.utils.json_to_sheet(this.customerTotals.map(c=>({Name:c.name, Phone:c.phone, Bills:c.orders, Total:c.total})));
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Ledger');
+    XLSX.writeFile(wb, 'Customer_Ledger.xlsx');
+  }
+};
+
+/* ================= HISTORY ================= */
+window.History = {
+  render(){
+    const body = document.getElementById('hist-body');
+    if(!body) return;
+    const term = (document.getElementById('hist-search')?.value||'').toLowerCase();
+    const monthFilter = document.getElementById('hist-month')?.value;
+    let fy=null, fm=null; if(monthFilter) [fy,fm]=monthFilter.split('-');
+    let list = State.bills.filter(b=>{
+      if(term && !( (b.customerName||'').toLowerCase().includes(term) || (b.phone||'').includes(term) )) return false;
+      if(fm && fy){ const d=new Date(b.createdAt||0); const ym=`${d.getFullYear()}`,mm=String(d.getMonth()+1).padStart(2,'0'); if(ym!==fy||mm!==fm) return false; }
+      return true;
+    });
+    if(!list.length){ body.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-slate-400">No bills found</td></tr>'; return; }
+    body.innerHTML = list.map(b=>{
+      const itemsTxt = (b.items||[]).map(i=>`${i.name} x${i.qty}`).join(', ');
+      const d = new Date(b.createdAt||0);
+      return `<tr class="border-b hover:bg-slate-50">
+        <td class="p-3"><div class="font-bold text-sm">${escapeHtml(b.customerName)}</div><div class="text-xs text-slate-400">${escapeHtml(b.phone||'')}</div></td>
+        <td class="p-3 text-xs">${escapeHtml(b.periodLabel||'-')}<div class="text-slate-400">${d.toLocaleDateString('en-IN')}</div></td>
+        <td class="p-3 text-xs text-slate-500 max-w-[240px] truncate" title="${escapeHtml(itemsTxt)}">${escapeHtml(itemsTxt)}</td>
+        <td class="p-3 text-xs"><span class="px-2 py-1 rounded-full font-bold ${b.type==='auto'?'bg-emerald-100 text-emerald-700':'bg-slate-100 text-slate-600'}">${b.type==='auto'?'AUTO':'MANUAL'}</span></td>
+        <td class="p-3 text-right font-bold text-slate-700">₹${fmtMoney(b.totalAmount)}</td>
+        <td class="p-3 text-center">
+          <button onclick="History.openModal('${b.custId}','${b.billId}')" class="text-blue-500 p-2"><i class="fa-solid fa-pen-to-square"></i></button>
+          <button onclick="History.deleteBill('${b.custId}','${b.billId}')" class="text-red-500 p-2"><i class="fa-solid fa-trash"></i></button>
+        </td>
+      </tr>`;
+    }).join('');
+  },
+  openModal(custId, billId){
+    const b = State.bills.find(x=>x.custId===custId && x.billId===billId);
+    if(!b) return;
+    document.getElementById('edit-bill-custid').value = custId;
+    document.getElementById('edit-bill-id').value = billId;
+    document.getElementById('edit-name').value = b.customerName;
+    document.getElementById('edit-amount').value = b.totalAmount;
+    document.getElementById('edit-note').value = b.note || '';
+    document.getElementById('edit-modal').classList.remove('hidden');
+  },
+  closeModal(){ document.getElementById('edit-modal').classList.add('hidden'); },
+  saveUpdate(){
+    const custId = document.getElementById('edit-bill-custid').value;
+    const billId = document.getElementById('edit-bill-id').value;
+    const amount = parseFloat(document.getElementById('edit-amount').value);
+    const note = document.getElementById('edit-note').value.trim();
+    if(isNaN(amount) || amount < 0) return window.Toast('Valid amount daalo', 'error');
+    update(ref(db, `bills/${custId}/${billId}`), { totalAmount: amount, note }).then(()=>{
+      window.Toast('Bill updated'); this.closeModal();
+    });
+  },
+  deleteBillFromModal(){
+    const custId = document.getElementById('edit-bill-custid').value;
+    const billId = document.getElementById('edit-bill-id').value;
+    this.closeModal();
+    this.deleteBill(custId, billId);
+  },
+  deleteBill(custId, billId){
+    if(!confirm('Ye bill delete karein? Ye action wapas nahi ho sakta.')) return;
+    const b = State.bills.find(x=>x.custId===custId && x.billId===billId);
+    remove(ref(db, `bills/${custId}/${billId}`)).then(async ()=>{
+      if(b && b.dates && b.dates.length){
+        // Mark as DELETED (not null) so the AutoBill listener doesn't see an
+        // "unbilled" delivered date and instantly regenerate this same bill.
+        const updates = {};
+        b.dates.forEach(dstr => { updates[`customers/${custId}/deliveryByDate/${dstr}/billed`] = 'DELETED'; });
+        await update(ref(db), updates);
+      }
+      window.Toast('Bill deleted permanently');
+    });
+  },
+  downloadPDF(){
+    if(!State.bills.length) return window.Toast('No bills', 'error');
+    const { jsPDF } = window.jspdf; const doc = new jsPDF();
+    doc.setFontSize(16); doc.text('BILLING HISTORY', 14, 18);
+    const rows = State.bills.map(b=>[b.customerName, b.periodLabel||'-', b.type, `Rs. ${fmtMoney(b.totalAmount)}`]);
+    doc.autoTable({ head:[['Customer','Period','Type','Amount']], body: rows, startY:26, theme:'grid', headStyles:{fillColor:[67,56,202]}, styles:{fontSize:8} });
+    doc.save('Billing_History.pdf');
+  },
+  downloadExcel(){
+    if(!State.bills.length) return window.Toast('No bills', 'error');
+    const ws = XLSX.utils.json_to_sheet(State.bills.map(b=>({Customer:b.customerName, Phone:b.phone, Period:b.periodLabel, Type:b.type, Amount:b.totalAmount})));
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Bills');
+    XLSX.writeFile(wb, 'Billing_History.xlsx');
+  }
+};
+
+/* ================= SHARE / STORAGE ================= */
+window.ShareTab = {
+  save(){
+    const url = document.getElementById('portal-url').value.trim();
+    set(ref(db, 'settings/customerPortalUrl'), url).then(()=>{ State.portalUrl = url; window.Toast('Saved'); this.renderQr(); });
+  },
+  renderQr(){
+    const box = document.getElementById('qrcode-box');
+    box.innerHTML = '';
+    if(!State.portalUrl){ box.innerHTML = '<div class="text-xs text-slate-400 italic">No portal link set</div>'; return; }
+    new QRCode(box, { text: State.portalUrl, width:160, height:160 });
+  }
+};
+window.StorageMonitor = {
+  async init(){
+    const bar = document.getElementById('storage-bar');
+    const used = document.getElementById('storage-used-text');
+    const pct = document.getElementById('storage-pct-text');
+    if(!bar) return;
+    used.innerText = 'Checking...';
+    try{
+      const snap = await get(ref(db));
+      const bytes = new Blob([JSON.stringify(snap.val()||{})]).size;
+      const LIMIT = 1024*1024*1024;
+      const p = Math.min(100, (bytes/LIMIT)*100);
+      bar.style.width = Math.max(p, bytes>0?0.5:0).toFixed(2)+'%';
+      bar.className = 'h-full rounded-full transition-all duration-500 ' + (p>=85?'bg-red-500':p>=60?'bg-amber-500':'bg-emerald-500');
+      const fmt = (b)=> b<1024 ? b+' B' : b<1024*1024 ? (b/1024).toFixed(1)+' KB' : b<1024*1024*1024 ? (b/1024/1024).toFixed(1)+' MB' : (b/1024/1024/1024).toFixed(2)+' GB';
+      used.innerText = fmt(bytes);
+      pct.innerText = p.toFixed(p<1?3:2)+'%';
+    }catch(e){ used.innerText = 'Error checking storage'; }
+  }
+};
+
+/* ---------------- boot ---------------- */
+(function boot(){
+  if(isSessionValid()) enterApp();
+})();
+</script>
+</body>
+</html>
