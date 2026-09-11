@@ -1456,8 +1456,6 @@ function buildSummaryPdf(doc, sections){
 
 /* ---------------- PDF export — per-customer detail (name + products + note), color-coded by shift ---------------- */
 function buildCustomerDetailPdf(doc, sections){
-  const pageWidth = doc.internal.pageSize.getWidth();
-  const pageHeight = doc.internal.pageSize.getHeight();
   const marginX = 12;
   let first = true;
 
@@ -1465,68 +1463,62 @@ function buildCustomerDetailPdf(doc, sections){
     if (!first) doc.addPage();
     first = false;
 
-    const shiftColor = hexToRgb(sec.shift === 'evening' ? '#7C5CFC' : '#FFA23C');
     const shiftLabel = sec.shift === 'evening' ? 'Evening' : 'Morning';
+    const boyColor = hexToRgb(sec.boyColor);
 
-    doc.setFillColor(...shiftColor);
-    doc.rect(0, 0, pageWidth, 24, 'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(255,255,255);
-    doc.text(`${sec.boyName} — ${shiftLabel} Delivery`, marginX, 12);
-    doc.setFont('helvetica','normal'); doc.setFontSize(9);
-    doc.text(`${formatDateLabel(viewDate)}   ·   ${sec.list.length} stop${sec.list.length!==1?'s':''}   ·   Generated ${new Date().toLocaleString('en-IN')}`, marginX, 19);
-    doc.setTextColor(0);
+    doc.setFont('helvetica','bold'); doc.setFontSize(13.5); doc.setTextColor(...boyColor);
+    doc.text(`${sec.boyName}'s Delivery List (${shiftLabel})`, marginX, 14.5);
 
-    doc.setFillColor(245,225,255);
-    doc.rect(marginX, 27, 3.6, 3.6, 'F');
-    doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(110,70,140);
-    doc.text('= quantity modified specifically for this date (different from the daily default)', marginX + 6, 30.2);
+    doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(120,125,140);
+    doc.text(`Date: ${viewDate}   |   Total Orders: ${sec.list.length}`, marginX, 19.5);
     doc.setTextColor(0);
 
     const sortedList = sec.list.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||''));
     const rowMeta = [];
     const body = sortedList.map(c=>{
       const eff = effectiveFor(c, viewDate);
-      rowMeta.push({ isOverride: eff.isOverride, hasQty: hasAnyQty(eff) });
+      const address = [c.address, c.phone].filter(Boolean).join('  ·  ') || '—';
+      rowMeta.push({ isOverride: eff.isOverride });
       return [
         c.name || '—',
-        ...PRODUCTS.map(p => (eff[p.key]||0) > 0 ? `${eff[p.key]}${p.short}` : '-'),
-        eff.note ? eff.note : ''
+        address,
+        eff.note ? eff.note : '',
+        ...PRODUCTS.map(p => (eff[p.key]||0) > 0 ? String(eff[p.key]) : '')
       ];
     });
 
+    const totals = computeProductTotals(sec.list);
+    const footRow = ['TOTAL QTY', '', '', ...PRODUCTS.map(p => (Math.round(totals[p.key]*100)/100).toFixed(2))];
+
     doc.autoTable({
-      startY: 35,
-      head: [['Customer', ...PRODUCTS.map(p=>p.label), 'Note']],
+      startY: 24,
+      head: [['Customer', 'Address', 'Note', ...PRODUCTS.map(p=>p.label)]],
       body,
-      styles: { fontSize: 9, cellPadding: 3.6, valign:'middle', lineColor:[225,222,207], lineWidth:0.2 },
-      headStyles: { fillColor: shiftColor, textColor:255, fontStyle:'bold', fontSize:9 },
-      alternateRowStyles: { fillColor:[250,249,247] },
+      foot: [footRow],
+      theme: 'striped',
+      styles: { fontSize: 7.6, cellPadding: { top:2, bottom:2, left:2.5, right:2.5 }, valign:'middle', textColor:[40,44,58], lineColor:[236,238,246], lineWidth:0.1 },
+      headStyles: { fillColor: boyColor, textColor:255, fontStyle:'bold', fontSize:7.6, halign:'left' },
+      footStyles: { fillColor:[238,239,244], textColor:[40,44,58], fontStyle:'bold', fontSize:7.6, lineWidth:{top:0.3} },
+      alternateRowStyles: { fillColor:[250,250,252] },
       columnStyles: Object.assign(
-        { 0:{ halign:'left', fontStyle:'bold', cellWidth:50 } },
-        Object.fromEntries(PRODUCTS.map((p,i)=>[i+1, { halign:'center', cellWidth:22 }])),
-        { [PRODUCTS.length+1]: { halign:'left', fontStyle:'italic' } }
+        { 0:{ halign:'left', fontStyle:'bold', cellWidth:30 },
+          1:{ halign:'left', cellWidth:'auto', textColor:[110,116,135] },
+          2:{ halign:'left', cellWidth:34, fontStyle:'italic', textColor:[150,154,168] } },
+        Object.fromEntries(PRODUCTS.map((p,i)=>[i+3, { halign:'center', cellWidth:13 }]))
       ),
       didParseCell:(data)=>{
-        if (data.section === 'body'){
+        if (data.section === 'foot' && data.column.index >= 3){
+          data.cell.styles.halign = 'center';
+        }
+        if (data.section === 'body' && data.column.index >= 3){
           const meta = rowMeta[data.row.index];
           if (meta && meta.isOverride){
-            data.cell.styles.fillColor = [245, 225, 255];
-          } else if (meta && !meta.hasQty && data.column.index !== 0){
-            data.cell.styles.textColor = [180,180,180];
+            data.cell.styles.fontStyle = 'bold';
+            data.cell.styles.textColor = boyColor;
           }
         }
       }
     });
-
-    const totals = computeProductTotals(sec.list);
-    let y = doc.lastAutoTable.finalY + 7;
-    if (y > pageHeight - 16){ doc.addPage(); y = 20; }
-    doc.setFillColor(...shiftColor);
-    doc.roundedRect(marginX, y - 5.5, pageWidth - marginX*2, 9.5, 2, 2, 'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(8.5); doc.setTextColor(255,255,255);
-    const totalsLine = PRODUCTS.map(p=> `${p.label} ${totals[p.key]>0?totals[p.key]:0}${p.short}`).join('   ·   ');
-    doc.text(`ROUTE TOTAL — ${totalsLine}`, marginX + 4, y + 1);
-    doc.setTextColor(0);
   });
 }
 
@@ -1545,6 +1537,8 @@ function addPdfFooters(doc){
   }
 }
 
+const UNASSIGNED_PDF_COLOR = '#64748B';
+
 function buildPdfSections({ boyId, all }){
   let sections = [];
   if (boyId){
@@ -1552,20 +1546,20 @@ function buildPdfSections({ boyId, all }){
     if (!b) return [];
     ['morning','evening'].forEach(shift=>{
       const list = customers.filter(c=>c.assignedTo===b.id && custShift(c)===shift);
-      if (list.length) sections.push({ boyName: b.name, shift, list, boyKey: b.id });
+      if (list.length) sections.push({ boyName: b.name, shift, list, boyKey: b.id, boyColor: b.color || UNASSIGNED_PDF_COLOR });
     });
   } else if (all){
     const shiftsToShow = filtShift === 'all' ? ['morning','evening'] : [filtShift];
     deliveryBoys.forEach(b=>{
       shiftsToShow.forEach(shift=>{
         const list = customers.filter(c=>c.assignedTo===b.id && custShift(c)===shift);
-        if (list.length) sections.push({ boyName: b.name, shift, list, boyKey: b.id });
+        if (list.length) sections.push({ boyName: b.name, shift, list, boyKey: b.id, boyColor: b.color || UNASSIGNED_PDF_COLOR });
       });
     });
     const unassigned = customers.filter(c=>!c.assignedTo || !deliveryBoys.find(b=>b.id===c.assignedTo));
     shiftsToShow.forEach(shift=>{
       const list = unassigned.filter(c=>custShift(c)===shift);
-      if (list.length) sections.push({ boyName: 'Unassigned', shift, list, boyKey: 'unassigned' });
+      if (list.length) sections.push({ boyName: 'Unassigned', shift, list, boyKey: 'unassigned', boyColor: UNASSIGNED_PDF_COLOR });
     });
   } else {
     const boysToShow = filtBoy === 'all' ? deliveryBoys : deliveryBoys.filter(b=>b.id===filtBoy);
@@ -1573,14 +1567,14 @@ function buildPdfSections({ boyId, all }){
     boysToShow.forEach(b=>{
       shiftsToShow.forEach(shift=>{
         const list = customers.filter(c=>c.assignedTo===b.id && custShift(c)===shift && matchesFilters(c));
-        if (list.length) sections.push({ boyName: b.name, shift, list, boyKey: b.id });
+        if (list.length) sections.push({ boyName: b.name, shift, list, boyKey: b.id, boyColor: b.color || UNASSIGNED_PDF_COLOR });
       });
     });
     if (filtBoy === 'all'){
       const unassigned = customers.filter(c=>!c.assignedTo || !deliveryBoys.find(b=>b.id===c.assignedTo));
       shiftsToShow.forEach(shift=>{
         const list = unassigned.filter(c=>custShift(c)===shift && matchesFilters(c));
-        if (list.length) sections.push({ boyName: 'Unassigned', shift, list, boyKey: 'unassigned' });
+        if (list.length) sections.push({ boyName: 'Unassigned', shift, list, boyKey: 'unassigned', boyColor: UNASSIGNED_PDF_COLOR });
       });
     }
   }
