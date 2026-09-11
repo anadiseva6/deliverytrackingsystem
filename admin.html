@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anadi Godham — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800;9..144,900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#F8F7F4; --paper:#F1EFE9; --card:#FFFFFF; --card-2:#F5F4F0;
+  --ink:#17160F; --ink-soft:#6E6D64; --ink-mute:#A7A59A;
+  --line:#E7E5DD;
+  --leaf:#20281F; --leaf-dark:#0F140E; --leaf-light:#EAECE6;
+  --gold:#8A7A4F; --gold-light:#F1ECDD;
+  --danger:#A8402F; --danger-light:#F6E4DF;
+  --grad-brand:linear-gradient(135deg,#2A2E22 0%,#15140F 100%);
+  --grad-navy:linear-gradient(160deg,#141309 0%,#1B1A12 45%,#201E15 78%,#25231A 100%);
+  --radius-sm:10px; --radius:14px; --radius-lg:20px;
+  --shadow-sm:0 1px 2px rgba(23,22,15,.05), 0 2px 9px rgba(23,22,15,.05);
+  --shadow-md:0 4px 12px rgba(23,22,15,.06), 0 14px 28px rgba(23,22,15,.08);
+  --shadow-lg:0 20px 46px rgba(15,14,9,.22);
+  --ease:cubic-bezier(.22,.8,.36,1);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{font-family:'Inter',sans-serif; background:var(--paper); color:var(--ink); font-size:14px; -webkit-font-smoothing:antialiased;}
+h1,h2,h3,.display{font-family:'Fraunces',serif; letter-spacing:-.01em;}
+.mono{font-family:'JetBrains Mono',monospace;}
+button{font-family:inherit; cursor:pointer;}
+input,textarea,select{font-family:inherit;}
+img{display:block; max-width:100%;}
+::-webkit-scrollbar{width:8px; height:8px;}
+::-webkit-scrollbar-thumb{background:var(--ink-mute); border-radius:99px;}
+
+/* ============ LOGIN GATE ============ */
+/* Basic screen-lock, not real auth — good enough to keep casual visitors
+   out of an admin link, but NOT a substitute for restricting writes to
+   this data with Firebase security rules. Change ADMIN_PASSWORD below
+   before sharing this file with anyone. */
+#gate{position:fixed; inset:0; z-index:999; background:var(--grad-navy); display:flex; align-items:center; justify-content:center; padding:20px;}
+#gate.hide{display:none;}
+.gate-card{width:100%; max-width:360px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1); border-radius:var(--radius-lg); padding:32px 28px; backdrop-filter:blur(6px);}
+.gate-card h1{color:#fff; font-size:22px; font-weight:800; margin-bottom:4px;}
+.gate-card p{color:#B7B4A6; font-size:12.5px; margin-bottom:20px; line-height:1.5;}
+.gate-card input{width:100%; padding:12px 14px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:#fff; font-size:14px; margin-bottom:12px;}
+.gate-card input::placeholder{color:#7A7869;}
+.gate-card button{width:100%; padding:12px 0; border:none; border-radius:10px; background:var(--gold); color:#fff; font-weight:700; font-size:13.5px; letter-spacing:.01em;}
+.gate-err{color:#E4988A; font-size:12px; margin-top:8px; display:none;}
+.gate-err.show{display:block;}
+
+/* ============ SHELL ============ */
+#app{display:none; min-height:100vh;}
+#app.show{display:flex;}
+.sidebar{width:220px; flex:0 0 220px; background:var(--grad-brand); color:#fff; display:flex; flex-direction:column; padding:22px 14px; position:sticky; top:0; height:100vh;}
+.brand{display:flex; align-items:center; gap:10px; padding:0 8px 22px; border-bottom:1px solid rgba(255,255,255,.1); margin-bottom:14px;}
+.brand .mark{width:34px; height:34px; border-radius:10px; background:var(--gold); display:flex; align-items:center; justify-content:center; font-family:'Fraunces'; font-weight:800; font-size:16px; flex:0 0 34px;}
+.brand .tx{font-family:'Fraunces'; font-weight:800; font-size:14.5px; line-height:1.25;}
+.brand .tx span{display:block; font-size:9.5px; font-weight:600; color:#ADAA9C; letter-spacing:.04em;}
+.navlist{display:flex; flex-direction:column; gap:2px;}
+.navlist button{display:flex; align-items:center; gap:10px; padding:10px 12px; border:none; background:none; color:#C9C6B8; border-radius:9px; font-size:13px; font-weight:600; text-align:left;}
+.navlist button .ic{font-size:15px; width:18px; text-align:center;}
+.navlist button:hover{background:rgba(255,255,255,.06); color:#fff;}
+.navlist button.active{background:var(--gold); color:#fff;}
+.sidebar-foot{margin-top:auto; padding-top:14px; border-top:1px solid rgba(255,255,255,.1);}
+.sidebar-foot button{width:100%; padding:9px 0; background:rgba(255,255,255,.07); border:none; border-radius:9px; color:#E7E5DD; font-size:12px; font-weight:600;}
+
+main{flex:1; min-width:0; padding:28px 34px 60px; max-width:1180px;}
+.page-head{display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:22px; flex-wrap:wrap;}
+.page-head h2{font-size:24px; font-weight:800;}
+.page-head .sub{color:var(--ink-soft); font-size:12.5px; margin-top:3px;}
+.btn{display:inline-flex; align-items:center; gap:7px; border:none; border-radius:10px; padding:10px 16px; font-weight:700; font-size:12.5px; letter-spacing:.01em; transition:transform .12s var(--ease);}
+.btn:active{transform:scale(.97);}
+.btn:disabled{opacity:.6; cursor:not-allowed; transform:none;}
+.btn-primary{background:var(--grad-brand); color:#fff; box-shadow:var(--shadow-sm);}
+.btn-ghost{background:var(--card); border:1px solid var(--line); color:var(--ink);}
+.btn-danger{background:var(--danger-light); color:var(--danger);}
+.btn-sm{padding:6px 11px; font-size:11.5px; border-radius:8px;}
+
+.toolbar{display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; align-items:center;}
+.search-box{position:relative; flex:1; min-width:200px; max-width:320px;}
+.search-box input{width:100%; padding:9px 12px 9px 32px; border-radius:9px; border:1px solid var(--line); background:var(--card); font-size:12.5px;}
+.search-box .ic{position:absolute; left:11px; top:50%; transform:translateY(-50%); opacity:.5; font-size:12px;}
+.chip-filter{display:flex; gap:6px; flex-wrap:wrap;}
+.chip-filter button{padding:7px 13px; border-radius:99px; border:1px solid var(--line); background:var(--card); font-size:11.5px; font-weight:700; color:var(--ink-soft);}
+.chip-filter button.active{background:var(--leaf); color:#fff; border-color:var(--leaf);}
+
+/* ---- product table ---- */
+.ptable{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow-sm);}
+.prow{display:grid; grid-template-columns:52px 1.6fr .9fr .8fr .8fr 1fr auto; gap:12px; align-items:center; padding:11px 14px; border-bottom:1px solid var(--line);}
+.prow.head{background:var(--card-2); font-size:10.5px; font-weight:800; letter-spacing:.03em; color:var(--ink-soft); text-transform:uppercase;}
+.prow:last-child{border-bottom:none;}
+/* p-metawrap groups category/price/stock/status so it can act as 4 plain
+   grid columns on desktop (via display:contents) but collapse into one
+   wrapped row on mobile — see the responsive block below. Nothing here is
+   ever display:none anymore, so stock status is always visible. */
+.p-metawrap{display:contents;}
+.p-thumb{width:42px; height:42px; border-radius:9px; background:var(--card-2); overflow:hidden; display:flex; align-items:center; justify-content:center; font-size:19px;}
+.p-thumb img{width:100%; height:100%; object-fit:cover;}
+.p-name{font-weight:700; font-size:13px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+.p-meta{font-size:10.5px; color:var(--ink-mute); margin-top:1px;}
+.p-price{font-family:'JetBrains Mono'; font-weight:700; font-size:12.5px;}
+.p-price .mrp{color:var(--ink-mute); text-decoration:line-through; font-weight:600; font-size:10.5px; margin-left:5px;}
+.stock-input{width:64px; padding:6px 8px; border-radius:7px; border:1px solid var(--line); font-size:12px; text-align:center;}
+.stock-unlimited{color:var(--ink-mute); font-size:11px; font-style:italic;}
+.badge{display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:99px; font-size:10px; font-weight:800; letter-spacing:.02em;}
+.badge-active{background:var(--leaf-light); color:var(--leaf);}
+.badge-oos{background:var(--danger-light); color:var(--danger);}
+.badge-soon{background:var(--gold-light); color:var(--gold);}
+.badge-dupe{background:#FDE9D8; color:#9A5B12;}
+.row-actions{display:flex; gap:6px; justify-content:flex-end;}
+.icon-btn{width:30px; height:30px; border-radius:8px; border:1px solid var(--line); background:var(--card); display:flex; align-items:center; justify-content:center; font-size:13px;}
+.icon-btn:hover{background:var(--card-2);}
+.empty-state{padding:60px 20px; text-align:center; color:var(--ink-mute);}
+.empty-state .ic{font-size:34px; margin-bottom:10px;}
+.dupe-banner{display:flex; align-items:center; gap:10px; background:var(--gold-light); color:#6B5321; border:1px solid #E6D9AF; border-radius:var(--radius); padding:12px 16px; margin-bottom:14px; font-size:12.5px; font-weight:600;}
+.dupe-banner .btn{margin-left:auto; flex:0 0 auto;}
+
+/* ---- category & banner cards ---- */
+.grid-cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:14px;}
+.cat-card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow-sm); display:flex; flex-direction:column; gap:10px;}
+.cat-card .top{display:flex; align-items:center; gap:11px;}
+.cat-card .ic-tile{width:44px; height:44px; border-radius:11px; background:var(--card-2); display:flex; align-items:center; justify-content:center; font-size:20px; overflow:hidden;}
+.cat-card .ic-tile img{width:100%; height:100%; object-fit:cover;}
+.cat-card .nm{font-weight:800; font-size:14px;}
+.cat-card .id{font-size:10.5px; color:var(--ink-mute); font-family:'JetBrains Mono';}
+.cat-card .count{font-size:11.5px; color:var(--ink-soft);}
+.cat-card .foot{display:flex; gap:8px; margin-top:auto;}
+
+.ban-card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow-sm);}
+.ban-preview{aspect-ratio:2.1/1; display:flex; flex-direction:column; justify-content:center; padding:16px; color:#fff; position:relative; background-size:cover; background-position:center;}
+.ban-preview .ey{font-size:9.5px; font-weight:800; letter-spacing:.06em; color:#D8D4C0; margin-bottom:4px;}
+.ban-preview .tt{font-family:'Fraunces'; font-size:15px; font-weight:800; line-height:1.2;}
+.ban-preview .sb{font-size:10.5px; color:#D8D4C0; margin-top:3px;}
+.ban-foot{display:flex; gap:8px; padding:10px 12px;}
+
+/* ============ MODAL ============ */
+.modal-overlay{position:fixed; inset:0; background:rgba(15,14,9,.5); z-index:500; display:none; align-items:flex-start; justify-content:center; padding:30px 16px; overflow-y:auto;}
+.modal-overlay.show{display:flex;}
+.modal{width:100%; max-width:560px; background:var(--card); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); overflow:hidden; margin-bottom:30px;}
+.modal-head{display:flex; align-items:center; justify-content:space-between; padding:18px 22px; border-bottom:1px solid var(--line);}
+.modal-head h3{font-size:16px; font-weight:800;}
+.modal-close{width:30px; height:30px; border-radius:8px; border:none; background:var(--card-2); font-size:14px;}
+.modal-body{padding:20px 22px; display:flex; flex-direction:column; gap:14px; max-height:70vh; overflow-y:auto;}
+.field{display:flex; flex-direction:column; gap:5px;}
+.field label{font-size:11.5px; font-weight:700; color:var(--ink-soft);}
+.field input,.field select,.field textarea{padding:10px 12px; border-radius:9px; border:1px solid var(--line); font-size:13px; background:var(--card);}
+.field textarea{resize:vertical; min-height:60px;}
+.field-row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.field-hint{font-size:10.5px; color:var(--ink-mute);}
+.check-row{display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:600;}
+.check-row input{width:16px; height:16px;}
+.img-row{display:flex; gap:8px; align-items:center;}
+.img-row input{flex:1;}
+.img-row .rm{width:32px; height:32px; flex:0 0 32px; border-radius:8px; border:1px solid var(--line); background:var(--card); font-size:13px;}
+.add-img-btn{align-self:flex-start; font-size:11.5px; font-weight:700; color:var(--gold); background:none; border:none; padding:4px 0;}
+.modal-foot{display:flex; justify-content:space-between; align-items:center; padding:16px 22px; border-top:1px solid var(--line); gap:10px;}
+
+.toast{position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--leaf-dark); color:#fff; padding:11px 20px; border-radius:99px; font-size:12.5px; font-weight:600; opacity:0; pointer-events:none; transition:all .3s var(--ease); z-index:900; box-shadow:var(--shadow-md);}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+@media(max-width:860px){
+  #app.show{flex-direction:column;}
+  .sidebar{width:100%; flex:none; height:auto; position:relative; flex-direction:row; align-items:center; padding:14px 16px;}
+  .navlist{flex-direction:row; overflow-x:auto;}
+  .sidebar-foot{margin-top:0; margin-left:auto; padding-top:0; border-top:none;}
+  main{padding:20px 16px 50px;}
+  /* Card-style row on mobile: thumb + name + edit button on the first line,
+     category/price/stock/status wrap onto a second line underneath. Nothing
+     is hidden here anymore — this used to display:none the status badge and
+     price/category, and squash the edit button into a 40px column, which is
+     why stock status looked fine on desktop but vanished (or looked broken)
+     on phones. */
+  .prow.head{display:none;}
+  .prow{display:flex; flex-wrap:wrap; align-items:center; column-gap:10px; row-gap:8px; padding:12px 14px;}
+  .prow .p-thumb{flex:0 0 auto;}
+  .prow > div:nth-child(2){flex:1 1 auto; min-width:0;}
+  .prow .row-actions{flex:0 0 auto;}
+  .p-metawrap{display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; flex-basis:100%; order:5;}
+  .p-metawrap .col-cat{font-size:10.5px; color:var(--ink-soft); background:var(--card-2); padding:3px 8px; border-radius:99px;}
+  .p-metawrap .col-price{font-size:11.5px;}
+  .p-metawrap .col-stock{display:flex; align-items:center;}
+}
+</style>
+</head>
+<body>
+
+<div id="gate">
+  <div class="gate-card">
+    <h1>Anadi Godham</h1>
+    <p>Admin panel — enter the admin password to manage products, categories and banners. This is a basic screen-lock only; don't share this link publicly.</p>
+    <input type="password" id="gatePw" placeholder="Admin password" autocomplete="current-password">
+    <button id="gateBtn">Unlock Admin Panel</button>
+    <div class="gate-err" id="gateErr">Wrong password — try again.</div>
+  </div>
+</div>
+
+<div id="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="mark">अ</div>
+      <div class="tx">Anadi Godham<span>ADMIN PANEL</span></div>
+    </div>
+    <div class="navlist">
+      <button data-page="products" class="active"><span class="ic">🧺</span> Products</button>
+      <button data-page="categories"><span class="ic">🗂️</span> Categories</button>
+      <button data-page="banners"><span class="ic">🖼️</span> Banners</button>
+    </div>
+    <div class="sidebar-foot">
+      <button id="lockBtn">🔒 Lock panel</button>
+    </div>
+  </aside>
+
+  <main>
+    <!-- ========== PRODUCTS PAGE ========== -->
+    <section id="page-products">
+      <div class="page-head">
+        <div>
+          <h2>Products</h2>
+          <div class="sub">Stock, images, pricing and availability — changes appear on the customer app in real time.</div>
+        </div>
+        <button class="btn btn-primary" id="addProductBtn">+ Add Product</button>
+      </div>
+      <div class="dupe-banner" id="dupeBanner" style="display:none;"></div>
+      <div class="toolbar">
+        <div class="search-box"><span class="ic">🔎</span><input type="text" id="productSearch" placeholder="Search products…"></div>
+        <div class="chip-filter" id="catFilterChips"></div>
+      </div>
+      <div class="ptable">
+        <div class="prow head">
+          <div></div>
+          <div>Product</div>
+          <div class="p-metawrap">
+            <div class="col-cat">Category</div>
+            <div class="col-price">Price</div>
+            <div class="col-stock">Stock</div>
+            <div class="col-status">Status</div>
+          </div>
+          <div></div>
+        </div>
+        <div id="productRows"></div>
+      </div>
+    </section>
+
+    <!-- ========== CATEGORIES PAGE ========== -->
+    <section id="page-categories" style="display:none;">
+      <div class="page-head">
+        <div>
+          <h2>Categories</h2>
+          <div class="sub">Create categories and assign products to them from the product form.</div>
+        </div>
+        <button class="btn btn-primary" id="addCategoryBtn">+ Add Category</button>
+      </div>
+      <div class="grid-cards" id="categoryGrid"></div>
+    </section>
+
+    <!-- ========== BANNERS PAGE ========== -->
+    <section id="page-banners" style="display:none;">
+      <div class="page-head">
+        <div>
+          <h2>Home Banners</h2>
+          <div class="sub">The rotating banner strip at the top of the customer app's home tab.</div>
+        </div>
+        <button class="btn btn-primary" id="addBannerBtn">+ Add Banner</button>
+      </div>
+      <div class="grid-cards" id="bannerGrid"></div>
+    </section>
+  </main>
+</div>
+
+<!-- ===== Product modal ===== -->
+<div class="modal-overlay" id="productModal">
+  <div class="modal">
+    <div class="modal-head"><h3 id="productModalTitle">Add Product</h3><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Product name</label><input type="text" id="pfName" placeholder="e.g. Fresh Paneer"></div>
+      <div class="field-row">
+        <div class="field"><label>Category</label><select id="pfCat"></select></div>
+        <div class="field"><label>Unit / pack size</label><input type="text" id="pfUnit" placeholder="e.g. 200 g Block"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Price (₹)</label><input type="number" id="pfPrice" min="0"></div>
+        <div class="field"><label>MRP (₹, optional)</label><input type="number" id="pfMrp" min="0"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Tag (optional, e.g. Bestseller)</label><input type="text" id="pfTag"></div>
+        <div class="field"><label>Emoji fallback</label><input type="text" id="pfEmoji" placeholder="🧀" maxlength="4"></div>
+      </div>
+      <div class="field"><label>Description</label><textarea id="pfDesc"></textarea></div>
+
+      <div class="field">
+        <label>Product images (first one is used as the main photo)</label>
+        <div id="pfImagesList"></div>
+        <button type="button" class="add-img-btn" id="pfAddImageBtn">+ Add another image URL</button>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Stock quantity</label>
+          <input type="number" id="pfStock" min="0" placeholder="leave blank = unlimited">
+          <span class="field-hint">Decreases automatically as orders come in. Leave blank if you don't track quantity for this SKU.</span>
+        </div>
+        <div class="field">
+          <label style="opacity:0;">.</label>
+          <div class="check-row"><input type="checkbox" id="pfOutOfStock"> Mark out of stock manually</div>
+        </div>
+      </div>
+      <div class="check-row"><input type="checkbox" id="pfComingSoon"> Coming soon (hidden from ordering, shown as preview)</div>
+      <div class="check-row"><input type="checkbox" id="pfPopular"> Show in "Popular" row on home</div>
+      <div class="check-row"><input type="checkbox" id="pfFeatured"> Show in "Featured" row on home</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger" id="pfDeleteBtn" style="display:none;">Delete Product</button>
+      <div style="margin-left:auto; display:flex; gap:10px;">
+        <button class="btn btn-ghost" data-close>Cancel</button>
+        <button class="btn btn-primary" id="pfSaveBtn">Save Product</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Category modal ===== -->
+<div class="modal-overlay" id="categoryModal">
+  <div class="modal">
+    <div class="modal-head"><h3 id="categoryModalTitle">Add Category</h3><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Category name</label><input type="text" id="cfName" placeholder="e.g. Sweets"></div>
+      <div class="field-row">
+        <div class="field"><label>Emoji icon</label><input type="text" id="cfIcon" placeholder="🍬" maxlength="4"></div>
+        <div class="field"><label>Display order</label><input type="number" id="cfOrder" min="0" value="0"></div>
+      </div>
+      <div class="field"><label>Category image URL (optional — replaces the emoji tile)</label><input type="text" id="cfImage" placeholder="https://…"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger" id="cfDeleteBtn" style="display:none;">Delete Category</button>
+      <div style="margin-left:auto; display:flex; gap:10px;">
+        <button class="btn btn-ghost" data-close>Cancel</button>
+        <button class="btn btn-primary" id="cfSaveBtn">Save Category</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Banner modal ===== -->
+<div class="modal-overlay" id="bannerModal">
+  <div class="modal">
+    <div class="modal-head"><h3 id="bannerModalTitle">Add Banner</h3><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Eyebrow label</label><input type="text" id="bfEyebrow" placeholder="e.g. LIMITED OFFER"></div>
+      <div class="field"><label>Title</label><input type="text" id="bfTitle" placeholder="e.g. Flat 10% OFF on Desi Ghee"></div>
+      <div class="field"><label>Subtitle</label><input type="text" id="bfSub"></div>
+      <div class="field"><label>Banner image URL (optional — leave blank to use a plain gradient)</label><input type="text" id="bfImage" placeholder="https://…"></div>
+      <div class="field"><label>Display order</label><input type="number" id="bfOrder" min="0" value="0"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger" id="bfDeleteBtn" style="display:none;">Delete Banner</button>
+      <div style="margin-left:auto; display:flex; gap:10px;">
+        <button class="btn btn-ghost" data-close>Cancel</button>
+        <button class="btn btn-primary" id="bfSaveBtn">Save Banner</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getDatabase, ref, get, set, update, remove, push, onValue
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+/* Same Firebase project as customerapp.html / deliverychart.html — this
+   panel reads and writes catalog/{categories,products,banners}, which is
+   exactly what customerapp.html subscribes to live. */
+const firebaseConfig = {
+  apiKey: "AIzaSyA4q2qD7K7o5yN5v9H9jSIvWsTPWlAvurY",
+  authDomain: "delivry-tracking-system.firebaseapp.com",
+  databaseURL: "https://delivry-tracking-system-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "delivry-tracking-system",
+  storageBucket: "delivry-tracking-system.firebasestorage.app",
+  messagingSenderId: "181704924735",
+  appId: "1:181704924735:web:7c57448137e91b745ca28a",
+  measurementId: "G-43WG6FFZVC"
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getDatabase(fbApp);
+
+/* ================= BASIC PASSWORD GATE ================= */
+/* Change this before handing the file/link to anyone. This only hides the
+   UI in the browser — it does not stop someone who has direct Firebase
+   access. For real protection, lock down write access to the `catalog`
+   node with Firebase Realtime Database security rules. */
+const ADMIN_PASSWORD = "admin123";
+const $ = s=>document.querySelector(s);
+const $$ = s=>[...document.querySelectorAll(s)];
+
+function unlock(){
+  $('#gate').classList.add('hide');
+  $('#app').classList.add('show');
+  boot();
+}
+if (sessionStorage.getItem('ag_admin_unlocked')==='1') unlock();
+$('#gateBtn').addEventListener('click', tryUnlock);
+$('#gatePw').addEventListener('keydown', e=>{ if (e.key==='Enter') tryUnlock(); });
+function tryUnlock(){
+  if ($('#gatePw').value === ADMIN_PASSWORD){
+    sessionStorage.setItem('ag_admin_unlocked','1');
+    unlock();
+  } else {
+    $('#gateErr').classList.add('show');
+  }
+}
+$('#lockBtn').addEventListener('click', ()=>{
+  sessionStorage.removeItem('ag_admin_unlocked');
+  location.reload();
+});
+
+/* ================= STATE ================= */
+let categories = [];
+let products = [];
+let banners = [];
+let activeCatFilter = 'all';
+let editingProductId = null;   // null = creating new
+let editingCategoryId = null;
+let editingBannerId = null;
+
+function showToast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function slugify(name){
+  return (name||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') || ('cat'+Date.now());
+}
+function money(n){ return n===''||n===null||n===undefined ? '' : '₹'+Math.round(n).toLocaleString('en-IN'); }
+function statusOf(p){
+  if (p.comingSoon) return 'coming_soon';
+  if (p.outOfStock) return 'out_of_stock';
+  if (typeof p.stock === 'number' && p.stock<=0) return 'out_of_stock';
+  return 'active';
+}
+function statusBadge(status){
+  if (status==='coming_soon') return `<span class="badge badge-soon">COMING SOON</span>`;
+  if (status==='out_of_stock') return `<span class="badge badge-oos">OUT OF STOCK</span>`;
+  return `<span class="badge badge-active">ACTIVE</span>`;
+}
+function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ================= BOOT / LIVE SYNC ================= */
+let booted = false;
+function boot(){
+  if (booted) return; booted = true;
+  onValue(ref(db,'catalog/categories'), snap=>{
+    const val = snap.val() || {};
+    // {...c, id} — spread first, id last — so the real database key always
+    // wins over any (possibly stale) "id" field saved inside the record.
+    categories = Object.entries(val).map(([id,c])=>({...c, id})).sort((a,b)=>(a.order||0)-(b.order||0));
+    renderCategoryFilterChips();
+    renderCategoriesPage();
+    populateCategorySelect();
+    renderProductsPage();
+  });
+  onValue(ref(db,'catalog/products'), snap=>{
+    const val = snap.val() || {};
+    products = Object.entries(val).map(([id,p])=>({...p, id}));
+    renderProductsPage();
+    renderCategoriesPage();
+  });
+  onValue(ref(db,'catalog/banners'), snap=>{
+    const val = snap.val() || {};
+    banners = Object.entries(val).map(([id,b])=>({...b, id})).sort((a,b)=>(a.order||0)-(b.order||0));
+    renderBannersPage();
+  });
+}
+
+/* ================= NAV ================= */
+$$('.navlist button[data-page]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    $$('.navlist button[data-page]').forEach(b=>b.classList.toggle('active', b===btn));
+    const page = btn.getAttribute('data-page');
+    ['products','categories','banners'].forEach(p=>{
+      $('#page-'+p).style.display = (p===page) ? '' : 'none';
+    });
+  });
+});
+
+/* ================= PRODUCTS PAGE ================= */
+function renderCategoryFilterChips(){
+  $('#catFilterChips').innerHTML = ['all', ...categories.map(c=>c.id)].map(id=>{
+    const label = id==='all' ? 'All' : (categories.find(c=>c.id===id)?.name || id);
+    return `<button data-filter="${id}" class="${activeCatFilter===id?'active':''}">${escapeHtml(label)}</button>`;
+  }).join('');
+  $$('#catFilterChips button').forEach(b=>b.addEventListener('click', ()=>{
+    activeCatFilter = b.getAttribute('data-filter');
+    renderCategoryFilterChips();
+    renderProductsPage();
+  }));
+}
+/* Groups products that look like accidental duplicates (same name + same
+   category, case/space-insensitive) so the admin can spot and clean them up
+   instead of having two records silently drift apart (one in stock, one
+   marked out of stock, etc). This does NOT delete anything automatically —
+   it only flags rows so a person can decide what to remove. */
+function findDuplicateProductIds(){
+  const groups = {};
+  products.forEach(p=>{
+    const key = (p.name||'').trim().toLowerCase() + '|' + (p.cat||'');
+    if (!key.trim().replace('|','')) return;
+    (groups[key] = groups[key]||[]).push(p);
+  });
+  const dupeIds = new Set();
+  Object.values(groups).forEach(group=>{
+    if (group.length>1) group.forEach(p=>dupeIds.add(p.id));
+  });
+  return dupeIds;
+}
+function renderProductsPage(){
+  const q = ($('#productSearch').value||'').trim().toLowerCase();
+  let list = products.slice();
+  if (activeCatFilter!=='all') list = list.filter(p=>p.cat===activeCatFilter);
+  if (q) list = list.filter(p=>(p.name||'').toLowerCase().includes(q));
+  list.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  const dupeIds = findDuplicateProductIds();
+  const host = $('#productRows');
+  const banner = $('#dupeBanner');
+  if (dupeIds.size){
+    banner.style.display = '';
+    banner.innerHTML = `⚠️ ${dupeIds.size} product${dupeIds.size===1?'':'s'} look like duplicates (same name + category). They're marked "DUPLICATE" below — open each one to compare and delete the extra copy.`;
+  } else {
+    banner.style.display = 'none';
+  }
+  if (!list.length){
+    host.innerHTML = `<div class="empty-state"><div class="ic">🧺</div>No products found. ${products.length? 'Try a different search or filter.':'Add your first product to get started.'}</div>`;
+    return;
+  }
+  host.innerHTML = list.map(p=>{
+    const status = statusOf(p);
+    const catName = categories.find(c=>c.id===p.cat)?.name || p.cat || '—';
+    const thumb = (p.images&&p.images[0]) || p.image;
+    return `<div class="prow" data-pid="${p.id}">
+      <div class="p-thumb">${thumb?`<img src="${thumb}" loading="lazy">`:(p.emoji||'📦')}</div>
+      <div><div class="p-name">${escapeHtml(p.name)}${dupeIds.has(p.id)?`<span class="badge badge-dupe" title="Same name + category as another product">DUPLICATE</span>`:''}</div><div class="p-meta">${escapeHtml(p.unit||'')}</div></div>
+      <div class="p-metawrap">
+        <div class="col-cat">${escapeHtml(catName)}</div>
+        <div class="col-price p-price">${money(p.price)}${p.mrp&&p.mrp>p.price?`<span class="mrp">${money(p.mrp)}</span>`:''}</div>
+        <div class="col-stock">${typeof p.stock==='number' ? `<input type="number" class="stock-input" data-stock-id="${p.id}" value="${p.stock}" min="0">` : `<span class="stock-unlimited">unlimited</span>`}</div>
+        <div class="col-status">${statusBadge(status)}</div>
+      </div>
+      <div class="row-actions">
+        <button class="icon-btn" data-edit-product="${p.id}" title="Edit">✎</button>
+      </div>
+    </div>`;
+  }).join('');
+  $$('[data-stock-id]').forEach(inp=>{
+    inp.addEventListener('change', async ()=>{
+      const id = inp.getAttribute('data-stock-id');
+      const val = Math.max(0, parseInt(inp.value||'0',10));
+      try{ await update(ref(db,'catalog/products/'+id), { stock: val, outOfStock: false }); showToast('Stock updated'); }
+      catch(e){ console.error(e); showToast('Could not update stock'); }
+    });
+  });
+  $$('[data-edit-product]').forEach(btn=>btn.addEventListener('click', ()=> openProductModal(btn.getAttribute('data-edit-product'))));
+}
+$('#productSearch').addEventListener('input', renderProductsPage);
+$('#addProductBtn').addEventListener('click', ()=> openProductModal(null));
+
+/* ---- Product modal ---- */
+function populateCategorySelect(){
+  $('#pfCat').innerHTML = categories.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('') || `<option value="">Add a category first</option>`;
+}
+function pfImagesRowHtml(url=''){
+  return `<div class="img-row"><input type="text" class="pf-image-input" value="${escapeHtml(url)}" placeholder="https://…"><button type="button" class="rm" data-rm-img>✕</button></div>`;
+}
+function bindImageRowRemovers(){
+  $$('#pfImagesList [data-rm-img]').forEach(btn=>{
+    btn.onclick = ()=>{
+      btn.closest('.img-row').remove();
+      if (!$('#pfImagesList').children.length){
+        $('#pfImagesList').insertAdjacentHTML('beforeend', pfImagesRowHtml());
+        bindImageRowRemovers();
+      }
+    };
+  });
+}
+$('#pfAddImageBtn').addEventListener('click', ()=>{
+  $('#pfImagesList').insertAdjacentHTML('beforeend', pfImagesRowHtml());
+  bindImageRowRemovers();
+});
+function openProductModal(id){
+  editingProductId = id;
+  const p = id ? products.find(x=>x.id===id) : null;
+  $('#productModalTitle').textContent = p ? 'Edit Product' : 'Add Product';
+  $('#pfName').value = p?.name || '';
+  populateCategorySelect();
+  $('#pfCat').value = p?.cat || (categories[0]?.id||'');
+  $('#pfUnit').value = p?.unit || '';
+  $('#pfPrice').value = p?.price ?? '';
+  $('#pfMrp').value = p?.mrp ?? '';
+  $('#pfTag').value = p?.tag || '';
+  $('#pfEmoji').value = p?.emoji || '📦';
+  $('#pfDesc').value = p?.desc || '';
+  const imgs = (p?.images && p.images.length) ? p.images : (p?.image ? [p.image] : ['']);
+  $('#pfImagesList').innerHTML = imgs.map(pfImagesRowHtml).join('');
+  bindImageRowRemovers();
+  $('#pfStock').value = (typeof p?.stock==='number') ? p.stock : '';
+  $('#pfOutOfStock').checked = !!p?.outOfStock;
+  $('#pfComingSoon').checked = !!p?.comingSoon;
+  $('#pfPopular').checked = !!p?.popular;
+  $('#pfFeatured').checked = !!p?.featured;
+  $('#pfDeleteBtn').style.display = p ? '' : 'none';
+  $('#productModal').classList.add('show');
+}
+$$('#productModal [data-close]').forEach(b=>b.addEventListener('click', ()=>{ $('#productModal').classList.remove('show'); editingProductId = null; }));
+$('#pfSaveBtn').addEventListener('click', async ()=>{
+  const btn = $('#pfSaveBtn');
+  if (btn.disabled) return; // guard against double-tap firing this twice and creating a duplicate
+  const name = $('#pfName').value.trim();
+  const cat = $('#pfCat').value;
+  if (!name){ showToast('Product name is required'); return; }
+  if (!cat){ showToast('Add a category first'); return; }
+  const images = $$('.pf-image-input').map(i=>i.value.trim()).filter(Boolean);
+  const stockRaw = $('#pfStock').value;
+  const payload = {
+    name, cat,
+    unit: $('#pfUnit').value.trim(),
+    price: Number($('#pfPrice').value)||0,
+    mrp: $('#pfMrp').value===''? null : Number($('#pfMrp').value),
+    tag: $('#pfTag').value.trim(),
+    emoji: $('#pfEmoji').value.trim() || '📦',
+    desc: $('#pfDesc').value.trim(),
+    images,
+    image: images[0] || '',
+    stock: stockRaw===''? null : Math.max(0,parseInt(stockRaw,10)),
+    outOfStock: $('#pfOutOfStock').checked,
+    comingSoon: $('#pfComingSoon').checked,
+    popular: $('#pfPopular').checked,
+    featured: $('#pfFeatured').checked,
+  };
+  const wasEditing = !!editingProductId;
+  btn.disabled = true;
+  try{
+    if (wasEditing){
+      await update(ref(db,'catalog/products/'+editingProductId), payload);
+    } else {
+      const newRef = push(ref(db,'catalog/products'));
+      await set(newRef, { id:newRef.key, ...payload });
+    }
+    $('#productModal').classList.remove('show');
+    editingProductId = null;
+    showToast(wasEditing ? 'Product updated' : 'Product added');
+  } catch(e){ console.error(e); showToast('Could not save product'); }
+  finally { btn.disabled = false; }
+});
+$('#pfDeleteBtn').addEventListener('click', async ()=>{
+  if (!editingProductId) return;
+  if (!confirm('Delete this product permanently? This cannot be undone.')) return;
+  try{ await remove(ref(db,'catalog/products/'+editingProductId)); $('#productModal').classList.remove('show'); showToast('Product deleted'); }
+  catch(e){ console.error(e); showToast('Could not delete product'); }
+});
+
+/* ================= CATEGORIES PAGE ================= */
+function renderCategoriesPage(){
+  const host = $('#categoryGrid');
+  if (!categories.length){
+    host.innerHTML = `<div class="empty-state"><div class="ic">🗂️</div>No categories yet. Add one to start organizing products.</div>`;
+    return;
+  }
+  host.innerHTML = categories.map(c=>{
+    const count = products.filter(p=>p.cat===c.id).length;
+    return `<div class="cat-card">
+      <div class="top">
+        <div class="ic-tile">${c.image?`<img src="${c.image}">`:c.icon||'🗂️'}</div>
+        <div><div class="nm">${escapeHtml(c.name)}</div><div class="id">${escapeHtml(c.id)}</div></div>
+      </div>
+      <div class="count">${count} product${count===1?'':'s'}</div>
+      <div class="foot">
+        <button class="btn btn-ghost btn-sm" data-edit-cat="${c.id}" style="flex:1;">Edit</button>
+      </div>
+    </div>`;
+  }).join('');
+  $$('[data-edit-cat]').forEach(btn=>btn.addEventListener('click', ()=> openCategoryModal(btn.getAttribute('data-edit-cat'))));
+}
+$('#addCategoryBtn').addEventListener('click', ()=> openCategoryModal(null));
+function openCategoryModal(id){
+  editingCategoryId = id;
+  const c = id ? categories.find(x=>x.id===id) : null;
+  $('#categoryModalTitle').textContent = c ? 'Edit Category' : 'Add Category';
+  $('#cfName').value = c?.name || '';
+  $('#cfIcon').value = c?.icon || '';
+  $('#cfOrder').value = c?.order ?? categories.length;
+  $('#cfImage').value = c?.image || '';
+  $('#cfDeleteBtn').style.display = c ? '' : 'none';
+  $('#categoryModal').classList.add('show');
+}
+$$('#categoryModal [data-close]').forEach(b=>b.addEventListener('click', ()=>{ $('#categoryModal').classList.remove('show'); editingCategoryId = null; }));
+$('#cfSaveBtn').addEventListener('click', async ()=>{
+  const btn = $('#cfSaveBtn');
+  if (btn.disabled) return;
+  const name = $('#cfName').value.trim();
+  if (!name){ showToast('Category name is required'); return; }
+  const payload = {
+    name,
+    icon: $('#cfIcon').value.trim() || '🗂️',
+    image: $('#cfImage').value.trim(),
+    order: Number($('#cfOrder').value)||0,
+  };
+  btn.disabled = true;
+  try{
+    const id = editingCategoryId || slugify(name);
+    await update(ref(db,'catalog/categories/'+id), { id, ...payload });
+    $('#categoryModal').classList.remove('show');
+    editingCategoryId = null;
+    showToast('Category saved');
+  } catch(e){ console.error(e); showToast('Could not save category'); }
+  finally { btn.disabled = false; }
+});
+$('#cfDeleteBtn').addEventListener('click', async ()=>{
+  if (!editingCategoryId) return;
+  const count = products.filter(p=>p.cat===editingCategoryId).length;
+  const msg = count
+    ? `${count} product${count===1?'':'s'} are still in this category. Delete the category anyway? Those products will stay assigned to a category that no longer exists until you re-assign them.`
+    : 'Delete this category?';
+  if (!confirm(msg)) return;
+  try{ await remove(ref(db,'catalog/categories/'+editingCategoryId)); $('#categoryModal').classList.remove('show'); showToast('Category deleted'); }
+  catch(e){ console.error(e); showToast('Could not delete category'); }
+});
+
+/* ================= BANNERS PAGE ================= */
+function renderBannersPage(){
+  const host = $('#bannerGrid');
+  if (!banners.length){
+    host.innerHTML = `<div class="empty-state"><div class="ic">🖼️</div>No banners yet. Add one to show it on the customer app's home tab.</div>`;
+    return;
+  }
+  host.innerHTML = banners.map(b=>{
+    const bg = b.image ? `background-image:url('${b.image}')` : `background:${b.grad||'var(--grad-brand)'}`;
+    return `<div class="ban-card">
+      <div class="ban-preview" style="${bg}">
+        <div class="ey">${escapeHtml(b.eyebrow||'')}</div>
+        <div class="tt">${escapeHtml(b.title||'')}</div>
+        <div class="sb">${escapeHtml(b.sub||'')}</div>
+      </div>
+      <div class="ban-foot">
+        <button class="btn btn-ghost btn-sm" data-edit-ban="${b.id}" style="flex:1;">Edit</button>
+      </div>
+    </div>`;
+  }).join('');
+  $$('[data-edit-ban]').forEach(btn=>btn.addEventListener('click', ()=> openBannerModal(btn.getAttribute('data-edit-ban'))));
+}
+$('#addBannerBtn').addEventListener('click', ()=> openBannerModal(null));
+const DEFAULT_GRADS = [
+  'linear-gradient(135deg,#2E2C22,#15140F)', 'linear-gradient(135deg,#A38F5E,#6E5D38)',
+  'linear-gradient(135deg,#3C3A2E,#20281F)', 'linear-gradient(135deg,#5C5B51,#312F26)'
+];
+function openBannerModal(id){
+  editingBannerId = id;
+  const b = id ? banners.find(x=>x.id===id) : null;
+  $('#bannerModalTitle').textContent = b ? 'Edit Banner' : 'Add Banner';
+  $('#bfEyebrow').value = b?.eyebrow || '';
+  $('#bfTitle').value = b?.title || '';
+  $('#bfSub').value = b?.sub || '';
+  $('#bfImage').value = b?.image || '';
+  $('#bfOrder').value = b?.order ?? banners.length;
+  $('#bfDeleteBtn').style.display = b ? '' : 'none';
+  $('#bannerModal').classList.add('show');
+  $('#bannerModal').dataset.grad = b?.grad || DEFAULT_GRADS[banners.length % DEFAULT_GRADS.length];
+}
+$$('#bannerModal [data-close]').forEach(b=>b.addEventListener('click', ()=>{ $('#bannerModal').classList.remove('show'); editingBannerId = null; }));
+$('#bfSaveBtn').addEventListener('click', async ()=>{
+  const btn = $('#bfSaveBtn');
+  if (btn.disabled) return;
+  const title = $('#bfTitle').value.trim();
+  if (!title){ showToast('Banner title is required'); return; }
+  const payload = {
+    eyebrow: $('#bfEyebrow').value.trim(),
+    title,
+    sub: $('#bfSub').value.trim(),
+    image: $('#bfImage').value.trim(),
+    grad: $('#bannerModal').dataset.grad || DEFAULT_GRADS[0],
+    order: Number($('#bfOrder').value)||0,
+  };
+  const wasEditing = !!editingBannerId;
+  btn.disabled = true;
+  try{
+    if (wasEditing){
+      await update(ref(db,'catalog/banners/'+editingBannerId), payload);
+    } else {
+      const newRef = push(ref(db,'catalog/banners'));
+      await set(newRef, payload);
+    }
+    $('#bannerModal').classList.remove('show');
+    editingBannerId = null;
+    showToast('Banner saved');
+  } catch(e){ console.error(e); showToast('Could not save banner'); }
+  finally { btn.disabled = false; }
+});
+$('#bfDeleteBtn').addEventListener('click', async ()=>{
+  if (!editingBannerId) return;
+  if (!confirm('Delete this banner?')) return;
+  try{ await remove(ref(db,'catalog/banners/'+editingBannerId)); $('#bannerModal').classList.remove('show'); showToast('Banner deleted'); }
+  catch(e){ console.error(e); showToast('Could not delete banner'); }
+});
+
+/* Click outside modal card to close */
+$$('.modal-overlay').forEach(ov=> ov.addEventListener('click', e=>{
+  if (e.target!==ov) return;
+  ov.classList.remove('show');
+  if (ov.id==='productModal') editingProductId = null;
+  if (ov.id==='categoryModal') editingCategoryId = null;
+  if (ov.id==='bannerModal') editingBannerId = null;
+}));
+</script>
+</body>
+</html>
