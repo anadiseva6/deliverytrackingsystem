@@ -262,6 +262,12 @@
   .ov-status-line.is-mod{color:var(--mod-dark); font-weight:700; font-style:normal;}
   .ov-note-field{width:100%; border:1.5px solid var(--line); border-radius:10px; padding:10px 11px; font-size:13px; background:var(--card); margin-bottom:10px; font-family:'Inter'; transition:border-color .15s var(--ease), box-shadow .15s var(--ease);}
   .ov-note-field:focus{outline:none; border-color:var(--orange); box-shadow:0 0 0 4px rgba(255,106,61,.12);}
+  .app-order-note-title{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-mute); margin:2px 0 7px;}
+  .app-order-note-list{display:flex; flex-direction:column; gap:7px; margin-bottom:12px;}
+  .app-order-note-row{display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--card); border:1.5px solid var(--line); border-radius:10px; padding:9px 10px;}
+  .aonr-text{font-size:12.5px; color:var(--ink); line-height:1.4;}
+  .aonr-reject-btn{flex-shrink:0; border:1.5px solid #F7C2B8; background:#FFEDEA; color:#C0392B; font-size:11px; font-weight:700; border-radius:8px; padding:6px 10px; cursor:pointer; transition:filter .15s var(--ease);}
+  .aonr-reject-btn:hover{filter:brightness(0.97);}
   .ov-btn-row{display:flex; gap:8px; margin-bottom:11px;}
   .ov-btn-row .btn{flex:1;}
 
@@ -484,6 +490,7 @@
           <select id="filterZone"><option value="all">All zones</option></select>
           <select id="filterMod">
             <option value="all">All customers</option>
+            <option value="active">✅ Has an order for this date</option>
             <option value="mod">📅 Modified this date only</option>
             <option value="unset">⚠️ No quantities set</option>
           </select>
@@ -644,20 +651,52 @@ function getDefaults(c){
 function getOverride(c, dstr){
   return (c.overrides && c.overrides[dstr]) || null;
 }
+/* App orders placed from customerapp.html land their non-dairy product
+   lines in overrides/{date}/orderNotes/{orderId} — one clean slot per
+   order, keyed by order id, holding ONLY the visible text ("A2 Gir Gau
+   Milk x0.5"). No order id is mixed into the visible string, so stop/
+   resume/delete on the app side can add/remove exactly one order's line
+   (by key) without regex-scraping it back out of a combined string, and
+   nothing but product names ever shows here. combinedNoteText() is what
+   joins the admin's own free-text note with every order's line for
+   display. */
+function combinedNoteText(ov){
+  if (!ov) return '';
+  const parts = [];
+  if (ov.note) parts.push(ov.note);
+  if (ov.orderNotes) Object.keys(ov.orderNotes).forEach(k=>{ if (ov.orderNotes[k]) parts.push(ov.orderNotes[k]); });
+  return parts.join(' | ');
+}
 function effectiveFor(c, dstr){
   const ov = getOverride(c, dstr);
   if (ov){
     const out = {};
     PRODUCTS.forEach(p => out[p.key] = ov[p.key] != null ? ov[p.key] : 0);
-    out.note = ov.note != null ? ov.note : '';
+    out.rawNote = ov.note != null ? ov.note : '';
+    out.orderNotes = ov.orderNotes || {};
+    out.note = combinedNoteText(ov);
     out.isOverride = true;
     return out;
   }
   const def = getDefaults(c);
+  def.rawNote = def.note;
+  def.orderNotes = {};
   def.isOverride = false;
   return def;
 }
 function hasAnyQty(vals){ return PRODUCTS.some(p => (vals[p.key]||0) > 0); }
+
+/* Marks one order rejected for exactly one delivery date — written straight
+   onto that order's own Firebase record (customers/{id}/webOrders/{orderId})
+   so customerapp.html's existing real-time orders listener picks it up
+   immediately with no extra wiring: the customer sees a badge + notification
+   as soon as this write lands, and only that date is affected — every other
+   date on the order keeps running normally. */
+async function rejectOrderForDate(custId, orderId, dstr){
+  try{
+    await update(ref(db, `customers/${custId}/webOrders/${orderId}`), { [`rejectedDates/${dstr}`]: Date.now() });
+  } catch(e){ console.error('Reject write failed', e); }
+}
 
 /* ---------------- delivery status (checklist result submitted from the delivery boy's app) ---------------- */
 function getDeliveryLog(c, dstr){
@@ -822,6 +861,11 @@ function matchesFilters(c){
   const eff = effectiveFor(c, viewDate);
   if (filtMod === 'mod' && !eff.isOverride) return false;
   if (filtMod === 'unset' && (hasAnyQty(eff) || eff.note)) return false;
+  // "Has an order" = at least one product quantity or a note for this date.
+  // Since this re-evaluates on every live `customers` update, a customer
+  // stopping their last active item/date for today (from the app) makes
+  // them drop out of this filtered view immediately — no refresh needed.
+  if (filtMod === 'active' && !(hasAnyQty(eff) || eff.note)) return false;
   if (searchTerm){
     const hay = `${c.name||''} ${c.phone||''} ${c.address||''}`.toLowerCase();
     if (!hay.includes(searchTerm)) return false;
@@ -1036,7 +1080,8 @@ function renderOverridesList(c, onEdit){
   const rowHtml = (d) => {
     const ov = c.overrides[d];
     const parts = PRODUCTS.filter(p => (ov[p.key]||0) > 0).map(p => `${p.label} ${ov[p.key]}${p.short}`);
-    if (ov.note) parts.push('📝 ' + ov.note);
+    const noteText = combinedNoteText(ov);
+    if (noteText) parts.push('📝 ' + noteText);
     const summary = parts.length ? parts.join(', ') : 'No quantities';
     return `<div class="ov-row">
       <span class="ov-row-date">${d===today?'Today':formatDateLabel(d)}</span>
@@ -1178,6 +1223,7 @@ function renderDateModal(){
       }).join('')}
     </div>
     <input type="text" class="ov-note-field" id="dmNote" placeholder="Note for this date (optional)" value="${escapeHtml(ov?(ov.note||''):def.note)}">
+    ${renderAppOrderNotes(ov)}
     <div class="ov-btn-row">
       <button class="btn btn-mint btn-sm" id="dmSaveBtn">💾 Save for this date</button>
       <button class="btn btn-danger btn-sm" id="dmRemoveBtn" style="${ov?'':'display:none;'}">🗑️ Remove</button>
@@ -1191,6 +1237,22 @@ function renderDateModal(){
     ${renderOverridesList(c)}
   `;
   wireDateModal();
+}
+/* Lists each app order's note line for this date as its own removable
+   chip, separate from the admin's free-text note above. Clicking ✕ only
+   rejects THAT order's delivery for THIS date (marks it rejected in
+   Firebase so the customer app shows it immediately) — quantities, the
+   manual note, and every other date on the order are left untouched. */
+function renderAppOrderNotes(ov){
+  const orderNotes = (ov && ov.orderNotes) || {};
+  const ids = Object.keys(orderNotes).filter(k => orderNotes[k]);
+  if (!ids.length) return '';
+  return `<div class="app-order-note-title">App orders on this date</div>
+  <div class="app-order-note-list">${ids.map(oid => `
+    <div class="app-order-note-row">
+      <span class="aonr-text">${escapeHtml(orderNotes[oid])}</span>
+      <button type="button" class="aonr-reject-btn" data-reject-order="${oid}">✕ Reject</button>
+    </div>`).join('')}</div>`;
 }
 function renderDmChips(){
   const row = document.getElementById('dmChipRow');
@@ -1257,18 +1319,27 @@ function wireDateModal(){
     const custId = dateModalCustId;
     const d = dateModalDate;
     if (!d) return showToast('Please pick a date first');
-    const obj = {};
+    const baseObj = {};
     PRODUCTS.forEach(p=>{
       const inp = document.querySelector(`#dmGrid input[data-dm-field="${p.key}"]`);
-      obj[p.key] = Math.max(0, parseFloat(inp.value) || 0);
+      baseObj[p.key] = Math.max(0, parseFloat(inp.value) || 0);
     });
-    obj.note = document.getElementById('dmNote').value;
-    obj.updatedAt = Date.now();
+    baseObj.note = document.getElementById('dmNote').value;
+    baseObj.updatedAt = Date.now();
     const targetDates = (dateModalMultiEnabled && dateModalExtraDates.length)
       ? [...new Set([d, ...dateModalExtraDates])]
       : [d];
+    const c = customers.find(x=>x.id===custId);
     try{
-      await Promise.all(targetDates.map(td => set(ref(db, `customers/${custId}/overrides/${td}`), obj)));
+      // A full save must never wipe out orderNotes — those are the app
+      // order lines that stop/resume/delete in customerapp.html depend on
+      // to keep this chart in sync, so each target date's existing ones
+      // are carried forward untouched.
+      await Promise.all(targetDates.map(td=>{
+        const existing = c && c.overrides && c.overrides[td];
+        const obj = { ...baseObj, orderNotes: (existing && existing.orderNotes) || {} };
+        return set(ref(db, `customers/${custId}/overrides/${td}`), obj);
+      }));
       showToast(targetDates.length > 1
         ? `Saved the same quantities to ${targetDates.length} dates`
         : `Modification saved for ${formatDateLabel(d)}`);
@@ -1282,8 +1353,17 @@ function wireDateModal(){
     const d = dateModalDate;
     if (!d) return;
     try{
+      // Removing the whole day's modification also wipes every app order's
+      // note line for that date — so any order that had one gets rejected
+      // for this date only, and the customer is notified immediately.
+      const c = customers.find(x=>x.id===custId);
+      const ov = c && c.overrides && c.overrides[d];
+      const orderIds = ov && ov.orderNotes ? Object.keys(ov.orderNotes).filter(k=>ov.orderNotes[k]) : [];
+      await Promise.all(orderIds.map(oid => rejectOrderForDate(custId, oid, d)));
       await remove(ref(db, `customers/${custId}/overrides/${d}`));
-      showToast('Modification removed — back to default');
+      showToast(orderIds.length
+        ? `Modification removed — ${orderIds.length} app order${orderIds.length>1?'s':''} ki is date ki delivery reject ho gayi`
+        : 'Modification removed — back to default');
     }catch(e){ console.error(e); showToast('Could not remove — check your internet connection'); }
   };
   document.getElementById('dmMonthLink').onclick = ()=>{
@@ -1303,6 +1383,19 @@ function wireDateModal(){
       }catch(e){ console.error(e); showToast('Could not delete — check your internet connection'); }
     };
   }
+  document.querySelectorAll('[data-reject-order]').forEach(btn=>{
+    btn.onclick = async ()=>{
+      const orderId = btn.dataset.rejectOrder;
+      const custId = dateModalCustId, d = dateModalDate;
+      if (!confirm(`Is order ki ${formatDateLabel(d)} ki delivery reject karein? Customer ko turant notify kiya jaayega.`)) return;
+      try{
+        await rejectOrderForDate(custId, orderId, d);
+        await remove(ref(db, `customers/${custId}/overrides/${d}/orderNotes/${orderId}`));
+        showToast('Delivery reject kar di gayi — customer ko turant pata chal jaayega');
+        renderDateModal();
+      }catch(e){ console.error(e); showToast('Could not reject — check your internet connection'); }
+    };
+  });
   document.querySelectorAll('[data-edit-ov]').forEach(btn=>{
     btn.onclick = ()=>{ dateModalDate = btn.dataset.editOv; renderDateModal(); };
   });
@@ -1311,8 +1404,15 @@ function wireDateModal(){
       const custId = btn.dataset.cust;
       const d = btn.dataset.delOvRow;
       try{
+        // Same rule as the "Remove" button in the modal — deleting a whole
+        // day's modification from this list also rejects any app orders
+        // whose note line was showing on that date.
+        const c = customers.find(x=>x.id===custId);
+        const ov = c && c.overrides && c.overrides[d];
+        const orderIds = ov && ov.orderNotes ? Object.keys(ov.orderNotes).filter(k=>ov.orderNotes[k]) : [];
+        await Promise.all(orderIds.map(oid => rejectOrderForDate(custId, oid, d)));
         await remove(ref(db, `customers/${custId}/overrides/${d}`));
-        showToast('Modification removed');
+        showToast(orderIds.length ? 'Modification removed — delivery reject ho gayi' : 'Modification removed');
       }catch(e){ console.error(e); showToast('Could not remove — check your internet connection'); }
     };
   });
