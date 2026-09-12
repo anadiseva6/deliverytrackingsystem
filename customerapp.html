@@ -451,8 +451,10 @@ body::before{content:'';position:fixed; inset:0; z-index:0; pointer-events:none;
 #bottomNav{position:absolute; left:14px; right:14px; bottom:calc(12px + var(--safe-b)); height:var(--nav-h); background:rgba(14,32,22,.94); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); border:1px solid rgba(255,255,255,.07); border-radius:20px; display:flex; box-shadow:0 16px 34px rgba(9,24,16,.4); z-index:50;}
 #bottomNav button{flex:1; border:none; background:transparent; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px; color:#8D89A0; font-size:9.5px; font-weight:700; cursor:pointer; position:relative; transition:color .18s ease, transform .18s var(--ease-spring);}
 #bottomNav button:active{transform:scale(.92);}
-#bottomNav button .nic{font-size:18px; line-height:1; transition:transform .22s var(--ease-spring);}
+#bottomNav button .nic{font-size:18px; line-height:1; transition:transform .22s var(--ease-spring); position:relative;}
 #bottomNav button .nic svg{width:20px; height:20px; display:block;}
+#bottomNav button .nic .badge{position:absolute; top:-7px; right:-9px; min-width:16px; height:16px; padding:0 3px; border-radius:999px; background:var(--danger,#E63946); color:#fff; font-size:9px; font-weight:800; display:none; align-items:center; justify-content:center; border:2px solid #14231A;}
+#bottomNav button .nic .badge.show{display:flex;}
 #bottomNav button.active{color:#fff;}
 #bottomNav button.active .nic{transform:translateY(-1px) scale(1.08);}
 #bottomNav button.active::before{content:'';position:absolute; top:6px; width:28px; height:28px; border-radius:10px; background:var(--grad-brand); opacity:.9; z-index:-1; animation:navPop .32s var(--ease-spring);}
@@ -515,6 +517,7 @@ body::before{content:'';position:fixed; inset:0; z-index:0; pointer-events:none;
 .order-head .chev{font-size:12px; color:var(--ink-mute); transition:transform .25s var(--ease);}
 .order-card.open .chev{transform:rotate(180deg);}
 .order-status{font-size:9.5px; font-weight:800; padding:3px 8px; border-radius:999px; background:var(--leaf-light); color:var(--leaf-dark); white-space:nowrap;}
+.order-status.has-rejected{background:var(--danger-light); color:var(--danger);}
 .order-body{max-height:0; overflow:hidden; transition:max-height .3s var(--ease);}
 .order-card.open .order-body{max-height:1400px;}
 .order-body-in{padding:0 15px 15px; border-top:1px solid var(--line);}
@@ -529,6 +532,8 @@ body::before{content:'';position:fixed; inset:0; z-index:0; pointer-events:none;
 .oi-dates{display:flex; flex-wrap:wrap; gap:6px;}
 .oi-date{display:flex; align-items:center; gap:6px; background:var(--card-2); border:1px solid var(--line); border-radius:999px; padding:4px 4px 4px 10px; font-size:10px; font-weight:700;}
 .oi-date.stopped{background:var(--danger-light); border-color:#F6C7CC; color:var(--danger); text-decoration:line-through; opacity:.85;}
+.oi-date.rejected{background:var(--danger-light); border-color:#F6C7CC; color:var(--danger); padding:4px 10px;}
+.oi-rejected-tag{font-size:8.5px; font-weight:800; letter-spacing:.01em;}
 .oi-date button{background:var(--card); border:1px solid var(--line); color:var(--ink-soft); font-size:8.5px; font-weight:800; padding:3px 7px; border-radius:999px; cursor:pointer; text-decoration:none;}
 .oi-date.stopped button{background:var(--leaf-light); color:var(--leaf-dark); border-color:#BEE7D2;}
 .orders-empty, .bill-empty{text-align:center; padding:60px 20px; color:var(--ink-mute);}
@@ -1418,6 +1423,19 @@ body{font-size:14px;background:#EEF1EB;}
   box-shadow:0 2px 10px rgba(23,45,28,.045);
   overflow:hidden;
 }
+.bill-timeline-card.rejected,.bill-order-card.rejected{
+  background:linear-gradient(135deg,#FFF3F1,#FFE9E6);
+  border-color:#F5B8AE;
+  box-shadow:0 2px 10px rgba(168,64,47,.08);
+}
+.bill-rejected-tag{
+  display:inline-block;
+  color:var(--danger);
+  font-size:10px;
+  font-weight:800;
+  margin-left:6px;
+}
+.bill-rejected-date{color:var(--danger); font-weight:800;}
 .bill-timeline-head,.bill-order-head{
   width:100%;
   display:flex;
@@ -1510,6 +1528,7 @@ body{font-size:14px;background:#EEF1EB;}
 }
 .bill-status-chip.active{background:#EAF5E7;color:#2F6B35;}
 .bill-status-chip.stopped{background:#F8E5E1;color:#A24B3A;}
+.bill-status-chip.rejected{background:var(--danger-light);color:var(--danger);}
 .bill-day-total{
   display:flex;
   align-items:center;
@@ -1826,7 +1845,7 @@ body{font-size:14px;background:#EEF1EB;}
     <nav id="bottomNav">
       <button class="active" data-tab="home"><span class="nic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-7 9 7"/><path d="M5 9v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9"/></svg></span>Home</button>
       <button data-tab="category"><span class="nic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></svg></span>Category</button>
-      <button data-tab="orders"><span class="nic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8V7a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 7v10a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 17v-1"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span>My Order</button>
+      <button data-tab="orders"><span class="nic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8V7a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 7v10a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 17v-1"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg><span class="badge" id="ordersNavBadge">0</span></span>My Order</button>
       <button data-tab="bill"><span class="nic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M8 7h8M8 11h8M8 15h5"/></svg></span>Bill</button>
     </nav>
     <button id="whatsappBtn" aria-label="Chat on WhatsApp"><svg viewBox="0 0 24 24" fill="currentColor" width="25" height="25"><path d="M12.04 2c-5.5 0-9.96 4.46-9.96 9.96 0 1.76.46 3.48 1.34 5L2 22l5.2-1.36a9.9 9.9 0 0 0 4.84 1.23h.01c5.5 0 9.96-4.46 9.96-9.96S17.54 2 12.04 2zm5.87 14.14c-.25.7-1.45 1.37-2 1.46-.51.08-1.15.11-1.86-.12-.43-.14-.98-.32-1.68-.63-2.96-1.28-4.89-4.27-5.04-4.47-.15-.2-1.2-1.6-1.2-3.06 0-1.45.76-2.16 1.03-2.46.27-.3.6-.37.8-.37h.57c.18 0 .43-.07.67.51.25.6.85 2.08.92 2.23.07.15.12.33.02.53-.1.2-.15.32-.3.5-.15.18-.31.4-.44.53-.15.15-.3.31-.13.6.17.3.76 1.25 1.63 2.02 1.12 1 2.06 1.31 2.36 1.46.3.15.47.13.65-.08.18-.2.75-.87.95-1.17.2-.3.4-.25.67-.15.27.1 1.73.82 2.03.97.3.15.5.22.57.35.08.13.08.75-.17 1.45z"/></svg></button>
@@ -1850,6 +1869,7 @@ body{font-size:14px;background:#EEF1EB;}
             <div class="pd-mrp" id="pdMrp"></div>
             <div class="pd-off" id="pdOff" style="display:none;"></div>
           </div>
+          <div id="pdStockLeft"></div>
           <div class="pd-desc-title">About this product</div>
           <div class="pd-desc" id="pdDesc">—</div>
           <div class="pd-qty-row">
@@ -1875,7 +1895,7 @@ body{font-size:14px;background:#EEF1EB;}
       </div>
       <div class="overlay-body" style="padding:16px 14px 10px;" id="cartBody"></div>
       <div class="pd-footer" id="cartFooter" style="display:none;">
-        <button class="btn btn-primary btn-block" id="placeOrderBtn">Confirm your Order <span aria-hidden="true">→</span></button>
+        <button class="btn btn-primary btn-block" id="placeOrderBtn">Proceed to Pay <span aria-hidden="true">→</span></button>
       </div>
     </div>
   </div>
@@ -1971,7 +1991,7 @@ function waitForFirebaseConnection(timeoutMs=5000){
     onValue(infoRef,handler);
   });
 }
-function setNetworkBusy(on){const btn=$('#placeOrderBtn');if(!btn)return;btn.disabled=on;if(on)btn.innerHTML='<span class="spinner"></span> Checking connection…';else btn.innerHTML='Confirm your Order <span aria-hidden="true">→</span>';}
+function setNetworkBusy(on){const btn=$('#placeOrderBtn');if(!btn)return;btn.disabled=on;if(on)btn.innerHTML='<span class="spinner"></span> Checking connection…';else btn.innerHTML='Proceed to Pay <span aria-hidden="true">→</span>';}
 
 /* `navigator.onLine` and Firebase's own `.info/connected` value can both
    keep reporting "online" for several seconds (sometimes much longer)
@@ -2098,6 +2118,15 @@ function catMedia(c){
 const CHART_PRODUCT_KEY = {
   p1:'milk', p2:'milk', p3:'paneer', p4:'curd', p5:'ghee', p6:'chach', p7:'butter'
 };
+
+/* One line of chart-note text for a non-dairy item: name, its per-unit
+   size/weight (e.g. "0.5 kg", "500 ml"), and how many units were ordered —
+   e.g. "Curd 0.5 kg x1" — so whoever reads the chart knows exactly how
+   much product that "x1" actually means, not just a bare quantity. */
+function chartNoteLine(it){
+  const unit = (it.unit||'').trim();
+  return unit ? `${it.name} ${unit} x${it.qty}` : `${it.name} x${it.qty}`;
+}
 
 function isMilkProduct(p){
   if (!p || !p.name) return false;
@@ -2294,6 +2323,44 @@ function saveCart(){ localStorage.setItem('ag_cart', JSON.stringify(cart)); }
 function saveOrders(){ localStorage.setItem('ag_orders', JSON.stringify(orders)); }
 function saveCustomer(){ localStorage.setItem('ag_customer', JSON.stringify(customer)); }
 
+/* ---------------- rejected-delivery tracking ----------------
+   When admin removes an order's note line on the chart, deliverychart.html
+   writes customers/{id}/webOrders/{orderId}/rejectedDates/{date}=timestamp.
+   The existing attachOrdersListener() below already streams webOrders in
+   real time, so that write reaches this app immediately — no extra
+   listener needed. `rejectionsSeen` just remembers (locally, per device)
+   which order+date rejections the customer has already been shown, so the
+   badge count and the "new rejection" toast only ever count each one once. */
+let rejectionsSeen = new Set(JSON.parse(localStorage.getItem('ag_rejections_seen')||'[]'));
+function saveRejectionsSeen(){ localStorage.setItem('ag_rejections_seen', JSON.stringify([...rejectionsSeen])); }
+function rejectionKey(orderId, date){ return orderId+'::'+date; }
+/* Every {orderId,date} pair currently marked rejected across all orders. */
+function allRejectionKeys(){
+  const keys = [];
+  orders.forEach(o=>{
+    if (!o.rejectedDates) return;
+    Object.keys(o.rejectedDates).forEach(d=> keys.push(rejectionKey(o.id, d)));
+  });
+  return keys;
+}
+/* Updates the red count badge on the "My Order" nav tab to the number of
+   rejections the customer hasn't opened My Orders to see yet. */
+function refreshRejectionBadge(){
+  const badge = document.getElementById('ordersNavBadge');
+  if (!badge) return;
+  const unseen = allRejectionKeys().filter(k=> !rejectionsSeen.has(k));
+  badge.textContent = unseen.length;
+  badge.classList.toggle('show', unseen.length>0);
+}
+/* Marks every rejection currently known as "seen" — called when the
+   customer opens My Orders, since that's where they can actually see
+   which date was rejected. Clears the nav badge. */
+function markRejectionsSeen(){
+  allRejectionKeys().forEach(k=> rejectionsSeen.add(k));
+  saveRejectionsSeen();
+  refreshRejectionBadge();
+}
+
 /* Keeps `customer` in sync with Firebase in real time once we know their
    record's key — so if admin edits the address, changes the shift, or
    reassigns the delivery partner, this app reflects it without a re-login.
@@ -2322,7 +2389,7 @@ function attachCustomerListener(id){
   onValue(custListenerRef, snap=>{
     if (!snap.exists()){
       customer = null; saveCustomer(); detachSessionListeners();
-      orders = []; saveOrders(); renderOrders(); renderBill();
+      orders = []; saveOrders(); renderOrders(); renderBill(); refreshRejectionBadge();
       showToast('Aapka account admin dwara hata diya gaya hai');
       if ($('#profileSheetOverlay').classList.contains('show')) openProfileSheet();
       return;
@@ -2364,6 +2431,7 @@ function attachOrdersListener(id){
     // on delete (our own explicit re-render restored .open, then this
     // listener's re-render immediately undid it).
     const openIds = getOpenOrderIds();
+    const prevKeys = new Set(allRejectionKeys());
     orders = Object.keys(val)
       .map(k=> ({ ...val[k], id:k, custId:id }))
       .sort((a,b)=> new Date(b.placedAt) - new Date(a.placedAt));
@@ -2371,6 +2439,18 @@ function attachOrdersListener(id){
     renderOrders();
     restoreOpenOrderIds(openIds);
     renderBill();
+    // Any rejection key that's brand new since the last snapshot (not just
+    // "unseen" — genuinely new) gets its own toast right away. Everything
+    // unseen (new or from before this session) still counts on the badge.
+    const freshKeys = allRejectionKeys().filter(k=> !prevKeys.has(k) && !rejectionsSeen.has(k));
+    if (freshKeys.length){
+      const [orderId, dateStr] = freshKeys[0].split('::');
+      const label = freshKeys.length===1
+        ? `Order #${orderId} ki ${fmtDate(dateStr)} ki delivery reject ho gayi hai ❗`
+        : `${freshKeys.length} deliveries reject ho gayi hain ❗ My Orders mein dekhein`;
+      showToast(label);
+    }
+    refreshRejectionBadge();
   }, err=>{ console.error('Orders listener failed', err); window.__showGlobalNetworkError && window.__showGlobalNetworkError(); });
 }
 
@@ -2407,6 +2487,20 @@ function fmtDateLong(iso){
 }
 function money(n){ return '₹'+Math.round(n).toLocaleString('en-IN'); }
 
+/* Shift-based scheduling cutoff — a delivery date is only bookable up till
+   a fixed clock-time ON THAT SAME DATE: 4:00 AM for morning-shift customers,
+   4:00 PM for evening-shift customers. Once that moment passes, the date
+   flips from bookable to disabled and the next calendar day becomes the
+   earliest option. This one rule naturally covers both real-world cases:
+   morning shift ordering "tomorrow" the night before (still open till 4 AM
+   the next morning) and evening shift ordering "today" up to 4 PM same day. */
+function cutoffHourFor(shift){ return shift==='evening' ? 16 : 4; }
+function isDateBookable(iso, shift){
+  const [y,m,d] = iso.split('-').map(Number);
+  const cutoff = new Date(y, m-1, d, cutoffHourFor(shift), 0, 0, 0);
+  return new Date() < cutoff;
+}
+
 /* Single source of truth for delivery pricing — used by the cart screen,
    order placement, My Orders and Bill, so the ₹10-below-₹99 rule (and the
    amount itself) can never drift out of sync between screens again. */
@@ -2415,6 +2509,25 @@ const DELIVERY_FEE = 10;
 function deliveryChargeFor(itemsTotal){
   if (itemsTotal <= 0) return 0; // nothing to deliver -> no delivery fee
   return itemsTotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_FEE;
+}
+/* Delivery charge must be decided PER DELIVERY DATE, not on the combined
+   value of every scheduled date lumped together — a ₹40 item scheduled on
+   3 different dates is three separate ₹40 deliveries, each below the ₹99
+   free-delivery bar, not one ₹120 delivery that clears it. This walks every
+   item's dates, buckets price×qty into that specific date, then charges (or
+   waives) the ₹10 fee once per date independently before summing. `isActive`
+   lets callers exclude stopped/rejected dates (used by orderEffectiveBreakdown)
+   — omit it to treat every date as active (used for a fresh cart/order). */
+function deliveryChargeForItemsPerDate(items, isActive){
+  const perDate = {};
+  items.forEach(it=>{
+    it.dates.forEach(d=>{
+      if (isActive && !isActive(it, d)) return;
+      const dateKey = typeof d === 'string' ? d : d.date;
+      perDate[dateKey] = (perDate[dateKey]||0) + it.price*it.qty;
+    });
+  });
+  return Object.values(perDate).reduce((sum,amt)=>sum+deliveryChargeFor(amt), 0);
 }
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function stars(n){ return '★'.repeat(n)+'☆'.repeat(5-n); }
@@ -2431,6 +2544,13 @@ function cartCount(){ return cart.reduce((s,c)=>s+c.qty,0); }
 // An item with no selected dates is charged for today, matching finalizeOrder().
 function cartDaysOf(c){ return (c && c.dates && c.dates.length) ? c.dates.length : 1; }
 function cartSubtotal(){ return cart.reduce((s,c)=>s + (prodMap[c.id]?.price||0)*c.qty*cartDaysOf(c), 0); }
+// Total delivery charge across the cart, calculated per delivery date (see
+// deliveryChargeForItemsPerDate above) rather than on the combined subtotal.
+function cartDeliveryChargeTotal(){
+  const items = cart.map(c=>({ price: prodMap[c.id]?.price||0, qty:c.qty, dates: c.dates.length?c.dates:[todayISO()] }));
+  return deliveryChargeForItemsPerDate(items);
+}
+
 
 function refreshCartBadges(){
   const n = cartCount();
@@ -2519,6 +2639,16 @@ function stockBadgeHtml(p){
   if (status==='out_of_stock') return `<span class="badge-oos">SOLD OUT</span>`;
   return '';
 }
+/* Only shows anything when the product has a real numeric stock count set
+   by admin. Products left "unlimited" (p.stock is not a number) show
+   nothing here — exactly what was asked for. */
+function stockLeftText(p){
+  return (typeof p.stock === 'number' && p.stock > 0) ? `${p.stock} left in stock` : '';
+}
+function stockLeftHtml(p, extraStyle){
+  const txt = stockLeftText(p);
+  return txt ? `<div class="stock-left-lbl" style="font-size:10.5px;color:var(--ink-mute);font-weight:700;margin:1px 0 2px;${extraStyle||''}">${txt}</div>` : '';
+}
 function compactUnitLabel(unit){
   const raw=String(unit||'1 pc').trim();
   const m=raw.match(/(\d+(?:\.\d+)?)\s*(kg|g|ml|l|litre|liter|pcs?|pieces?)/i);
@@ -2548,6 +2678,7 @@ function bigCardHtml(p){
         <div class="cta" data-cta-host="${p.id}">${ctaMarkup(p.id,'lg')}</div>
       </div>
       <div class="nm">${escapeHtml(p.name)}</div>
+      ${status==='active' ? stockLeftHtml(p) : ''}
       <div class="pr">${money(p.price)}<span class="mrp">${money(p.mrp)}</span></div>
     </div>
   </div>`;
@@ -2751,12 +2882,15 @@ function renderPdQty(){
   const status = p ? stockStatus(p) : 'active';
   const area = $('#pdQtyArea');
   const addBtn = $('#pdAddBtn');
+  const stockEl = $('#pdStockLeft');
   if (status!=='active'){
     area.innerHTML = `<span style="color:var(--danger); font-size:12.5px; font-weight:700;">${status==='coming_soon'?'Coming Soon':'Out of Stock'}</span>`;
     addBtn.disabled = true; addBtn.textContent = status==='coming_soon'?'Coming Soon':'Out of Stock';
+    if (stockEl) stockEl.innerHTML = '';
     return;
   }
   addBtn.disabled = false; addBtn.textContent = 'Add to Cart';
+  if (stockEl) stockEl.innerHTML = stockLeftHtml(p, 'margin-bottom:10px;');
   const q = cartQtyOf(currentProductId);
   if (q<=0){ area.innerHTML = `<span style="color:var(--ink-mute); font-size:12.5px; font-weight:600;">Not added yet</span>`; }
   else { area.innerHTML = `<div class="stepper-pill" style="width:96px;"><button data-dec="${currentProductId}">−</button><div class="qv">${q}</div><button data-inc="${currentProductId}">+</button></div>`; }
@@ -2808,6 +2942,7 @@ function renderCart(){
       <div class="mid">
         <div class="nm">${escapeHtml(p.name)}</div>
         <div class="un">${escapeHtml(p.unit)}</div>
+        ${stockLeftHtml(p)}
         <div class="row2">
           <div class="stepper-pill" style="width:78px;"><button data-cdec="${idx}">−</button><div class="qv">${c.qty}</div><button data-cinc="${idx}">+</button></div>
           <div class="pr">${money(p.price*c.qty)}</div>
@@ -2819,7 +2954,7 @@ function renderCart(){
     </div>`;
   });
   const subtotal = cartSubtotal();
-  const cartDeliveryCharge = deliveryChargeFor(subtotal);
+  const cartDeliveryCharge = cartDeliveryChargeTotal();
   html += `<div class="cart-delivery-status">
     <div class="status-icon">🚚</div>
     <div><b>Delivery within 24 hr</b><span>Your order will be delivered fresh</span></div>
@@ -2835,7 +2970,15 @@ function renderCart(){
 }
 $('#cartBody').addEventListener('click', e=>{
   const inc = e.target.closest('[data-cinc]');
-  if (inc){ const i=+inc.getAttribute('data-cinc'); cart[i].qty += qtyStepOf(cart[i].id); saveCart(); refreshCartBadges(); renderCart(); refreshAllCtas(); return; }
+  if (inc){
+    const i=+inc.getAttribute('data-cinc');
+    const id = cart[i].id;
+    const p = prodMap[id];
+    const desired = cart[i].qty + qtyStepOf(id);
+    if (p && desired>stockLeft(p)){ showToast('Available stock khatam ho gaya hai'); cart[i].qty = stockLeft(p); }
+    else cart[i].qty = desired;
+    saveCart(); refreshCartBadges(); renderCart(); refreshAllCtas(); return;
+  }
   const dec = e.target.closest('[data-cdec]');
   if (dec){ const i=+dec.getAttribute('data-cdec'); cart[i].qty -= qtyStepOf(cart[i].id); if(cart[i].qty<=0) cart.splice(i,1); saveCart(); refreshCartBadges(); renderCart(); refreshAllCtas(); return; }
   const rm = e.target.closest('[data-rm]');
@@ -2866,13 +3009,14 @@ function renderCalendar(){
   const curMonth = calYear*12+calMonth;
   $('#calPrev').disabled = curMonth<=minMonth;
   $('#calNext').disabled = curMonth>=minMonth+2;
+  const shift = (customer && customer.shift==='evening') ? 'evening' : 'morning';
 
   let cells = '';
   for (let i=0;i<startDow;i++) cells += `<div class="cal-cell blank"></div>`;
   for (let d=1; d<=daysInMonth; d++){
     const dt = new Date(calYear,calMonth,d);
     const iso = toISO(dt);
-    const isPast = iso<today;
+    const isPast = !isDateBookable(iso, shift);
     const isToday = iso===today;
     const isSel = calSelected.has(iso);
     cells += `<div class="cal-cell ${isPast?'disabled':''} ${isToday?'today':''} ${isSel?'selected':''}" ${isPast?'':`data-day="${iso}"`}>${d}</div>`;
@@ -3099,7 +3243,7 @@ async function finalizeOrder(cust){
   await waitForFirebaseConnection(5000);
   const items=cart.map(c=>{const p=prodMap[c.id];return{productId:c.id,name:p.name,unit:p.unit,price:p.price,qty:c.qty,dates:(c.dates.length?c.dates:[todayISO()]).map(d=>({date:d,stopped:false}))};});
   const itemsTotal=items.reduce((sum,it)=>sum+it.price*it.qty*it.dates.length,0);
-  const deliveryCharge=deliveryChargeFor(itemsTotal);
+  const deliveryCharge=deliveryChargeForItemsPerDate(items);
   const total=itemsTotal+deliveryCharge;
   const order={id:'AG'+Date.now().toString().slice(-8),placedAt:new Date().toISOString(),itemsTotal,deliveryCharge,total,custId:cust.id||null,items};
   const custKey=await syncOrderToChart(cust,order); if(custKey)order.custId=custKey;
@@ -3114,15 +3258,20 @@ async function finalizeOrder(cust){
   saveOrders();cart=[];saveCart();refreshCartBadges();$('#screenCart').classList.remove('show');renderCart();refreshAllCtas();spawnSuccessConfetti();$('#orderSuccess').classList.add('show');decrementStockForOrder(items);
 }
 
-/* Deducts each item's ordered qty (× number of delivery dates) from its
-   live Firebase stock count via a transaction, so two customers ordering
-   the last units at the same moment can never both succeed. Products with
-   no stock tracking (stock === null) are skipped entirely. Runs after the
-   order is already confirmed to the customer — this only affects future
-   availability, never blocks the order that was just placed. */
+/* Deducts each item's ordered qty from its live Firebase stock count via a
+   transaction, so two customers ordering the last units at the same moment
+   can never both succeed. Deliberately NOT multiplied by dates.length: the
+   `stock` field represents units available from TODAY's pool, and each
+   scheduled future date draws from that future day's own stock (topped up
+   independently later) — not from today's count. So booking qty 1 across 5
+   different future dates should only ever consume 1 unit right now, the
+   same as booking qty 1 for a single date. Products with no stock tracking
+   (stock === null) are skipped entirely. Runs after the order is already
+   confirmed to the customer — this only affects future availability, never
+   blocks the order that was just placed. */
 function decrementStockForOrder(items){
   items.forEach(it=>{
-    const qtyOrdered = it.qty * it.dates.length;
+    const qtyOrdered = it.qty;
     runTransaction(ref(db,'catalog/products/'+it.productId+'/stock'), current=>{
       if (typeof current !== 'number') return current; // not stock-tracked
       return Math.max(0, current - qtyOrdered);
@@ -3142,14 +3291,19 @@ async function syncOrderToChart(cust, order){
   const defaults = custData.defaultProducts || {};
   const overridesRoot = custData.overrides || {};
 
-  // Group increments + note lines per delivery date
+  // Group increments + note lines per delivery date. Every item gets its
+  // own note line (name + unit size + qty, e.g. "Curd 0.5 kg x1") so the
+  // admin can see exactly what this order contains — even for the 6 fixed
+  // dairy products, which ALSO still bump the pooled day-total field the
+  // delivery boy's pick list relies on. The note is purely for visibility;
+  // it never changes what the pooled quantity fields add up to.
   const byDate = {};
   order.items.forEach(it=>{
     const key = CHART_PRODUCT_KEY[it.productId];
     it.dates.forEach(d=>{
       if (!byDate[d.date]) byDate[d.date] = { inc:{}, notes:[] };
       if (key) byDate[d.date].inc[key] = (byDate[d.date].inc[key]||0) + it.qty;
-      else byDate[d.date].notes.push(`${it.name} x${it.qty}`);
+      byDate[d.date].notes.push(chartNoteLine(it));
     });
   });
 
@@ -3167,14 +3321,16 @@ async function syncOrderToChart(cust, order){
     };
     const { inc, notes } = byDate[date];
     Object.keys(inc).forEach(k=> base[k] = (base[k]||0) + inc[k]);
-    // Visible text is just the product names/qty ("Chaach (Buttermilk) x1") —
-    // no "App order #AG..." prefix shown to whoever reads the chart. The
-    // order id is still embedded as an invisible zero-width marker so
-    // stop/resume/delete can still find and remove exactly this order's
-    // segment later (see orderNoteTag / removeOrderNoteFromChart).
-    const appNote = orderNoteTag(order.id) + notes.join(', ');
-    base.note = base.note ? base.note+' | '+appNote : appNote;
-    updates['customers/'+custKey+'/overrides/'+date] = base;
+    // Written as individual field paths (not one object per date) so this
+    // never clobbers overrides/{date}/orderNotes/{otherOrderId} — every
+    // other app order's line for this date is left completely alone.
+    Object.keys(base).forEach(k=>{ updates[`customers/${custKey}/overrides/${date}/${k}`] = base[k]; });
+    // This order's own note line lives at its own key, keyed by order id,
+    // holding ONLY the product names/qty text ("Chaach (Buttermilk) x1") —
+    // no order id is mixed into the visible string, so nothing but that
+    // text ever shows on the chart for this order.
+    updates[`customers/${custKey}/overrides/${date}/orderNotes/${order.id}`] = notes.join(', ');
+    updates[`customers/${custKey}/overrides/${date}/updatedAt`] = Date.now();
   });
 
   await withTimeout(update(ref(db), updates),8000);
@@ -3189,12 +3345,19 @@ async function syncOrderToChart(cust, order){
    live items total, recalculated fresh each time so stopping/resuming a
    date immediately updates both the item total AND whether delivery is
    free, exactly like the cart does before the order is placed. */
+/* A date counts as active for billing only if it's neither stopped by the
+   customer NOR rejected by the admin on the chart — either one removes
+   that single date from the total, while every other date on the order
+   keeps billing normally. */
+function isDateRejected(order, dateStr){
+  return !!(order.rejectedDates && order.rejectedDates[dateStr]);
+}
 function orderEffectiveBreakdown(order){
   const itemsTotal = order.items.reduce((s,it)=>{
-    const active = it.dates.filter(d=>!d.stopped).length;
+    const active = it.dates.filter(d=>!d.stopped && !isDateRejected(order, d.date)).length;
     return s + it.price*it.qty*active;
   }, 0);
-  const deliveryCharge = deliveryChargeFor(itemsTotal);
+  const deliveryCharge = deliveryChargeForItemsPerDate(order.items, (it,d)=>!d.stopped && !isDateRejected(order, d.date));
   return { itemsTotal, deliveryCharge, total: itemsTotal + deliveryCharge };
 }
 function orderEffectiveTotal(order){
@@ -3235,51 +3398,33 @@ function orderDateFullyStopped(order, dateStr, excludeIdx){
   });
 }
 
-/* Invisible per-order marker embedded at the start of that order's note
-   segment for a date. Lets removeOrderNoteFromChart/addOrderNoteToChart
-   find and remove/re-add exactly this order's text later, WITHOUT any
-   "App order #AG..." text actually being visible on the chart — a
-   zero-width space renders as nothing, so only the product names show. */
-function orderNoteTag(orderId){ return `\u200B#${orderId}\u200B`; }
-
-/* Strips this order's note segment out of that date's override note on the
-   chart. Called once nothing from the order is active on that date anymore,
-   so deliverychart.html stops showing a note for an order that's been
-   stopped/deleted from the app. */
+/* Removes this order's own note slot (overrides/{date}/orderNotes/{orderId})
+   from that date's chart override. Called once nothing from the order is
+   active on that date anymore, so deliverychart.html stops showing a note
+   for an order that's been stopped/deleted from the app. Only this order's
+   own slot is touched — every other order's note on that date, and the
+   admin's own free-text note, are untouched. */
 async function removeOrderNoteFromChart(order, dateStr){
   const custKey = order.custId;
   if (!custKey) return;
-  const path = `customers/${custKey}/overrides/${dateStr}`;
   try{
-    const snap = await get(ref(db, path));
-    const existing = snap.val() || {};
-    if (!existing.note) return;
-    const re = new RegExp(`\\s*\\|?\\s*${orderNoteTag(order.id)}[^|]*`, 'g');
-    const cleaned = existing.note.replace(re, '').replace(/^\s*\|\s*/, '').replace(/\s*\|\s*$/, '').trim();
-    if (cleaned === existing.note) return;
-    await update(ref(db, path), { note: cleaned, updatedAt: Date.now() });
+    await remove(ref(db, `customers/${custKey}/overrides/${dateStr}/orderNotes/${order.id}`));
   } catch(e){ console.error('Note removal failed', e); }
 }
 
-/* Re-adds this order's note segment to a date's chart override once a
-   previously-stopped delivery on that date is resumed — the mirror image
-   of removeOrderNoteFromChart. Skips if it's already there (e.g. another
-   still-active item from the same order left it). */
+/* Re-writes this order's own note slot for a date once a previously-stopped
+   delivery on that date is resumed — the mirror image of
+   removeOrderNoteFromChart. Includes every item still active on that
+   date (dairy or not) with its unit size + qty, e.g. "Curd 0.5 kg x1" —
+   matching what syncOrderToChart writes when the order is first placed. */
 async function addOrderNoteToChart(order, dateStr){
   const custKey = order.custId;
   if (!custKey) return;
-  const tag = orderNoteTag(order.id);
-  const nonChartNames = order.items
-    .filter(it => !CHART_PRODUCT_KEY[it.productId] && it.dates.some(d=>d.date===dateStr && !d.stopped))
-    .map(it => `${it.name} x${it.qty}`);
-  const appNote = tag + nonChartNames.join(', ');
-  const path = `customers/${custKey}/overrides/${dateStr}`;
+  const text = order.items
+    .filter(it => it.dates.some(d=>d.date===dateStr && !d.stopped))
+    .map(it => chartNoteLine(it)).join(', ');
   try{
-    const snap = await get(ref(db, path));
-    const existing = snap.val() || {};
-    if (existing.note && existing.note.includes(tag)) return;
-    const note = existing.note ? existing.note+' | '+appNote : appNote;
-    await update(ref(db, path), { note, updatedAt: Date.now() });
+    await update(ref(db, `customers/${custKey}/overrides/${dateStr}`), { [`orderNotes/${order.id}`]: text, updatedAt: Date.now() });
   } catch(e){ console.error('Note add failed', e); }
 }
 
@@ -3312,11 +3457,19 @@ function renderOrders(){
   wrap.innerHTML = orders.map((o,oi)=>{
     const itemsHtml = o.items.map((it,ii)=>{
       const p = prodMap[it.productId];
-      const datesHtml = it.dates.map((dd,di)=>`
-        <div class="oi-date ${dd.stopped?'stopped':''}">
+      const datesHtml = it.dates.map((dd,di)=>{
+        const rejected = isDateRejected(o, dd.date);
+        if (rejected){
+          return `<div class="oi-date rejected" title="Yeh delivery reject kar di gayi hai">
+            ${fmtDate(dd.date)}
+            <span class="oi-rejected-tag">❌ Rejected</span>
+          </div>`;
+        }
+        return `<div class="oi-date ${dd.stopped?'stopped':''}">
           ${fmtDate(dd.date)}
           <button data-stop="${oi}:${ii}:${di}">${dd.stopped?'Resume':'Stop'}</button>
-        </div>`).join('');
+        </div>`;
+      }).join('');
       return `<div class="oi-row" data-item="${oi}:${ii}">
         <div class="tile ${p?tileOf(p):''} ${p&&firstImageOf(p)?'has-img img-loading':''}">${tileMedia(p)}</div>
         <div class="mid">
@@ -3328,10 +3481,11 @@ function renderOrders(){
       </div>`;
     }).join('');
     const b = orderEffectiveBreakdown(o);
+    const hasRejected = o.items.some(it=> it.dates.some(dd=> isDateRejected(o, dd.date)));
     return `<div class="order-card" data-order="${o.id}">
       <div class="order-head" data-toggle="${oi}">
         <div class="l"><div class="id">Order #${o.id}</div><div class="dt">${new Date(o.placedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})} · ${o.items.length} item(s)</div></div>
-        <div class="r"><span class="order-status">Scheduled</span><div class="amt">${money(b.total)}</div><span class="chev">▾</span></div>
+        <div class="r"><span class="order-status ${hasRejected?'has-rejected':''}">${hasRejected?'⚠️ Delivery Rejected':'Scheduled'}</span><div class="amt">${money(b.total)}</div><span class="chev">▾</span></div>
       </div>
       <div class="order-body"><div class="order-body-in">${itemsHtml}${orderBreakdownHtml(b)}</div></div>
     </div>`;
@@ -3464,19 +3618,22 @@ function buildDayWiseMap(){
   orders.forEach(o=>{
     o.items.forEach(it=>{
       (it.dates||[]).forEach(d=>{
-        if (!map.has(d.date)) map.set(d.date, {items:[], total:0});
+        if (!map.has(d.date)) map.set(d.date, {items:[], total:0, hasRejected:false});
         const day = map.get(d.date);
-        const liveAmount = d.stopped ? 0 : it.price * it.qty;
+        const rejected = isDateRejected(o, d.date);
+        const liveAmount = (d.stopped || rejected) ? 0 : it.price * it.qty;
         day.items.push({
           name:it.name,
           unit:it.unit,
           qty:it.qty,
           price:it.price,
           stopped:!!d.stopped,
+          rejected,
           orderId:o.id,
           orderDate:o.placedAt
         });
         day.total += liveAmount;
+        if (rejected) day.hasRejected = true;
       });
     });
   });
@@ -3485,14 +3642,16 @@ function buildDayWiseMap(){
 
 function billItemRowHtml(it){
   const amount = it.price * it.qty;
+  const statusLabel = it.rejected ? 'Rejected' : (it.stopped ? 'Stopped' : 'Included');
+  const statusCls = it.rejected ? 'rejected' : (it.stopped ? 'stopped' : 'active');
   return `<div class="bill-item-row">
     <div>
       <div class="bill-item-name">${escapeHtml(it.name)}</div>
       <div class="bill-item-meta">${it.qty} × ${money(it.price)} · ${escapeHtml(it.unit||'')} · <span class="order-ref">Order #${escapeHtml(it.orderId)}</span></div>
     </div>
     <div class="bill-item-side">
-      <div class="bill-item-amount" style="${it.stopped?'text-decoration:line-through;opacity:.45;':''}">${money(amount)}</div>
-      <span class="bill-status-chip ${it.stopped?'stopped':'active'}">${it.stopped?'Stopped':'Included'}</span>
+      <div class="bill-item-amount" style="${(it.stopped||it.rejected)?'text-decoration:line-through;opacity:.45;':''}">${money(amount)}</div>
+      <span class="bill-status-chip ${statusCls}">${statusLabel}</span>
     </div>
   </div>`;
 }
@@ -3511,10 +3670,10 @@ function renderBillTimeline(){
     </div>
     ${dates.map((iso, idx)=>{
       const day = map.get(iso);
-      return `<div class="bill-timeline-card ${idx===0?'open':''}" data-bill-day-card="${iso}">
+      return `<div class="bill-timeline-card ${idx===0?'open':''} ${day.hasRejected?'rejected':''}" data-bill-day-card="${iso}">
         <button class="bill-timeline-head" data-bill-day-toggle="${iso}" aria-expanded="${idx===0?'true':'false'}">
           <div class="bill-date-main">
-            <div class="bill-date-title">${fmtDateLong(iso)}</div>
+            <div class="bill-date-title">${fmtDateLong(iso)}${day.hasRejected?' <span class="bill-rejected-tag">❌ Rejected</span>':''}</div>
             <div class="bill-date-meta">${day.items.length} item${day.items.length===1?'':'s'} · delivery date</div>
           </div>
           <div class="bill-head-right"><div class="bill-head-amount">${money(day.total)}</div><div class="bill-chevron">⌄</div></div>
@@ -3541,11 +3700,12 @@ function renderBillOrders(){
     </div>
     ${orders.map((o, oi)=>{
       const b = orderEffectiveBreakdown(o);
-      const activeDates = o.items.reduce((n,it)=>n + (it.dates||[]).filter(d=>!d.stopped).length, 0);
-      return `<div class="bill-order-card ${oi===0?'open':''}" data-bill-order-card="${o.id}">
+      const activeDates = o.items.reduce((n,it)=>n + (it.dates||[]).filter(d=>!d.stopped && !isDateRejected(o,d.date)).length, 0);
+      const orderHasRejected = o.items.some(it=> (it.dates||[]).some(d=> isDateRejected(o, d.date)));
+      return `<div class="bill-order-card ${oi===0?'open':''} ${orderHasRejected?'rejected':''}" data-bill-order-card="${o.id}">
         <button class="bill-order-head" data-bill-order-toggle="${o.id}" aria-expanded="${oi===0?'true':'false'}">
           <div class="bill-order-main">
-            <div class="bill-order-title">Order #${escapeHtml(o.id)}</div>
+            <div class="bill-order-title">Order #${escapeHtml(o.id)}${orderHasRejected?' <span class="bill-rejected-tag">❌ Rejected</span>':''}</div>
             <div class="bill-order-meta">${new Date(o.placedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})} · ${o.items.length} item${o.items.length===1?'':'s'} · ${activeDates} active date${activeDates===1?'':'s'}</div>
           </div>
           <div class="bill-head-right">
@@ -3555,16 +3715,21 @@ function renderBillOrders(){
         <div class="bill-card-body">
           <div class="bill-items-wrap bill-order-items">
             ${o.items.map(it=>{
-              const active = (it.dates||[]).filter(d=>!d.stopped).length;
+              const active = (it.dates||[]).filter(d=>!d.stopped && !isDateRejected(o,d.date)).length;
               const stopped = (it.dates||[]).filter(d=>d.stopped).length;
-              const dates = (it.dates||[]).slice().sort((a,b)=>a.date.localeCompare(b.date)).map(d=>fmtDate(d.date)).join(', ');
+              const rejected = (it.dates||[]).filter(d=>isDateRejected(o,d.date)).length;
+              const dates = (it.dates||[]).slice().sort((a,b)=>a.date.localeCompare(b.date)).map(d=>{
+                const r = isDateRejected(o, d.date);
+                return r ? `<span class="bill-rejected-date">${fmtDate(d.date)} ❌</span>` : fmtDate(d.date);
+              }).join(', ');
               return `<div class="bill-item-row">
                 <div>
                   <div class="bill-item-name">${escapeHtml(it.name)}</div>
                   <div class="bill-item-meta">${it.qty} × ${money(it.price)} · ${escapeHtml(it.unit||'')} · <span class="order-ref">${dates||'No date'}</span></div>
                   ${stopped?`<div class="bill-item-meta" style="color:#A24B3A;">${stopped} stopped date${stopped===1?'':'s'} · ${active} active</div>`:''}
+                  ${rejected?`<div class="bill-item-meta" style="color:var(--danger);font-weight:700;">${rejected} rejected date${rejected===1?'':'s'}</div>`:''}
                 </div>
-                <div class="bill-item-side"><div class="bill-item-amount">${money(it.price*it.qty*active)}</div><span class="bill-status-chip ${active?'active':'stopped'}">${active?'Active':'Stopped'}</span></div>
+                <div class="bill-item-side"><div class="bill-item-amount">${money(it.price*it.qty*active)}</div><span class="bill-status-chip ${rejected&&!active?'rejected':(active?'active':'stopped')}">${rejected&&!active?'Rejected':(active?'Active':'Stopped')}</span></div>
               </div>`;
             }).join('')}
             ${orderBreakdownHtml(b)}
@@ -3587,10 +3752,11 @@ function renderBill(){
   const total = orders.reduce((s,o)=>s+orderEffectiveTotal(o),0);
   const dayMap = buildDayWiseMap();
   const deliveryDates = dayMap.size;
+  const rejectedDates = [...dayMap.values()].filter(d=>d.hasRejected).length;
   $('#billHero').innerHTML = `
     <div class="lbl">CURRENT BILL</div>
     <div class="amt">${money(total)}</div>
-    <div class="sub">${orders.length} order${orders.length===1?'':'s'} · ${deliveryDates} delivery date${deliveryDates===1?'':'s'}</div>`;
+    <div class="sub">${orders.length} order${orders.length===1?'':'s'} · ${deliveryDates} delivery date${deliveryDates===1?'':'s'}${rejectedDates?` · <span style="color:var(--danger);font-weight:800;">${rejectedDates} rejected</span>`:''}</div>`;
   $('#billSummary').innerHTML = `<div class="bill-summary-strip">
       <div class="bill-stat"><div class="v">${orders.length}</div><div class="k">Orders</div></div>
       <div class="bill-stat"><div class="v">${deliveryDates}</div><div class="k">Delivery dates</div></div>
@@ -3671,7 +3837,7 @@ function switchTab(tab, skipLoading){
     $('#mainScroll').scrollTop = 0;
     $('#mainScroll').classList.toggle('pane-locked', tab==='category');
     if (tab==='category') renderCategoryTab();
-    if (tab==='orders') renderOrders();
+    if (tab==='orders'){ renderOrders(); markRejectionsSeen(); }
     if (tab==='bill') renderBill();
   };
   if (skipLoading) apply();
@@ -3725,7 +3891,7 @@ function openProfileSheet(){
       $('#profileSheetOverlay').classList.remove('show');
       openConfirm('Kya aap logout karna chahte hain?', 'Aap dobara apna mobile number darj karke turant login kar sakenge.', ()=>{
         customer = null; localStorage.removeItem('ag_customer'); detachSessionListeners();
-        orders = []; saveOrders(); renderOrders(); renderBill();
+        orders = []; saveOrders(); renderOrders(); renderBill(); refreshRejectionBadge();
         showToast('Aap safaltapoorvak logout ho gaye hain');
       });
     });
@@ -3832,6 +3998,7 @@ async function resumeSession(){
   renderOrders();
   renderBill();
   refreshCartBadges();
+  refreshRejectionBadge();
   // Warm up the Firebase connection early (fire-and-forget) so it's likely
   // already established by the time the person reaches the login card —
   // this is what removes most of the "waiting with no feedback" feeling.
