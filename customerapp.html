@@ -1875,7 +1875,7 @@ body{font-size:14px;background:#EEF1EB;}
       </div>
       <div class="overlay-body" style="padding:16px 14px 10px;" id="cartBody"></div>
       <div class="pd-footer" id="cartFooter" style="display:none;">
-        <button class="btn btn-primary btn-block" id="placeOrderBtn">Proceed to Pay <span aria-hidden="true">→</span></button>
+        <button class="btn btn-primary btn-block" id="placeOrderBtn">Confirm your Order <span aria-hidden="true">→</span></button>
       </div>
     </div>
   </div>
@@ -1971,7 +1971,7 @@ function waitForFirebaseConnection(timeoutMs=5000){
     onValue(infoRef,handler);
   });
 }
-function setNetworkBusy(on){const btn=$('#placeOrderBtn');if(!btn)return;btn.disabled=on;if(on)btn.innerHTML='<span class="spinner"></span> Checking connection…';else btn.innerHTML='Proceed to Pay <span aria-hidden="true">→</span>';}
+function setNetworkBusy(on){const btn=$('#placeOrderBtn');if(!btn)return;btn.disabled=on;if(on)btn.innerHTML='<span class="spinner"></span> Checking connection…';else btn.innerHTML='Confirm your Order <span aria-hidden="true">→</span>';}
 
 /* `navigator.onLine` and Firebase's own `.info/connected` value can both
    keep reporting "online" for several seconds (sometimes much longer)
@@ -2406,6 +2406,16 @@ function fmtDateLong(iso){
   return d.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
 }
 function money(n){ return '₹'+Math.round(n).toLocaleString('en-IN'); }
+
+/* Single source of truth for delivery pricing — used by the cart screen,
+   order placement, My Orders and Bill, so the ₹10-below-₹99 rule (and the
+   amount itself) can never drift out of sync between screens again. */
+const FREE_DELIVERY_THRESHOLD = 99;
+const DELIVERY_FEE = 10;
+function deliveryChargeFor(itemsTotal){
+  if (itemsTotal <= 0) return 0; // nothing to deliver -> no delivery fee
+  return itemsTotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_FEE;
+}
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function stars(n){ return '★'.repeat(n)+'☆'.repeat(5-n); }
 
@@ -2809,15 +2819,16 @@ function renderCart(){
     </div>`;
   });
   const subtotal = cartSubtotal();
+  const cartDeliveryCharge = deliveryChargeFor(subtotal);
   html += `<div class="cart-delivery-status">
     <div class="status-icon">🚚</div>
     <div><b>Delivery within 24 hr</b><span>Your order will be delivered fresh</span></div>
   </div>
   <div class="cart-total-card">
     <div class="cart-total-row"><span>Items total</span><span>${money(subtotal)}</span></div>
-    <div class="cart-total-row"><span>Delivery charges</span><span>${subtotal>=99?'Free': '₹10'}</span></div>
+    <div class="cart-total-row"><span>Delivery charges</span><span>${cartDeliveryCharge===0?'Free':money(cartDeliveryCharge)}</span></div>
     <div class="cart-total-row"><span>Packaging charges</span><span>₹0</span></div>
-    <div class="cart-total-row grand"><span>Total payable</span><span>${money(subtotal + (subtotal>=99?0:10) + 0)}</span></div>
+    <div class="cart-total-row grand"><span>Total payable</span><span>${money(subtotal + cartDeliveryCharge)}</span></div>
   </div>
   <div class="cart-note-wrap"><textarea id="cartNote" placeholder="Add a note for delivery (optional)…"></textarea></div>`;
   body.innerHTML = html;
@@ -3087,8 +3098,10 @@ function spawnSuccessConfetti(){
 async function finalizeOrder(cust){
   await waitForFirebaseConnection(5000);
   const items=cart.map(c=>{const p=prodMap[c.id];return{productId:c.id,name:p.name,unit:p.unit,price:p.price,qty:c.qty,dates:(c.dates.length?c.dates:[todayISO()]).map(d=>({date:d,stopped:false}))};});
-  const total=items.reduce((sum,it)=>sum+it.price*it.qty*it.dates.length,0);
-  const order={id:'AG'+Date.now().toString().slice(-8),placedAt:new Date().toISOString(),total,custId:cust.id||null,items};
+  const itemsTotal=items.reduce((sum,it)=>sum+it.price*it.qty*it.dates.length,0);
+  const deliveryCharge=deliveryChargeFor(itemsTotal);
+  const total=itemsTotal+deliveryCharge;
+  const order={id:'AG'+Date.now().toString().slice(-8),placedAt:new Date().toISOString(),itemsTotal,deliveryCharge,total,custId:cust.id||null,items};
   const custKey=await syncOrderToChart(cust,order); if(custKey)order.custId=custKey;
   await pushOrderToFirebase(order);
   // NOTE: attachOrdersListener() is already streaming customers/{id}/webOrders
@@ -3154,7 +3167,12 @@ async function syncOrderToChart(cust, order){
     };
     const { inc, notes } = byDate[date];
     Object.keys(inc).forEach(k=> base[k] = (base[k]||0) + inc[k]);
-    const appNote = `App order #${order.id}${notes.length ? ': '+notes.join(', ') : ''}`;
+    // Visible text is just the product names/qty ("Chaach (Buttermilk) x1") —
+    // no "App order #AG..." prefix shown to whoever reads the chart. The
+    // order id is still embedded as an invisible zero-width marker so
+    // stop/resume/delete can still find and remove exactly this order's
+    // segment later (see orderNoteTag / removeOrderNoteFromChart).
+    const appNote = orderNoteTag(order.id) + notes.join(', ');
     base.note = base.note ? base.note+' | '+appNote : appNote;
     updates['customers/'+custKey+'/overrides/'+date] = base;
   });
@@ -3166,11 +3184,21 @@ async function syncOrderToChart(cust, order){
 /* Live cost of an order right now — price × qty for every date that is NOT
    stopped. This is what "My Orders" and "Bill" display, so stopping a date
    immediately reduces the amount shown. */
-function orderEffectiveTotal(order){
-  return order.items.reduce((s,it)=>{
+/* Live breakdown of an order right now — items total (price × qty for every
+   date that is NOT stopped) plus the delivery charge that applies to that
+   live items total, recalculated fresh each time so stopping/resuming a
+   date immediately updates both the item total AND whether delivery is
+   free, exactly like the cart does before the order is placed. */
+function orderEffectiveBreakdown(order){
+  const itemsTotal = order.items.reduce((s,it)=>{
     const active = it.dates.filter(d=>!d.stopped).length;
     return s + it.price*it.qty*active;
   }, 0);
+  const deliveryCharge = deliveryChargeFor(itemsTotal);
+  return { itemsTotal, deliveryCharge, total: itemsTotal + deliveryCharge };
+}
+function orderEffectiveTotal(order){
+  return orderEffectiveBreakdown(order).total;
 }
 
 /* Adds (resuming) or removes (stopping) one item's quantity on one date from
@@ -3207,10 +3235,17 @@ function orderDateFullyStopped(order, dateStr, excludeIdx){
   });
 }
 
-/* Strips this order's "App order #ID..." note segment out of that date's
-   override note on the chart. Called once nothing from the order is
-   active on that date anymore, so deliverychart.html stops showing a
-   note for an order that's been stopped/deleted from the app. */
+/* Invisible per-order marker embedded at the start of that order's note
+   segment for a date. Lets removeOrderNoteFromChart/addOrderNoteToChart
+   find and remove/re-add exactly this order's text later, WITHOUT any
+   "App order #AG..." text actually being visible on the chart — a
+   zero-width space renders as nothing, so only the product names show. */
+function orderNoteTag(orderId){ return `\u200B#${orderId}\u200B`; }
+
+/* Strips this order's note segment out of that date's override note on the
+   chart. Called once nothing from the order is active on that date anymore,
+   so deliverychart.html stops showing a note for an order that's been
+   stopped/deleted from the app. */
 async function removeOrderNoteFromChart(order, dateStr){
   const custKey = order.custId;
   if (!custKey) return;
@@ -3219,25 +3254,25 @@ async function removeOrderNoteFromChart(order, dateStr){
     const snap = await get(ref(db, path));
     const existing = snap.val() || {};
     if (!existing.note) return;
-    const re = new RegExp(`\\s*\\|?\\s*App order #${order.id}(:[^|]*)?`, 'g');
+    const re = new RegExp(`\\s*\\|?\\s*${orderNoteTag(order.id)}[^|]*`, 'g');
     const cleaned = existing.note.replace(re, '').replace(/^\s*\|\s*/, '').replace(/\s*\|\s*$/, '').trim();
     if (cleaned === existing.note) return;
     await update(ref(db, path), { note: cleaned, updatedAt: Date.now() });
   } catch(e){ console.error('Note removal failed', e); }
 }
 
-/* Re-adds this order's "App order #ID..." note segment to a date's chart
-   override once a previously-stopped delivery on that date is resumed —
-   the mirror image of removeOrderNoteFromChart. Skips if it's already
-   there (e.g. another still-active item from the same order left it). */
+/* Re-adds this order's note segment to a date's chart override once a
+   previously-stopped delivery on that date is resumed — the mirror image
+   of removeOrderNoteFromChart. Skips if it's already there (e.g. another
+   still-active item from the same order left it). */
 async function addOrderNoteToChart(order, dateStr){
   const custKey = order.custId;
   if (!custKey) return;
-  const tag = `App order #${order.id}`;
+  const tag = orderNoteTag(order.id);
   const nonChartNames = order.items
     .filter(it => !CHART_PRODUCT_KEY[it.productId] && it.dates.some(d=>d.date===dateStr && !d.stopped))
     .map(it => `${it.name} x${it.qty}`);
-  const appNote = `${tag}${nonChartNames.length ? ': '+nonChartNames.join(', ') : ''}`;
+  const appNote = tag + nonChartNames.join(', ');
   const path = `customers/${custKey}/overrides/${dateStr}`;
   try{
     const snap = await get(ref(db, path));
@@ -3292,14 +3327,28 @@ function renderOrders(){
         <button class="row-del-btn del-item-btn" data-delete-item="${oi}:${ii}" title="Product hataayein"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button>
       </div>`;
     }).join('');
+    const b = orderEffectiveBreakdown(o);
     return `<div class="order-card" data-order="${o.id}">
       <div class="order-head" data-toggle="${oi}">
         <div class="l"><div class="id">Order #${o.id}</div><div class="dt">${new Date(o.placedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})} · ${o.items.length} item(s)</div></div>
-        <div class="r"><span class="order-status">Scheduled</span><div class="amt">${money(orderEffectiveTotal(o))}</div><span class="chev">▾</span></div>
+        <div class="r"><span class="order-status">Scheduled</span><div class="amt">${money(b.total)}</div><span class="chev">▾</span></div>
       </div>
-      <div class="order-body"><div class="order-body-in">${itemsHtml}</div></div>
+      <div class="order-body"><div class="order-body-in">${itemsHtml}${orderBreakdownHtml(b)}</div></div>
     </div>`;
   }).join('');
+}
+
+/* Shared breakdown card (items total / delivery charges / total payable) —
+   same visual language as the cart screen's total card — reused by both
+   My Orders and Bill so the customer always sees exactly what's free and
+   what's charged, not just one lump-sum number. */
+function orderBreakdownHtml(b){
+  return `<div class="cart-total-card" style="margin-top:10px;">
+    <div class="cart-total-row"><span>Items total</span><span>${money(b.itemsTotal)}</span></div>
+    <div class="cart-total-row"><span>Delivery charges</span><span>${b.deliveryCharge===0?'Free':money(b.deliveryCharge)}</span></div>
+    <div class="cart-total-row"><span>Packaging charges</span><span>₹0</span></div>
+    <div class="cart-total-row grand"><span>Total payable</span><span>${money(b.total)}</span></div>
+  </div>`;
 }
 
 /* Shared by both My Orders and Bill — reverses this order's still-active
@@ -3491,7 +3540,7 @@ function renderBillOrders(){
       <div><div class="bill-panel-title">Order history</div><div class="bill-panel-sub">Order amount, products aur delivery dates sab ek card mein</div></div>
     </div>
     ${orders.map((o, oi)=>{
-      const total = orderEffectiveTotal(o);
+      const b = orderEffectiveBreakdown(o);
       const activeDates = o.items.reduce((n,it)=>n + (it.dates||[]).filter(d=>!d.stopped).length, 0);
       return `<div class="bill-order-card ${oi===0?'open':''}" data-bill-order-card="${o.id}">
         <button class="bill-order-head" data-bill-order-toggle="${o.id}" aria-expanded="${oi===0?'true':'false'}">
@@ -3500,7 +3549,7 @@ function renderBillOrders(){
             <div class="bill-order-meta">${new Date(o.placedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})} · ${o.items.length} item${o.items.length===1?'':'s'} · ${activeDates} active date${activeDates===1?'':'s'}</div>
           </div>
           <div class="bill-head-right">
-            <div class="bill-order-tools"><div class="bill-head-amount">${money(total)}</div><div class="bill-chevron">⌄</div></div>
+            <div class="bill-order-tools"><div class="bill-head-amount">${money(b.total)}</div><div class="bill-chevron">⌄</div></div>
           </div>
         </button>
         <div class="bill-card-body">
@@ -3518,7 +3567,7 @@ function renderBillOrders(){
                 <div class="bill-item-side"><div class="bill-item-amount">${money(it.price*it.qty*active)}</div><span class="bill-status-chip ${active?'active':'stopped'}">${active?'Active':'Stopped'}</span></div>
               </div>`;
             }).join('')}
-            <div class="bill-day-total"><span>Current order total</span><strong>${money(total)}</strong></div>
+            ${orderBreakdownHtml(b)}
             <button class="row-del-btn" data-delete-order="${oi}" title="Order hataayein" style="margin:8px 0 0 auto;width:32px;height:32px;">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
             </button>
