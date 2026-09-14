@@ -2500,6 +2500,18 @@ function hasActiveDeliveryToday(){
   }
   return false;
 }
+const SUBSCRIPTION_QTY_KEYS = ['milk','paneer','ghee','chach','butter','curd'];
+/* True if the customer's admin-managed standing subscription (set directly
+   on the delivery chart, not through this app's own order flow) has any
+   quantity scheduled for today. `overrides/{today}` fully replaces
+   `defaultProducts` for that date when present (same rule the chart-sync
+   write uses), so an override of all-zero means today was paused. */
+function hasActiveSubscriptionToday(){
+  if (!customer) return false;
+  const source = todayOverride || customer.defaultProducts;
+  if (!source) return false;
+  return SUBSCRIPTION_QTY_KEYS.some(k => (source[k]||0) > 0);
+}
 /* Central eligibility check — returns a state object describing what the
    floating bar / tracking popup should show right now, or null when nothing
    should be shown at all (no active delivery today, or already delivered).
@@ -2521,7 +2533,10 @@ function getLiveTrackInfo(){
   // delivery scheduled — so only let it block the bar if completedAt
   // actually falls on today's date.
   if (customer.status === 'completed' && customer.completedAt && toISO(new Date(customer.completedAt)) === todayISO()) return null;
-  if (!hasActiveDeliveryToday()) return null;
+  // Covers BOTH a one-off order placed through this app today AND a
+  // standing admin-set subscription active today — a customer can have
+  // either, and previously only the former was checked.
+  if (!hasActiveDeliveryToday() && !hasActiveSubscriptionToday()) return null;
   const windowOpen = isWithinTrackingWindow(customer.shift);
   const boy = customer.assignedTo ? deliveryBoysMap[customer.assignedTo] : null;
   const boyLive = windowOpen && isBoyOnline(boy) && boy && boy.lat != null && boy.lng != null;
@@ -2570,7 +2585,7 @@ function refreshLiveTrackBar(){
 }
 // Ticks the bar/popup on a timer too — this is what catches the clock
 // crossing the shift's tracking-start hour without needing any new data.
-setInterval(()=>{ refreshLiveTrackBar(); if (trackScreenOpen) updateTrackScreen(); }, 30000);
+setInterval(()=>{ if (customer && customer.id) attachTodayOverrideListener(customer.id); refreshLiveTrackBar(); if (trackScreenOpen) updateTrackScreen(); }, 30000);
 
 function trackEtaText(boy){
   if (!boy || customer.lat == null || customer.lng == null || boy.lat == null || boy.lng == null) return null;
@@ -2832,6 +2847,9 @@ let custListenerAttachedFor = null;
 let custListenerRef = null;
 let ordersListenerAttachedFor = null;
 let ordersListenerRef = null;
+let overrideListenerAttachedFor = null; // `${custId}:${date}` — date-scoped, see attachTodayOverrideListener
+let overrideListenerRef = null;
+let todayOverride = null; // customers/{id}/overrides/{today} snapshot, or null if none set
 
 /* Detaches any live listeners from a previous session — called on logout
    and before attaching a new customer's listeners, so switching accounts
@@ -2840,8 +2858,33 @@ let ordersListenerRef = null;
 function detachSessionListeners(){
   if (custListenerRef){ off(custListenerRef); custListenerRef = null; }
   if (ordersListenerRef){ off(ordersListenerRef); ordersListenerRef = null; }
+  if (overrideListenerRef){ off(overrideListenerRef); overrideListenerRef = null; }
   custListenerAttachedFor = null;
   ordersListenerAttachedFor = null;
+  overrideListenerAttachedFor = null;
+  todayOverride = null;
+}
+
+/* Many customers never place an order through this web app at all — the
+   admin sets their daily milk/paneer/etc. quota directly on the delivery
+   chart (customers/{id}/defaultProducts, optionally overridden per-date at
+   customers/{id}/overrides/{date}). hasActiveDeliveryToday() only knows
+   about this app's own webOrders, so those customers' tracking bar was
+   silently never showing even with a real delivery scheduled for today.
+   This listens to just today's override doc (re-attached whenever the id
+   or the date changes) so getLiveTrackInfo() can also see that. */
+function attachTodayOverrideListener(id){
+  if (!id) return;
+  const date = todayISO();
+  const key = id + ':' + date;
+  if (overrideListenerAttachedFor === key) return;
+  if (overrideListenerRef) off(overrideListenerRef);
+  overrideListenerAttachedFor = key;
+  overrideListenerRef = ref(db, 'customers/'+id+'/overrides/'+date);
+  onValue(overrideListenerRef, snap=>{
+    todayOverride = snap.val() || null;
+    refreshLiveTrackBar();
+  });
 }
 
 function attachCustomerListener(id){
@@ -2877,6 +2920,7 @@ function attachCustomerListener(id){
     refreshLiveTrackBar();
   });
   attachOrdersListener(id);
+  attachTodayOverrideListener(id);
 }
 
 /* Mirrors customers/{id}/webOrders in real time into the local `orders`
@@ -4030,6 +4074,7 @@ function deleteOrder(oi, cardEl){
     renderOrders();
     restoreOpenOrderIds(openIds);
     renderBill();
+    refreshLiveTrackBar();
     showToast('Order safaltapoorvak delete kar diya gaya');
   });
 }
@@ -4066,6 +4111,7 @@ function deleteOrderItem(oi, ii, rowEl){
     renderOrders();
     restoreOpenOrderIds(openIds);
     renderBill();
+    refreshLiveTrackBar();
     showToast('Product safaltapoorvak delete kar diya gaya');
   });
 }
@@ -4092,6 +4138,7 @@ $('#ordersList').addEventListener('click', async e=>{
     renderOrders();
     restoreOpenOrderIds(openIds);
     renderBill();
+    refreshLiveTrackBar();
     showToast(d.stopped ? 'Delivery safaltapoorvak stop kar di gayi' : 'Delivery safaltapoorvak resume kar di gayi');
     try{
       await adjustChartQty(order, item, d.date, d.stopped);
