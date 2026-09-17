@@ -279,6 +279,25 @@ img{content-visibility:auto;}
 .bday-item{display:flex; justify-content:space-between; gap:10px; font-size:11.5px; padding:6px 0; border-bottom:1px dashed var(--line);}
 .bday-item:last-child{border-bottom:none;}
 
+/* ============ ORDER MANAGEMENT (inside Billing modal) ============ */
+.omg-order{border:1px solid var(--line); border-radius:10px; margin-bottom:10px; overflow:hidden;}
+.omg-order.is-delivered{background:linear-gradient(135deg,#F2FAEC,#E7F5DC); border-color:#BEDFA3;}
+.omg-order-head{display:flex; justify-content:space-between; align-items:center; padding:10px 12px; background:var(--card-2); gap:10px; flex-wrap:wrap;}
+.omg-order.is-delivered .omg-order-head{background:transparent;}
+.omg-order-head .om-id{font-size:12px; font-weight:800;}
+.omg-order-head .om-meta{font-size:10.5px; color:var(--ink-mute); margin-top:1px;}
+.omg-items{padding:8px 12px 10px;}
+.omg-item{padding:7px 0; border-bottom:1px dashed var(--line);}
+.omg-item:last-child{border-bottom:none;}
+.omg-item .om-nm{font-size:12px; font-weight:700; margin-bottom:5px;}
+.omg-dates{display:flex; flex-wrap:wrap; gap:6px;}
+.omg-date{display:flex; align-items:center; gap:6px; background:var(--card); border:1px solid var(--line); border-radius:999px; padding:4px 4px 4px 10px; font-size:10px; font-weight:700;}
+.omg-date.rejected{background:var(--danger-light); border-color:#F1CFC7; color:var(--danger);}
+.omg-date.failed{background:var(--danger-light); border-color:#F1CFC7; color:var(--danger);}
+.omg-date.delivered{background:var(--leaf-light); border-color:#BEE7D2; color:var(--leaf);}
+.omg-date button{background:var(--card); border:1px solid var(--line); color:var(--ink-soft); font-size:8.5px; font-weight:800; padding:3px 7px; border-radius:999px; cursor:pointer;}
+.omg-date button.danger{color:var(--danger); border-color:#F1CFC7;}
+
 .toast{position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--leaf-dark); color:#fff; padding:11px 20px; border-radius:99px; font-size:12.5px; font-weight:600; opacity:0; pointer-events:none; transition:all .3s var(--ease); z-index:900; box-shadow:var(--shadow-md);}
 .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
 
@@ -597,6 +616,12 @@ img{content-visibility:auto;}
       </div>
 
       <div>
+        <div class="billing-section-title">Manage orders &amp; deliveries</div>
+        <div class="field-hint" style="margin-bottom:8px;">Reject an upcoming date, mark a delivered date as a failed delivery (amount is removed from their bill automatically), or delete an order/date outright. Every change here shows up in the customer's own app immediately.</div>
+        <div id="billingOrdersList"></div>
+      </div>
+
+      <div>
         <div class="billing-section-title">Monthly bill</div>
         <table class="month-table" id="billingMonthTable"></table>
       </div>
@@ -900,6 +925,14 @@ function deliveryChargeFor(itemsTotal){
 function isDateRejected(order, dateStr){
   return !!(order.rejectedDates && order.rejectedDates[dateStr]);
 }
+/* A "failed delivery" is an admin-only mark placed on a date that's already
+   past (i.e. was supposed to be delivered). It behaves like a rejected date
+   for billing purposes (the amount is dropped from every total below) but
+   keeps its own red "Delivery Failed" tag on the customer's side instead of
+   the green "Delivered" one, so a failed delivery is never silently billed. */
+function isDateFailed(order, dateStr){
+  return !!(order.failedDates && order.failedDates[dateStr]);
+}
 function customerOrdersArr(cust){
   return Object.values(cust.webOrders || {});
 }
@@ -914,7 +947,7 @@ function buildCustomerDayMap(cust){
       (it.dates||[]).forEach(d=>{
         const date = typeof d === 'string' ? d : d.date;
         const stopped = typeof d === 'object' && !!d.stopped;
-        if (!date || stopped || isDateRejected(o, date)) return;
+        if (!date || stopped || isDateRejected(o, date) || isDateFailed(o, date)) return;
         if (!map.has(date)) map.set(date, {items:[], itemsTotal:0});
         const day = map.get(date);
         day.items.push({name:it.name, unit:it.unit, qty:it.qty, price:it.price, orderId:o.id});
@@ -1012,6 +1045,8 @@ function renderBillingModal(custId){
     ${months.map(m=>{ const row = monthMap.get(m); return `<tr><td>${monthLabel(m)}</td><td>${row.deliveries}</td><td class="amt">${money(row.total)}</td></tr>`; }).join('')}
   ` : `<tr><td class="field-hint">No billed deliveries yet.</td></tr>`;
 
+  renderBillingOrders(cust);
+
   const dates = [...dayMap.keys()].sort().reverse();
   $('#billingDayList').innerHTML = dates.length ? dates.map((date, idx)=>{
     const day = dayMap.get(date);
@@ -1028,6 +1063,126 @@ function renderBillingModal(custId){
     </div>`;
   }).join('') : `<div class="empty-state"><div class="ic">🧾</div>No purchases yet.</div>`;
   $$('#billingDayList [data-bday-toggle]').forEach(el=>el.addEventListener('click', ()=> el.closest('.bday-card').classList.toggle('open')));
+}
+
+/* ---- Manage orders & deliveries (reject / mark-failed / delete) ----
+   Writes straight to customers/{id}/webOrders/{orderId}, the exact node
+   customerapp.html itself listens on with onValue — so every action here
+   (reject a date, mark a delivery failed, delete a date or a whole order)
+   shows up in that customer's own app in real time, with no refresh
+   needed on either side. */
+function renderBillingOrders(cust){
+  const host = $('#billingOrdersList');
+  if (!host) return;
+  const custId = cust.id;
+  const orders = Object.entries(cust.webOrders || {}).map(([id,o])=>({...o, id}));
+  if (!orders.length){
+    host.innerHTML = `<div class="empty-state"><div class="ic">📦</div>No orders from this customer yet.</div>`;
+    return;
+  }
+  const today = new Date().toISOString().slice(0,10);
+  host.innerHTML = orders.map(o=>{
+    const allDates = (o.items||[]).flatMap(it=>(it.dates||[]).map(d=> typeof d==='string'?d:d.date));
+    const isDelivered = allDates.length>0 && allDates.every(dt=>dt<today);
+    const itemsHtml = (o.items||[]).map((it,ii)=>{
+      const datesHtml = (it.dates||[]).map((dd,di)=>{
+        const date = typeof dd==='string' ? dd : dd.date;
+        const rejected = isDateRejected(o, date);
+        const failed = isDateFailed(o, date);
+        const isPast = date < today;
+        let cls = '', tag = '', actions = '';
+        if (rejected){
+          cls = 'rejected'; tag = '❌ Rejected';
+          actions = `<button data-om-unreject="${o.id}:${date}">Undo</button>`;
+        } else if (failed){
+          cls = 'failed'; tag = '⚠️ Delivery Failed';
+          actions = `<button data-om-unfail="${o.id}:${date}">Undo</button>`;
+        } else if (isPast){
+          cls = 'delivered'; tag = '✅ Delivered';
+          actions = `<button data-om-fail="${o.id}:${date}" class="danger">Mark Failed</button>`;
+        } else {
+          tag = '';
+          actions = `<button data-om-reject="${o.id}:${date}">Reject</button>`;
+        }
+        actions += `<button data-om-delete-date="${o.id}:${ii}:${date}" class="danger" title="Delete this date entirely">🗑</button>`;
+        return `<div class="omg-date ${cls}">${fmtDateShort(date)} ${tag?`<span>${tag}</span>`:''}${actions}</div>`;
+      }).join('');
+      return `<div class="omg-item">
+        <div class="om-nm">${escapeHtml(it.name||'')} <span class="field-hint">· ${it.qty}× ${money(it.price)}</span></div>
+        <div class="omg-dates">${datesHtml}</div>
+      </div>`;
+    }).join('');
+    return `<div class="omg-order ${isDelivered?'is-delivered':''}">
+      <div class="omg-order-head">
+        <div>
+          <div class="om-id">Order #${o.id}</div>
+          <div class="om-meta">${o.placedAt ? new Date(o.placedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : ''} · ${(o.items||[]).length} item(s)${isDelivered?' · Delivered':''}</div>
+        </div>
+        <button class="btn btn-danger btn-sm" data-om-delete-order="${o.id}">Delete Order</button>
+      </div>
+      <div class="omg-items">${itemsHtml}</div>
+    </div>`;
+  }).join('');
+
+  function fmtDateShort(d){
+    if (!d) return '';
+    return new Date(d+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+  }
+
+  async function patchOrder(orderId, path, value){
+    await update(ref(db, `customers/${custId}/webOrders/${orderId}/${path}`), value);
+  }
+
+  host.onclick = async (e)=>{
+    const rejectBtn = e.target.closest('[data-om-reject]');
+    const unrejectBtn = e.target.closest('[data-om-unreject]');
+    const failBtn = e.target.closest('[data-om-fail]');
+    const unfailBtn = e.target.closest('[data-om-unfail]');
+    const delDateBtn = e.target.closest('[data-om-delete-date]');
+    const delOrderBtn = e.target.closest('[data-om-delete-order]');
+    try{
+      if (rejectBtn){
+        const [orderId, date] = rejectBtn.getAttribute('data-om-reject').split(':');
+        await update(ref(db, `customers/${custId}/webOrders/${orderId}/rejectedDates`), {[date]: Date.now()});
+        showToast('Delivery rejected — reflected in customer app');
+      } else if (unrejectBtn){
+        const [orderId, date] = unrejectBtn.getAttribute('data-om-unreject').split(':');
+        await update(ref(db, `customers/${custId}/webOrders/${orderId}/rejectedDates`), {[date]: null});
+        showToast('Rejection undone');
+      } else if (failBtn){
+        const [orderId, date] = failBtn.getAttribute('data-om-fail').split(':');
+        if (!confirm('Mark this delivery as failed? The amount for this date will be removed from the customer\u2019s bill.')) return;
+        await update(ref(db, `customers/${custId}/webOrders/${orderId}/failedDates`), {[date]: Date.now()});
+        showToast('Marked as delivery failed — amount deducted for customer');
+      } else if (unfailBtn){
+        const [orderId, date] = unfailBtn.getAttribute('data-om-unfail').split(':');
+        await update(ref(db, `customers/${custId}/webOrders/${orderId}/failedDates`), {[date]: null});
+        showToast('Failed mark undone');
+      } else if (delDateBtn){
+        const [orderId, iiStr, date] = delDateBtn.getAttribute('data-om-delete-date').split(':');
+        const ii = Number(iiStr);
+        if (!confirm('Delete this date from the order? This cannot be undone.')) return;
+        const order = orders.find(o=>o.id===orderId);
+        if (!order) return;
+        const items = JSON.parse(JSON.stringify(order.items||[]));
+        if (items[ii]){
+          items[ii].dates = (items[ii].dates||[]).filter(d=> (typeof d==='string'?d:d.date) !== date);
+        }
+        const cleanItems = items.filter(it=> (it.dates||[]).length>0);
+        if (!cleanItems.length){
+          await remove(ref(db, `customers/${custId}/webOrders/${orderId}`));
+        } else {
+          await update(ref(db, `customers/${custId}/webOrders/${orderId}`), {items: cleanItems});
+        }
+        showToast('Date deleted from order');
+      } else if (delOrderBtn){
+        const orderId = delOrderBtn.getAttribute('data-om-delete-order');
+        if (!confirm('Delete this entire order? This removes it permanently from the customer\u2019s app too.')) return;
+        await remove(ref(db, `customers/${custId}/webOrders/${orderId}`));
+        showToast('Order deleted');
+      }
+    } catch(err){ console.error(err); showToast('Could not update order'); }
+  };
 }
 $$('#billingModal [data-close]').forEach(b=>b.addEventListener('click', ()=>{
   $('#billingModal').classList.remove('show');
