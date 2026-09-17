@@ -32,6 +32,101 @@ img{display:block; max-width:100%;}
 ::-webkit-scrollbar{width:8px; height:8px;}
 ::-webkit-scrollbar-thumb{background:var(--ink-mute); border-radius:99px;}
 
+
+/* ============ FAST ADMIN PRELOADER ============ */
+html.is-loading, body.is-loading{overflow:hidden;}
+#adminPreloader{
+  position:fixed; inset:0; z-index:2000;
+  display:flex; align-items:center; justify-content:center;
+  padding:20px; background:var(--paper);
+  opacity:1; visibility:visible;
+  transition:opacity .28s var(--ease), visibility .28s var(--ease);
+}
+#adminPreloader.hide{opacity:0; visibility:hidden; pointer-events:none;}
+.pre-shell{width:min(100%,760px);}
+.pre-brand{
+  display:flex; align-items:center; gap:12px;
+  margin-bottom:18px; padding-left:2px;
+}
+.pre-mark{
+  width:42px; height:42px; border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--grad-brand); color:#fff;
+  font:800 18px 'Fraunces',serif;
+  box-shadow:0 10px 24px rgba(20,20,14,.16);
+}
+.pre-brand-tx{font:800 16px 'Fraunces',serif; color:var(--ink); line-height:1.1;}
+.pre-brand-tx span{
+  display:block; margin-top:3px; font:700 9px 'Inter',sans-serif;
+  letter-spacing:.08em; color:var(--ink-mute);
+}
+.pre-card{
+  background:var(--card); border:1px solid var(--line);
+  border-radius:18px; overflow:hidden; box-shadow:var(--shadow-md);
+}
+.pre-top{height:58px; border-bottom:1px solid var(--line); background:var(--card-2);}
+.pre-body{display:grid; grid-template-columns:180px 1fr; min-height:260px;}
+.pre-side{background:#ecebe5; border-right:1px solid var(--line); padding:16px;}
+.pre-side-line,.pre-line,.pre-thumb{
+  position:relative; overflow:hidden; background:#d9d9d2; border-radius:8px;
+}
+.pre-side-line{height:11px; margin-bottom:12px;}
+.pre-side-line:nth-child(1){width:68%;}
+.pre-side-line:nth-child(2){width:88%;}
+.pre-side-line:nth-child(3){width:74%;}
+.pre-side-line:nth-child(4){width:82%;}
+.pre-main{padding:18px;}
+.pre-main-head{display:flex; gap:10px; margin-bottom:16px;}
+.pre-line{height:13px; width:160px;}
+.pre-line.short{width:95px; margin-left:auto;}
+.pre-rows{display:grid; gap:9px;}
+.pre-row{height:56px; border:1px solid var(--line); border-radius:10px; display:grid; grid-template-columns:40px 1fr 80px; gap:10px; align-items:center; padding:8px 10px;}
+.pre-thumb{width:40px;height:40px;border-radius:9px;}
+.pre-row .pre-line{height:9px; width:75%;}
+.pre-row .pre-line:last-child{width:48px; justify-self:end;}
+.pre-shimmer::after{
+  content:''; position:absolute; inset:0; transform:translateX(-120%);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.65),transparent);
+  animation:adminShimmer 1.15s ease-in-out infinite;
+}
+@keyframes adminShimmer{100%{transform:translateX(120%);}}
+.pre-status{
+  margin-top:14px; font-size:11.5px; color:var(--ink-soft);
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.pre-spinner{
+  width:14px;height:14px;border-radius:50%;
+  border:2px solid #d8d6cb;border-top-color:var(--leaf-dark);
+  animation:adminSpin .72s linear infinite;
+}
+@keyframes adminSpin{to{transform:rotate(360deg);}}
+.admin-loading-blur #app{filter:blur(0);}
+
+#adminPreloader .pre-error{
+  margin:14px auto 0; width:min(100%,420px); padding:12px 14px;
+  background:var(--card); border:1px solid #ead5cf; border-radius:12px;
+  display:flex; align-items:center; gap:10px; justify-content:space-between;
+  color:var(--danger); font-size:11.5px; box-shadow:var(--shadow-sm);
+}
+#adminPreloader .pre-error[hidden]{display:none;}
+#adminPreloader .pre-error-text{line-height:1.4; flex:1;}
+#adminPreloader .pre-retry{
+  flex:0 0 auto; border:none; border-radius:9px; padding:8px 11px;
+  background:var(--grad-brand); color:#fff; font:700 11px 'Inter',sans-serif; cursor:pointer;
+}
+
+#adminLoadNotice{
+  display:none; margin:0 0 16px; padding:11px 13px;
+  background:var(--card); border:1px solid var(--line);
+  border-radius:12px; color:var(--ink-soft); font-size:12px;
+}
+#adminLoadNotice.show{display:flex; align-items:center; gap:9px;}
+#adminLoadNotice .dot{
+  width:7px;height:7px;border-radius:50%;background:var(--gold);
+  box-shadow:0 0 0 5px var(--gold-light); flex:0 0 auto;
+}
+#adminLoadNotice.error .dot{background:var(--danger);box-shadow:0 0 0 5px var(--danger-light);}
+
 /* ============ LOGIN GATE ============ */
 /* Basic screen-lock, not real auth — good enough to keep casual visitors
    out of an admin link, but NOT a substitute for restricting writes to
@@ -133,6 +228,12 @@ main{flex:1; min-width:0; padding:28px 34px 60px; max-width:1180px;}
 .ban-preview .sb{font-size:10.5px; color:#D8D4C0; margin-top:3px;}
 .ban-foot{display:flex; gap:8px; padding:10px 12px;}
 
+
+/* ============ RENDER PERFORMANCE ============ */
+.ptable{contain:layout paint style;}
+.prow{content-visibility:auto; contain-intrinsic-size:70px;}
+img{content-visibility:auto;}
+
 /* ============ MODAL ============ */
 .modal-overlay{position:fixed; inset:0; background:rgba(15,14,9,.5); z-index:500; display:none; align-items:flex-start; justify-content:center; padding:30px 16px; overflow-y:auto;}
 .modal-overlay.show{display:flex;}
@@ -154,6 +255,29 @@ main{flex:1; min-width:0; padding:28px 34px 60px; max-width:1180px;}
 .img-row .rm{width:32px; height:32px; flex:0 0 32px; border-radius:8px; border:1px solid var(--line); background:var(--card); font-size:13px;}
 .add-img-btn{align-self:flex-start; font-size:11.5px; font-weight:700; color:var(--gold); background:none; border:none; padding:4px 0;}
 .modal-foot{display:flex; justify-content:space-between; align-items:center; padding:16px 22px; border-top:1px solid var(--line); gap:10px;}
+
+/* ---- billing page ---- */
+.bill-cust-row{cursor:pointer;}
+.bill-cust-row:hover{background:var(--card-2);}
+.bill-mini-stat{font-family:'JetBrains Mono'; font-weight:700; font-size:12.5px;}
+.modal.wide{max-width:760px;}
+.billing-section-title{font-size:13px; font-weight:800; margin:18px 0 10px;}
+.billing-section-title:first-child{margin-top:0;}
+.rate-grid{display:flex; flex-direction:column; gap:8px; max-height:260px; overflow-y:auto; padding-right:4px;}
+.rate-row{display:grid; grid-template-columns:1fr 120px; gap:10px; align-items:center; padding:8px 10px; border:1px solid var(--line); border-radius:9px;}
+.rate-row .nm{font-size:12.5px; font-weight:700;}
+.rate-row .un{font-size:10.5px; color:var(--ink-mute); margin-top:1px;}
+.rate-row input{width:100%; padding:7px 9px; border-radius:7px; border:1px solid var(--line); font-size:12.5px; text-align:right;}
+.month-table{width:100%; border-collapse:collapse; font-size:12.5px;}
+.month-table th,.month-table td{padding:9px 10px; border-bottom:1px solid var(--line); text-align:left;}
+.month-table th{font-size:10.5px; text-transform:uppercase; letter-spacing:.03em; color:var(--ink-soft); font-weight:800;}
+.month-table td.amt{font-family:'JetBrains Mono'; font-weight:700; text-align:right;}
+.bday-card{border:1px solid var(--line); border-radius:10px; margin-bottom:8px; overflow:hidden;}
+.bday-head{display:flex; justify-content:space-between; align-items:center; padding:10px 12px; background:var(--card-2); cursor:pointer; font-size:12px; font-weight:700; gap:10px;}
+.bday-body{padding:2px 12px 10px; display:none;}
+.bday-card.open .bday-body{display:block;}
+.bday-item{display:flex; justify-content:space-between; gap:10px; font-size:11.5px; padding:6px 0; border-bottom:1px dashed var(--line);}
+.bday-item:last-child{border-bottom:none;}
 
 .toast{position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--leaf-dark); color:#fff; padding:11px 20px; border-radius:99px; font-size:12.5px; font-weight:600; opacity:0; pointer-events:none; transition:all .3s var(--ease); z-index:900; box-shadow:var(--shadow-md);}
 .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
@@ -184,6 +308,41 @@ main{flex:1; min-width:0; padding:28px 34px 60px; max-width:1180px;}
 </head>
 <body>
 
+
+<div id="adminPreloader" aria-live="polite">
+  <div class="pre-shell">
+    <div class="pre-brand">
+      <div class="pre-mark">अ</div>
+      <div class="pre-brand-tx">Anadi Godham<span>ADMIN PANEL</span></div>
+    </div>
+    <div class="pre-card">
+      <div class="pre-top pre-shimmer"></div>
+      <div class="pre-body">
+        <div class="pre-side">
+          <div class="pre-side-line pre-shimmer"></div>
+          <div class="pre-side-line pre-shimmer"></div>
+          <div class="pre-side-line pre-shimmer"></div>
+          <div class="pre-side-line pre-shimmer"></div>
+        </div>
+        <div class="pre-main">
+          <div class="pre-main-head"><div class="pre-line pre-shimmer"></div><div class="pre-line short pre-shimmer"></div></div>
+          <div class="pre-rows">
+            <div class="pre-row"><div class="pre-thumb pre-shimmer"></div><div class="pre-line pre-shimmer"></div><div class="pre-line pre-shimmer"></div></div>
+            <div class="pre-row"><div class="pre-thumb pre-shimmer"></div><div class="pre-line pre-shimmer"></div><div class="pre-line pre-shimmer"></div></div>
+            <div class="pre-row"><div class="pre-thumb pre-shimmer"></div><div class="pre-line pre-shimmer"></div><div class="pre-line pre-shimmer"></div></div>
+            <div class="pre-row"><div class="pre-thumb pre-shimmer"></div><div class="pre-line pre-shimmer"></div><div class="pre-line pre-shimmer"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pre-status"><span class="pre-spinner"></span><span id="preloaderText">Loading live catalog…</span></div>
+    <div class="pre-error" id="preloaderError" hidden>
+      <div class="pre-error-text" id="preloaderErrorText">Unable to load the live catalog.</div>
+      <button type="button" class="pre-retry" id="preloaderRetry">Retry connection</button>
+    </div>
+  </div>
+</div>
+
 <div id="gate">
   <div class="gate-card">
     <h1>Anadi Godham</h1>
@@ -204,6 +363,8 @@ main{flex:1; min-width:0; padding:28px 34px 60px; max-width:1180px;}
       <button data-page="products" class="active"><span class="ic">🧺</span> Products</button>
       <button data-page="categories"><span class="ic">🗂️</span> Categories</button>
       <button data-page="banners"><span class="ic">🖼️</span> Banners</button>
+      <button data-page="notifications"><span class="ic">🔔</span> Notifications</button>
+      <button data-page="billing"><span class="ic">🧾</span> Billing</button>
     </div>
     <div class="sidebar-foot">
       <button id="lockBtn">🔒 Lock panel</button>
@@ -211,6 +372,7 @@ main{flex:1; min-width:0; padding:28px 34px 60px; max-width:1180px;}
   </aside>
 
   <main>
+    <div id="adminLoadNotice"><span class="dot"></span><span id="adminLoadNoticeText">Syncing your live catalog…</span></div>
     <!-- ========== PRODUCTS PAGE ========== -->
     <section id="page-products">
       <div class="page-head">
@@ -263,6 +425,63 @@ main{flex:1; min-width:0; padding:28px 34px 60px; max-width:1180px;}
         <button class="btn btn-primary" id="addBannerBtn">+ Add Banner</button>
       </div>
       <div class="grid-cards" id="bannerGrid"></div>
+    </section>
+
+    <!-- ========== NOTIFICATIONS PAGE ========== -->
+    <section id="page-notifications" style="display:none;">
+      <div class="page-head">
+        <div>
+          <h2>Notifications</h2>
+          <div class="sub">Send a push notification straight to every customer who has the app open or installed — reaches their phone even if the app is closed.</div>
+        </div>
+      </div>
+
+      <div class="ptable" style="padding:20px 22px; display:flex; flex-direction:column; gap:14px; max-width:520px;">
+        <div class="field">
+          <label for="notifTitle">Title</label>
+          <input type="text" id="notifTitle" placeholder="e.g. Fresh stock arrived! 🥬" maxlength="60">
+        </div>
+        <div class="field">
+          <label for="notifMessage">Message</label>
+          <textarea id="notifMessage" placeholder="e.g. Farm-fresh vegetables just restocked. Order now before they run out!" maxlength="180" style="min-height:80px;"></textarea>
+          <div class="field-hint"><span id="notifCharCount">0</span>/180</div>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <button class="btn btn-primary" id="notifSendBtn">🔔 Send to All Customers</button>
+          <span class="field-hint" id="notifStatus"></span>
+        </div>
+      </div>
+
+      <div class="page-head" style="margin-top:30px;">
+        <div>
+          <h2 style="font-size:16px;">Recently Sent</h2>
+        </div>
+      </div>
+      <div class="ptable" id="notifHistoryList">
+        <div class="empty-state"><div class="ic">🔔</div>No notifications sent yet.</div>
+      </div>
+    </section>
+
+    <!-- ========== BILLING PAGE ========== -->
+    <section id="page-billing" style="display:none;">
+      <div class="page-head">
+        <div>
+          <h2>Billing</h2>
+          <div class="sub">Every customer's purchases, their monthly bill and any custom product rates — all in one place.</div>
+        </div>
+      </div>
+      <div class="toolbar">
+        <div class="search-box"><span class="ic">🔎</span><input type="text" id="billingSearch" placeholder="Search by name or phone…"></div>
+      </div>
+      <div class="ptable">
+        <div class="prow head" style="grid-template-columns:1.6fr .9fr .8fr auto;">
+          <div>Customer</div>
+          <div>This Month</div>
+          <div>Orders</div>
+          <div></div>
+        </div>
+        <div id="billingRows"></div>
+      </div>
     </section>
   </main>
 </div>
@@ -361,6 +580,35 @@ main{flex:1; min-width:0; padding:28px 34px 60px; max-width:1180px;}
   </div>
 </div>
 
+<!-- ===== Billing detail modal ===== -->
+<div class="modal-overlay" id="billingModal">
+  <div class="modal wide">
+    <div class="modal-head"><h3 id="billingModalTitle">Customer Billing</h3><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-body">
+      <div id="billingModalMeta" class="field-hint" style="font-size:12px;"></div>
+
+      <div>
+        <div class="billing-section-title">Custom product rates</div>
+        <div class="field-hint" style="margin-bottom:8px;">Leave a field blank to charge this customer the normal catalog price. Fill in a number to override it just for them — e.g. a special milk rate — and they'll see that price everywhere in their app.</div>
+        <div class="rate-grid" id="billingRateGrid"></div>
+        <div style="margin-top:10px; display:flex; justify-content:flex-end;">
+          <button class="btn btn-primary btn-sm" id="billingSaveRatesBtn">Save Rates</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="billing-section-title">Monthly bill</div>
+        <table class="month-table" id="billingMonthTable"></table>
+      </div>
+
+      <div>
+        <div class="billing-section-title">Purchase history (day-wise)</div>
+        <div id="billingDayList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script type="module">
@@ -397,9 +645,16 @@ const $$ = s=>[...document.querySelectorAll(s)];
 function unlock(){
   $('#gate').classList.add('hide');
   $('#app').classList.add('show');
-  boot();
+  showAdminPreloader('Opening admin panel…');
+  requestAnimationFrame(()=>boot());
 }
-if (sessionStorage.getItem('ag_admin_unlocked')==='1') unlock();
+if (sessionStorage.getItem('ag_admin_unlocked')==='1'){
+  unlock();
+} else {
+  /* Keep the password gate as the first interactive screen, but don't hide it
+     behind a long blank load. */
+  hideAdminPreloader();
+}
 $('#gateBtn').addEventListener('click', tryUnlock);
 $('#gatePw').addEventListener('keydown', e=>{ if (e.key==='Enter') tryUnlock(); });
 function tryUnlock(){
@@ -412,6 +667,7 @@ function tryUnlock(){
 }
 $('#lockBtn').addEventListener('click', ()=>{
   sessionStorage.removeItem('ag_admin_unlocked');
+  showAdminPreloader('Locking panel…');
   location.reload();
 });
 
@@ -423,6 +679,9 @@ let activeCatFilter = 'all';
 let editingProductId = null;   // null = creating new
 let editingCategoryId = null;
 let editingBannerId = null;
+let customersList = [];        // live customers/{id} records, from Firebase
+let activeBillingCustomerId = null;
+let billingSearchTerm = '';
 
 function showToast(msg){
   const t = $('#toast'); t.textContent = msg; t.classList.add('show');
@@ -448,37 +707,360 @@ function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({'&':'
 
 /* ================= BOOT / LIVE SYNC ================= */
 let booted = false;
+let catalogDirty = {categories:false, products:false, banners:false};
+let catalogRenderFrame = null;
+let catalogReady = {categories:false, products:false, banners:false};
+let catalogError = false;
+
+function setAdminNotice(msg, isError=false){
+  const notice = $('#adminLoadNotice');
+  const tx = $('#adminLoadNoticeText');
+  if (!notice || !tx) return;
+  tx.textContent = msg;
+  notice.classList.toggle('error', !!isError);
+  notice.classList.add('show');
+}
+
+function clearAdminNotice(){
+  const notice = $('#adminLoadNotice');
+  if (notice) notice.classList.remove('show');
+}
+
+function hideAdminPreloader(message){
+  const pl = $('#adminPreloader');
+  const tx = $('#preloaderText');
+  if (tx && message) tx.textContent = message;
+  if (pl) pl.classList.add('hide');
+  document.documentElement.classList.remove('is-loading');
+  document.body.classList.remove('is-loading');
+}
+
+function showAdminPreloader(message){
+  const pl = $('#adminPreloader');
+  const tx = $('#preloaderText');
+  const err = $('#preloaderError');
+  if (tx && message) tx.textContent = message;
+  if (err) err.hidden = true;
+  if (pl) pl.classList.remove('hide');
+  document.documentElement.classList.add('is-loading');
+  document.body.classList.add('is-loading');
+}
+
+function setPreloaderError(message){
+  const tx = $('#preloaderText');
+  const err = $('#preloaderError');
+  const errTx = $('#preloaderErrorText');
+  if (tx) tx.textContent = 'Waiting for the live catalog…';
+  if (errTx) errTx.textContent = message;
+  if (err) err.hidden = false;
+  showAdminPreloader();
+}
+
+function updatePreloaderProgress(){
+  const done = Object.values(catalogReady).filter(Boolean).length;
+  const tx = $('#preloaderText');
+  if (!tx) return;
+  if (done===0) tx.textContent = 'Connecting to live catalog…';
+  else if (done===1) tx.textContent = 'Catalog connection established… loading the rest…';
+  else if (done===2) tx.textContent = 'Almost ready… rendering your catalog…';
+  else tx.textContent = 'Finishing up…';
+}
+
+function maybeFinishAdminLoad(){
+  if (!catalogReady.categories || !catalogReady.products || !catalogReady.banners) return;
+  if (catalogRenderFrame) return;
+  /* Give the browser two paint opportunities so the complete table/list is
+     actually committed before the loading screen disappears. */
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    if (catalogReady.categories && catalogReady.products && catalogReady.banners){
+      hideAdminPreloader();
+      clearAdminNotice();
+    }
+  }));
+}
+
+function scheduleCatalogRender(){
+  if (catalogRenderFrame) return;
+  catalogRenderFrame = requestAnimationFrame(()=>{
+    catalogRenderFrame = null;
+
+    const dirty = {...catalogDirty};
+    catalogDirty = {categories:false, products:false, banners:false};
+
+    /* One frame for an initial Firebase burst — prevents categories/products/
+       banners from triggering several full DOM rebuilds back-to-back. */
+    if (dirty.categories){
+      renderCategoryFilterChips();
+      renderCategoriesPage();
+      populateCategorySelect();
+    }
+    if (dirty.products){
+      renderProductsPage();
+      renderCategoriesPage();
+    }
+    if (dirty.categories && !dirty.products){
+      renderProductsPage();
+    }
+    if (dirty.banners){
+      renderBannersPage();
+    }
+
+    updatePreloaderProgress();
+    maybeFinishAdminLoad();
+  });
+}
+
+function markCatalogDirty(kind){
+  catalogDirty[kind] = true;
+  scheduleCatalogRender();
+}
+
 function boot(){
-  if (booted) return; booted = true;
+  if (booted) return;
+  booted = true;
+
+  showAdminPreloader('Connecting to live catalog…');
+
   onValue(ref(db,'catalog/categories'), snap=>{
     const val = snap.val() || {};
-    // {...c, id} — spread first, id last — so the real database key always
-    // wins over any (possibly stale) "id" field saved inside the record.
-    categories = Object.entries(val).map(([id,c])=>({...c, id})).sort((a,b)=>(a.order||0)-(b.order||0));
-    renderCategoryFilterChips();
-    renderCategoriesPage();
-    populateCategorySelect();
-    renderProductsPage();
+    categories = Object.entries(val)
+      .map(([id,c])=>({...c, id}))
+      .sort((a,b)=>(a.order||0)-(b.order||0));
+
+    catalogReady.categories = true;
+    catalogError = false;
+    updatePreloaderProgress();
+    markCatalogDirty('categories');
+  }, err=>{
+    console.error('Categories load failed', err);
+    catalogError = true;
+    setPreloaderError('Categories are not reachable yet. The admin panel will open only after the live catalog finishes loading.');
   });
+
   onValue(ref(db,'catalog/products'), snap=>{
     const val = snap.val() || {};
     products = Object.entries(val).map(([id,p])=>({...p, id}));
-    renderProductsPage();
-    renderCategoriesPage();
+
+    catalogReady.products = true;
+    catalogError = false;
+    updatePreloaderProgress();
+    markCatalogDirty('products');
+  }, err=>{
+    console.error('Products load failed', err);
+    catalogError = true;
+    setPreloaderError('Products are not reachable yet. Please retry when your Firebase connection is available.');
   });
+
   onValue(ref(db,'catalog/banners'), snap=>{
     const val = snap.val() || {};
-    banners = Object.entries(val).map(([id,b])=>({...b, id})).sort((a,b)=>(a.order||0)-(b.order||0));
-    renderBannersPage();
+    banners = Object.entries(val)
+      .map(([id,b])=>({...b, id}))
+      .sort((a,b)=>(a.order||0)-(b.order||0));
+
+    catalogReady.banners = true;
+    catalogError = false;
+    updatePreloaderProgress();
+    markCatalogDirty('banners');
+  }, err=>{
+    console.error('Banners load failed', err);
+    catalogError = true;
+    setPreloaderError('Banners are not reachable yet. The page will stay in loading state until the catalog is complete.');
+  });
+
+  attachCustomersListener();
+}
+
+/* ================= BILLING (customers + their orders) =================
+   Independent of the products/categories/banners preloader above — the
+   Billing tab isn't needed for the panel to open, so it streams in the
+   background and simply re-renders whenever new data arrives. Reads the
+   same `customers/{id}` and `customers/{id}/webOrders` nodes that
+   customerapp.html itself writes to, so figures always match what the
+   customer sees in their own "My Bill" tab. */
+function attachCustomersListener(){
+  onValue(ref(db,'customers'), snap=>{
+    const val = snap.val() || {};
+    customersList = Object.entries(val).map(([id,c])=>({...c, id}));
+    renderBillingPage();
+    if (activeBillingCustomerId) renderBillingModal(activeBillingCustomerId);
+  }, err=>{
+    console.error('Customers load failed', err);
   });
 }
+
+const FREE_DELIVERY_THRESHOLD = 99;
+const DELIVERY_FEE = 10;
+/* Mirrors customerapp.html's own delivery-fee rule exactly, so a month
+   total computed here always matches what that customer's own Bill tab
+   shows them. */
+function deliveryChargeFor(itemsTotal){
+  if (itemsTotal <= 0) return 0;
+  return itemsTotal >= FREE_DELIVERY_THRESHOLD ? 0 : DELIVERY_FEE;
+}
+function isDateRejected(order, dateStr){
+  return !!(order.rejectedDates && order.rejectedDates[dateStr]);
+}
+function customerOrdersArr(cust){
+  return Object.values(cust.webOrders || {});
+}
+/* date (YYYY-MM-DD) -> {items:[{name,unit,qty,price,orderId}], itemsTotal}
+   across every order this customer has ever placed, counting only dates
+   that weren't stopped by the customer or rejected by the admin — the same
+   rule buildDayWiseMap() in customerapp.html uses for "My Bill". */
+function buildCustomerDayMap(cust){
+  const map = new Map();
+  customerOrdersArr(cust).forEach(o=>{
+    (o.items||[]).forEach(it=>{
+      (it.dates||[]).forEach(d=>{
+        const date = typeof d === 'string' ? d : d.date;
+        const stopped = typeof d === 'object' && !!d.stopped;
+        if (!date || stopped || isDateRejected(o, date)) return;
+        if (!map.has(date)) map.set(date, {items:[], itemsTotal:0});
+        const day = map.get(date);
+        day.items.push({name:it.name, unit:it.unit, qty:it.qty, price:it.price, orderId:o.id});
+        day.itemsTotal += (it.price||0) * (it.qty||0);
+      });
+    });
+  });
+  return map;
+}
+/* 'YYYY-MM' -> {deliveries, total} — total includes the per-date delivery
+   fee, same as the customer's own bill. */
+function buildCustomerMonthMap(dayMap){
+  const map = new Map();
+  [...dayMap.entries()].forEach(([date, day])=>{
+    const month = date.slice(0,7);
+    if (!map.has(month)) map.set(month, {deliveries:0, total:0});
+    const m = map.get(month);
+    m.deliveries += 1;
+    m.total += day.itemsTotal + deliveryChargeFor(day.itemsTotal);
+  });
+  return map;
+}
+function monthLabel(ym){
+  const [y,m] = ym.split('-').map(Number);
+  return new Date(y, m-1, 1).toLocaleDateString('en-IN',{month:'long', year:'numeric'});
+}
+function currentMonthKey(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+
+function renderBillingPage(){
+  const host = $('#billingRows');
+  if (!host) return;
+  const term = billingSearchTerm.trim().toLowerCase();
+  const list = customersList
+    .filter(c=> !term || (c.name||'').toLowerCase().includes(term) || (c.phone||'').includes(term))
+    .sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+
+  if (!list.length){
+    host.innerHTML = `<div class="empty-state"><div class="ic">🧾</div>${customersList.length ? 'No customers match your search.' : 'No customers yet — they show up here once someone logs into the app.'}</div>`;
+    return;
+  }
+  const thisMonth = currentMonthKey();
+  host.innerHTML = list.map(c=>{
+    const monthMap = buildCustomerMonthMap(buildCustomerDayMap(c));
+    const thisMonthTotal = monthMap.get(thisMonth)?.total || 0;
+    const totalOrders = customerOrdersArr(c).length;
+    return `<div class="prow bill-cust-row" style="grid-template-columns:1.6fr .9fr .8fr auto;" data-view-bill="${c.id}">
+      <div>
+        <div class="p-name">${escapeHtml(c.name||'Unnamed')}</div>
+        <div class="p-meta">${escapeHtml(c.phone||'—')}</div>
+      </div>
+      <div class="bill-mini-stat">${money(thisMonthTotal) || '₹0'}</div>
+      <div class="bill-mini-stat">${totalOrders}</div>
+      <div class="row-actions"><button class="btn btn-ghost btn-sm" data-view-bill="${c.id}">View</button></div>
+    </div>`;
+  }).join('');
+  $$('[data-view-bill]').forEach(el=>el.addEventListener('click', ()=> openBillingModal(el.getAttribute('data-view-bill'))));
+}
+$('#billingSearch').addEventListener('input', ()=>{
+  billingSearchTerm = $('#billingSearch').value;
+  renderBillingPage();
+});
+
+function openBillingModal(custId){
+  activeBillingCustomerId = custId;
+  renderBillingModal(custId);
+  $('#billingModal').classList.add('show');
+}
+function renderBillingModal(custId){
+  const cust = customersList.find(c=>c.id===custId);
+  if (!cust){
+    $('#billingModal').classList.remove('show');
+    activeBillingCustomerId = null;
+    return;
+  }
+  $('#billingModalTitle').textContent = cust.name || 'Customer Billing';
+  $('#billingModalMeta').innerHTML = `${escapeHtml(cust.phone||'—')} · ${escapeHtml(cust.address||'No address on file')}`;
+
+  const overrides = cust.priceOverrides || {};
+  $('#billingRateGrid').innerHTML = products.length ? products.map(p=>{
+    const val = (overrides[p.id]!=null) ? overrides[p.id] : '';
+    return `<div class="rate-row">
+      <div><div class="nm">${escapeHtml(p.name)}</div><div class="un">${escapeHtml(p.unit||'')} · catalog ${money(p.price)}</div></div>
+      <input type="number" min="0" step="0.5" placeholder="${money(p.price)}" data-rate-input="${p.id}" value="${val}">
+    </div>`;
+  }).join('') : `<div class="field-hint">No products yet — add products first.</div>`;
+
+  const dayMap = buildCustomerDayMap(cust);
+  const monthMap = buildCustomerMonthMap(dayMap);
+  const months = [...monthMap.keys()].sort().reverse();
+  $('#billingMonthTable').innerHTML = months.length ? `
+    <tr><th>Month</th><th>Deliveries</th><th style="text-align:right;">Total</th></tr>
+    ${months.map(m=>{ const row = monthMap.get(m); return `<tr><td>${monthLabel(m)}</td><td>${row.deliveries}</td><td class="amt">${money(row.total)}</td></tr>`; }).join('')}
+  ` : `<tr><td class="field-hint">No billed deliveries yet.</td></tr>`;
+
+  const dates = [...dayMap.keys()].sort().reverse();
+  $('#billingDayList').innerHTML = dates.length ? dates.map((date, idx)=>{
+    const day = dayMap.get(date);
+    const dayTotal = day.itemsTotal + deliveryChargeFor(day.itemsTotal);
+    const dateLabel = new Date(date+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+    return `<div class="bday-card ${idx===0?'open':''}">
+      <div class="bday-head" data-bday-toggle>
+        <span>${dateLabel}</span>
+        <span>${money(dayTotal)}</span>
+      </div>
+      <div class="bday-body">
+        ${day.items.map(it=>`<div class="bday-item"><span>${escapeHtml(it.name)} · ${it.qty} × ${money(it.price)}</span><span>${money((it.price||0)*(it.qty||0))}</span></div>`).join('')}
+      </div>
+    </div>`;
+  }).join('') : `<div class="empty-state"><div class="ic">🧾</div>No purchases yet.</div>`;
+  $$('#billingDayList [data-bday-toggle]').forEach(el=>el.addEventListener('click', ()=> el.closest('.bday-card').classList.toggle('open')));
+}
+$$('#billingModal [data-close]').forEach(b=>b.addEventListener('click', ()=>{
+  $('#billingModal').classList.remove('show');
+  activeBillingCustomerId = null;
+}));
+$('#billingSaveRatesBtn').addEventListener('click', async ()=>{
+  if (!activeBillingCustomerId) return;
+  const btn = $('#billingSaveRatesBtn');
+  btn.disabled = true;
+  try{
+    const overrides = {};
+    // Any product left blank is written as null so Firebase's update()
+    // actually removes that override (rather than leaving a stale rate
+    // behind) — the customer then just falls back to the catalog price.
+    products.forEach(p=>{
+      const inp = document.querySelector(`[data-rate-input="${p.id}"]`);
+      const v = inp ? inp.value.trim() : '';
+      overrides[p.id] = (v !== '' && !isNaN(Number(v))) ? Number(v) : null;
+    });
+    await update(ref(db,'customers/'+activeBillingCustomerId+'/priceOverrides'), overrides);
+    showToast('Rates saved for this customer');
+  } catch(e){ console.error(e); showToast('Could not save rates'); }
+  finally { btn.disabled = false; }
+});
+
+$('#preloaderRetry').addEventListener('click', ()=>location.reload());
 
 /* ================= NAV ================= */
 $$('.navlist button[data-page]').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     $$('.navlist button[data-page]').forEach(b=>b.classList.toggle('active', b===btn));
     const page = btn.getAttribute('data-page');
-    ['products','categories','banners'].forEach(p=>{
+    ['products','categories','banners','notifications','billing'].forEach(p=>{
       $('#page-'+p).style.display = (p===page) ? '' : 'none';
     });
   });
@@ -538,7 +1120,7 @@ function renderProductsPage(){
     const catName = categories.find(c=>c.id===p.cat)?.name || p.cat || '—';
     const thumb = (p.images&&p.images[0]) || p.image;
     return `<div class="prow" data-pid="${p.id}">
-      <div class="p-thumb">${thumb?`<img src="${thumb}" loading="lazy">`:(p.emoji||'📦')}</div>
+      <div class="p-thumb">${thumb?`<img src="${thumb}" loading="lazy" decoding="async" fetchpriority="low">`:(p.emoji||'📦')}</div>
       <div><div class="p-name">${escapeHtml(p.name)}${dupeIds.has(p.id)?`<span class="badge badge-dupe" title="Same name + category as another product">DUPLICATE</span>`:''}</div><div class="p-meta">${escapeHtml(p.unit||'')}</div></div>
       <div class="p-metawrap">
         <div class="col-cat">${escapeHtml(catName)}</div>
@@ -561,7 +1143,11 @@ function renderProductsPage(){
   });
   $$('[data-edit-product]').forEach(btn=>btn.addEventListener('click', ()=> openProductModal(btn.getAttribute('data-edit-product'))));
 }
-$('#productSearch').addEventListener('input', renderProductsPage);
+let productSearchTimer = null;
+$('#productSearch').addEventListener('input', ()=>{
+  clearTimeout(productSearchTimer);
+  productSearchTimer = setTimeout(renderProductsPage, 120);
+});
 $('#addProductBtn').addEventListener('click', ()=> openProductModal(null));
 
 /* ---- Product modal ---- */
@@ -669,7 +1255,7 @@ function renderCategoriesPage(){
     const count = products.filter(p=>p.cat===c.id).length;
     return `<div class="cat-card">
       <div class="top">
-        <div class="ic-tile">${c.image?`<img src="${c.image}">`:c.icon||'🗂️'}</div>
+        <div class="ic-tile">${c.image?`<img src="${c.image}" loading="lazy" decoding="async" fetchpriority="low">`:c.icon||'🗂️'}</div>
         <div><div class="nm">${escapeHtml(c.name)}</div><div class="id">${escapeHtml(c.id)}</div></div>
       </div>
       <div class="count">${count} product${count===1?'':'s'}</div>
@@ -801,6 +1387,88 @@ $('#bfDeleteBtn').addEventListener('click', async ()=>{
   catch(e){ console.error(e); showToast('Could not delete banner'); }
 });
 
+/* ================= NOTIFICATIONS PAGE ================= */
+/* Sends a broadcast push to every OneSignal-subscribed customer via the
+   same serverless endpoint customerapp.html uses for per-customer pushes
+   (see /api/send-notification.js) — just without an externalId, which
+   that endpoint treats as "send to everyone subscribed" instead of one
+   specific customer. The REST API Key that actually authorizes sending
+   stays server-side in that function; this admin panel never touches it. */
+let notifHistory = [];
+onValue(ref(db,'adminNotifications'), snap=>{
+  const val = snap.val() || {};
+  notifHistory = Object.entries(val)
+    .map(([id,v])=>({id, ...v}))
+    .sort((a,b)=>(b.sentAt||0)-(a.sentAt||0))
+    .slice(0,20);
+  renderNotifHistory();
+});
+function renderNotifHistory(){
+  const host = $('#notifHistoryList');
+  if (!notifHistory.length){
+    host.innerHTML = `<div class="empty-state"><div class="ic">🔔</div>No notifications sent yet.</div>`;
+    return;
+  }
+  host.innerHTML = notifHistory.map(n=>{
+    const when = n.sentAt ? new Date(n.sentAt).toLocaleString() : '';
+    const failed = n.status === 'failed';
+    return `<div class="prow" style="grid-template-columns:1fr auto;">
+      <div>
+        <div class="p-name">${escapeHtml(n.title||'')}</div>
+        <div class="p-meta">${escapeHtml(n.message||'')}</div>
+        ${failed && n.error ? `<div class="p-meta" style="color:var(--danger); margin-top:3px;">${escapeHtml(n.error)}</div>` : ''}
+      </div>
+      <div style="text-align:right;">
+        <div class="badge ${failed?'badge-oos':'badge-active'}">${failed?'Failed':'Sent'}</div>
+        <div class="p-meta" style="margin-top:4px;">${when}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+$('#notifMessage').addEventListener('input', ()=>{
+  $('#notifCharCount').textContent = $('#notifMessage').value.length;
+});
+$('#notifSendBtn').addEventListener('click', async ()=>{
+  const btn = $('#notifSendBtn');
+  const title = $('#notifTitle').value.trim();
+  const message = $('#notifMessage').value.trim();
+  const statusEl = $('#notifStatus');
+  if (!message){ showToast('Message is required'); return; }
+  if (!confirm(`Send this notification to ALL customers?\n\nTitle: ${title || '(default)'}\nMessage: ${message}`)) return;
+
+  btn.disabled = true;
+  statusEl.textContent = 'Sending…';
+  let ok = false;
+  let errDetail = '';
+  try{
+    const res = await fetch('/api/send-notification', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ broadcast:true, title, message })
+    });
+    ok = res.ok;
+    if (!ok){ errDetail = await res.text(); console.error('Send failed', errDetail); }
+  } catch(e){ errDetail = String(e); console.error('Send failed', e); }
+
+  try{
+    await push(ref(db,'adminNotifications'), {
+      title, message, sentAt: Date.now(), status: ok ? 'sent' : 'failed',
+      error: ok ? null : (errDetail || '').slice(0, 300)
+    });
+  } catch(e){ console.error('Could not log notification', e); }
+
+  statusEl.textContent = '';
+  btn.disabled = false;
+  if (ok){
+    showToast('Notification sent to all customers');
+    $('#notifTitle').value = '';
+    $('#notifMessage').value = '';
+    $('#notifCharCount').textContent = '0';
+  } else {
+    showToast('Could not send — check Vercel function logs');
+  }
+});
+
 /* Click outside modal card to close */
 $$('.modal-overlay').forEach(ov=> ov.addEventListener('click', e=>{
   if (e.target!==ov) return;
@@ -808,6 +1476,7 @@ $$('.modal-overlay').forEach(ov=> ov.addEventListener('click', e=>{
   if (ov.id==='productModal') editingProductId = null;
   if (ov.id==='categoryModal') editingCategoryId = null;
   if (ov.id==='bannerModal') editingBannerId = null;
+  if (ov.id==='billingModal') activeBillingCustomerId = null;
 }));
 </script>
 </body>
