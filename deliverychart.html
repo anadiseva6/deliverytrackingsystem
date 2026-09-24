@@ -603,11 +603,11 @@ const ADMIN_PASSWORD = 'admin123';
 // Keys are unchanged from the original data model so existing Firebase records keep working.
 const PRODUCTS = [
   { key:'milk',   label:'Milk',   unit:'Ltr', short:'L',  css:'milk'   },
-  { key:'paneer', label:'Paneer', unit:'Kg',  short:'kg', css:'paneer' },
-  { key:'ghee',   label:'Ghee',   unit:'Ltr', short:'L',  css:'ghee'   },
-  { key:'chach',  label:'Chaach', unit:'Ltr', short:'L',  css:'chach'  },
-  { key:'butter', label:'Butter', unit:'Kg',  short:'kg', css:'butter' },
-  { key:'curd',   label:'Curd',   unit:'Kg',  short:'kg', css:'curd'   }
+  { key:'paneer', label:'Paneer', unit:'Pack',  short:'Pac', css:'paneer' },
+  { key:'ghee',   label:'Ghee',   unit:'Box', short:'Box',  css:'ghee'   },
+  { key:'chach',  label:'Chaach', unit:'Bottle', short:'Btl',  css:'chach'  },
+  { key:'butter', label:'Butter', unit:'Pack',  short:'Pac', css:'butter' },
+  { key:'curd',   label:'Curd',   unit:'Pack',  short:'Pac', css:'curd'   }
 ];
 
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
