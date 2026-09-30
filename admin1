@@ -1,0 +1,2403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anadi Godham — Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700;9..144,800;9..144,900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --cream:#F8F7F4; --paper:#F1EFE9; --card:#FFFFFF; --card-2:#F5F4F0;
+  --ink:#17160F; --ink-soft:#6E6D64; --ink-mute:#A7A59A;
+  --line:#E7E5DD;
+  --leaf:#20281F; --leaf-dark:#0F140E; --leaf-light:#EAECE6;
+  --gold:#8A7A4F; --gold-light:#F1ECDD;
+  --danger:#A8402F; --danger-light:#F6E4DF;
+  --grad-brand:linear-gradient(135deg,#2A2E22 0%,#15140F 100%);
+  --grad-navy:linear-gradient(160deg,#141309 0%,#1B1A12 45%,#201E15 78%,#25231A 100%);
+  --radius-sm:10px; --radius:14px; --radius-lg:20px;
+  --shadow-sm:0 1px 2px rgba(23,22,15,.05), 0 2px 9px rgba(23,22,15,.05);
+  --shadow-md:0 4px 12px rgba(23,22,15,.06), 0 14px 28px rgba(23,22,15,.08);
+  --shadow-lg:0 20px 46px rgba(15,14,9,.22);
+  --ease:cubic-bezier(.22,.8,.36,1);
+}
+*{box-sizing:border-box; margin:0; padding:0;}
+body{font-family:'Inter',sans-serif; background:var(--paper); color:var(--ink); font-size:14px; -webkit-font-smoothing:antialiased;}
+h1,h2,h3,.display{font-family:'Fraunces',serif; letter-spacing:-.01em;}
+.mono{font-family:'JetBrains Mono',monospace;}
+button{font-family:inherit; cursor:pointer;}
+input,textarea,select{font-family:inherit;}
+img{display:block; max-width:100%;}
+::-webkit-scrollbar{width:8px; height:8px;}
+::-webkit-scrollbar-thumb{background:var(--ink-mute); border-radius:99px;}
+
+
+/* ============ FAST ADMIN PRELOADER ============ */
+html.is-loading, body.is-loading{overflow:hidden;}
+#adminPreloader{
+  position:fixed; inset:0; z-index:2000;
+  display:flex; align-items:center; justify-content:center;
+  padding:20px; background:var(--paper);
+  opacity:1; visibility:visible;
+  transition:opacity .28s var(--ease), visibility .28s var(--ease);
+}
+#adminPreloader.hide{opacity:0; visibility:hidden; pointer-events:none;}
+.pre-shell{width:min(100%,760px);}
+.pre-brand{
+  display:flex; align-items:center; gap:12px;
+  margin-bottom:18px; padding-left:2px;
+}
+.pre-mark{
+  width:42px; height:42px; border-radius:12px;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--grad-brand); color:#fff;
+  font:800 18px 'Fraunces',serif;
+  box-shadow:0 10px 24px rgba(20,20,14,.16);
+}
+.pre-brand-tx{font:800 16px 'Fraunces',serif; color:var(--ink); line-height:1.1;}
+.pre-brand-tx span{
+  display:block; margin-top:3px; font:700 9px 'Inter',sans-serif;
+  letter-spacing:.08em; color:var(--ink-mute);
+}
+.pre-card{
+  background:var(--card); border:1px solid var(--line);
+  border-radius:18px; overflow:hidden; box-shadow:var(--shadow-md);
+}
+.pre-top{height:58px; border-bottom:1px solid var(--line); background:var(--card-2);}
+.pre-body{display:grid; grid-template-columns:180px 1fr; min-height:260px;}
+.pre-side{background:#ecebe5; border-right:1px solid var(--line); padding:16px;}
+.pre-side-line,.pre-line,.pre-thumb{
+  position:relative; overflow:hidden; background:#d9d9d2; border-radius:8px;
+}
+.pre-side-line{height:11px; margin-bottom:12px;}
+.pre-side-line:nth-child(1){width:68%;}
+.pre-side-line:nth-child(2){width:88%;}
+.pre-side-line:nth-child(3){width:74%;}
+.pre-side-line:nth-child(4){width:82%;}
+.pre-main{padding:18px;}
+.pre-main-head{display:flex; gap:10px; margin-bottom:16px;}
+.pre-line{height:13px; width:160px;}
+.pre-line.short{width:95px; margin-left:auto;}
+.pre-rows{display:grid; gap:9px;}
+.pre-row{height:56px; border:1px solid var(--line); border-radius:10px; display:grid; grid-template-columns:40px 1fr 80px; gap:10px; align-items:center; padding:8px 10px;}
+.pre-thumb{width:40px;height:40px;border-radius:9px;}
+.pre-row .pre-line{height:9px; width:75%;}
+.pre-row .pre-line:last-child{width:48px; justify-self:end;}
+.pre-shimmer::after{
+  content:''; position:absolute; inset:0; transform:translateX(-120%);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.65),transparent);
+  animation:adminShimmer 1.15s ease-in-out infinite;
+}
+@keyframes adminShimmer{100%{transform:translateX(120%);}}
+.pre-status{
+  margin-top:14px; font-size:11.5px; color:var(--ink-soft);
+  display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.pre-spinner{
+  width:14px;height:14px;border-radius:50%;
+  border:2px solid #d8d6cb;border-top-color:var(--leaf-dark);
+  animation:adminSpin .72s linear infinite;
+}
+@keyframes adminSpin{to{transform:rotate(360deg);}}
+.admin-loading-blur #app{filter:blur(0);}
+
+#adminPreloader .pre-error{
+  margin:14px auto 0; width:min(100%,420px); padding:12px 14px;
+  background:var(--card); border:1px solid #ead5cf; border-radius:12px;
+  display:flex; align-items:center; gap:10px; justify-content:space-between;
+  color:var(--danger); font-size:11.5px; box-shadow:var(--shadow-sm);
+}
+#adminPreloader .pre-error[hidden]{display:none;}
+#adminPreloader .pre-error-text{line-height:1.4; flex:1;}
+#adminPreloader .pre-retry{
+  flex:0 0 auto; border:none; border-radius:9px; padding:8px 11px;
+  background:var(--grad-brand); color:#fff; font:700 11px 'Inter',sans-serif; cursor:pointer;
+}
+
+#adminLoadNotice{
+  display:none; margin:0 0 16px; padding:11px 13px;
+  background:var(--card); border:1px solid var(--line);
+  border-radius:12px; color:var(--ink-soft); font-size:12px;
+}
+#adminLoadNotice.show{display:flex; align-items:center; gap:9px;}
+#adminLoadNotice .dot{
+  width:7px;height:7px;border-radius:50%;background:var(--gold);
+  box-shadow:0 0 0 5px var(--gold-light); flex:0 0 auto;
+}
+#adminLoadNotice.error .dot{background:var(--danger);box-shadow:0 0 0 5px var(--danger-light);}
+
+/* ============ LOGIN GATE ============ */
+/* Basic screen-lock, not real auth — good enough to keep casual visitors
+   out of an admin link, but NOT a substitute for restricting writes to
+   this data with Firebase security rules. Change ADMIN_PASSWORD below
+   before sharing this file with anyone. */
+#gate{position:fixed; inset:0; z-index:999; background:var(--grad-navy); display:flex; align-items:center; justify-content:center; padding:20px;}
+#gate.hide{display:none;}
+.gate-card{width:100%; max-width:360px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.1); border-radius:var(--radius-lg); padding:32px 28px; backdrop-filter:blur(6px);}
+.gate-card h1{color:#fff; font-size:22px; font-weight:800; margin-bottom:4px;}
+.gate-card p{color:#B7B4A6; font-size:12.5px; margin-bottom:20px; line-height:1.5;}
+.gate-card input{width:100%; padding:12px 14px; border-radius:10px; border:1px solid rgba(255,255,255,.18); background:rgba(255,255,255,.06); color:#fff; font-size:14px; margin-bottom:12px;}
+.gate-card input::placeholder{color:#7A7869;}
+.gate-card button{width:100%; padding:12px 0; border:none; border-radius:10px; background:var(--gold); color:#fff; font-weight:700; font-size:13.5px; letter-spacing:.01em;}
+.gate-err{color:#E4988A; font-size:12px; margin-top:8px; display:none;}
+.gate-err.show{display:block;}
+
+/* ============ SHELL ============ */
+#app{display:none; min-height:100vh;}
+#app.show{display:flex;}
+.sidebar{width:220px; flex:0 0 220px; background:var(--grad-brand); color:#fff; display:flex; flex-direction:column; padding:22px 14px; position:sticky; top:0; height:100vh;}
+.brand{display:flex; align-items:center; gap:10px; padding:0 8px 22px; border-bottom:1px solid rgba(255,255,255,.1); margin-bottom:14px;}
+.brand .mark{width:34px; height:34px; border-radius:10px; background:var(--gold); display:flex; align-items:center; justify-content:center; font-family:'Fraunces'; font-weight:800; font-size:16px; flex:0 0 34px;}
+.brand .tx{font-family:'Fraunces'; font-weight:800; font-size:14.5px; line-height:1.25;}
+.brand .tx span{display:block; font-size:9.5px; font-weight:600; color:#ADAA9C; letter-spacing:.04em;}
+.navlist{display:flex; flex-direction:column; gap:2px;}
+.navlist button{display:flex; align-items:center; gap:10px; padding:10px 12px; border:none; background:none; color:#C9C6B8; border-radius:9px; font-size:13px; font-weight:600; text-align:left;}
+.navlist button .ic{font-size:15px; width:18px; text-align:center;}
+.navlist button:hover{background:rgba(255,255,255,.06); color:#fff;}
+.navlist button.active{background:var(--gold); color:#fff;}
+.sidebar-foot{margin-top:auto; padding-top:14px; border-top:1px solid rgba(255,255,255,.1);}
+.sidebar-foot button{width:100%; padding:9px 0; background:rgba(255,255,255,.07); border:none; border-radius:9px; color:#E7E5DD; font-size:12px; font-weight:600;}
+
+main{flex:1; min-width:0; padding:28px 34px 60px; max-width:1180px;}
+.page-head{display:flex; align-items:flex-end; justify-content:space-between; gap:16px; margin-bottom:22px; flex-wrap:wrap;}
+.page-head h2{font-size:24px; font-weight:800;}
+.page-head .sub{color:var(--ink-soft); font-size:12.5px; margin-top:3px;}
+.btn{display:inline-flex; align-items:center; gap:7px; border:none; border-radius:10px; padding:10px 16px; font-weight:700; font-size:12.5px; letter-spacing:.01em; transition:transform .12s var(--ease);}
+.btn:active{transform:scale(.97);}
+.btn:disabled{opacity:.6; cursor:not-allowed; transform:none;}
+.btn-primary{background:var(--grad-brand); color:#fff; box-shadow:var(--shadow-sm);}
+.btn-ghost{background:var(--card); border:1px solid var(--line); color:var(--ink);}
+.btn-danger{background:var(--danger-light); color:var(--danger);}
+.btn-sm{padding:6px 11px; font-size:11.5px; border-radius:8px;}
+
+.toolbar{display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; align-items:center;}
+.search-box{position:relative; flex:1; min-width:200px; max-width:320px;}
+.search-box input{width:100%; padding:9px 12px 9px 32px; border-radius:9px; border:1px solid var(--line); background:var(--card); font-size:12.5px;}
+.search-box .ic{position:absolute; left:11px; top:50%; transform:translateY(-50%); opacity:.5; font-size:12px;}
+.chip-filter{display:flex; gap:6px; flex-wrap:wrap;}
+.chip-filter button{padding:7px 13px; border-radius:99px; border:1px solid var(--line); background:var(--card); font-size:11.5px; font-weight:700; color:var(--ink-soft);}
+.chip-filter button.active{background:var(--leaf); color:#fff; border-color:var(--leaf);}
+
+
+/* ---- usage tab ---- */
+.ustats{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-bottom:16px;}
+.ustat{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; box-shadow:var(--shadow-sm);}
+.ustat .n{font:800 26px 'Fraunces',serif; line-height:1.1;}
+.ustat .l{font-size:10.5px; font-weight:800; letter-spacing:.03em; color:var(--ink-soft); text-transform:uppercase; margin-top:4px;}
+.udot{display:inline-block; width:8px; height:8px; border-radius:50%; background:#c9c7bc; margin-right:6px;}
+.udot.on{background:#2f9e44; box-shadow:0 0 0 4px rgba(47,158,68,.18);}
+.uev{display:flex; gap:10px; padding:8px 12px; font-size:12.5px; border-bottom:1px solid var(--line);}
+.uev:last-child{border-bottom:none;}
+.uev .t{font-family:'JetBrains Mono',monospace; color:var(--ink-mute); min-width:120px; font-size:11.5px;}
+.unote{background:var(--gold-light); color:#5c4f27; border-radius:12px; padding:10px 14px; font-size:12px; margin-bottom:14px; line-height:1.5;}
+
+
+/* ---- product-wise bill summary ---- */
+.psum{border:1px solid var(--line); border-radius:12px; overflow:hidden;}
+.psum-row{display:flex; justify-content:space-between; align-items:baseline; gap:12px; flex-wrap:wrap; padding:10px 14px; border-bottom:1px solid var(--line); font-size:13px;}
+.psum-row:last-child{border-bottom:none;}
+.psum-row .amt{font-family:'JetBrains Mono',monospace; font-weight:800; white-space:nowrap;}
+.psum-row .calc{color:var(--ink-soft);}
+.psum-row.muted{color:var(--ink-soft); font-size:12.5px;}
+.psum-row.grand{background:var(--leaf); color:#fff; font-weight:800; font-size:15px;}
+.psum-row.grand .calc{color:#fff;}
+.psum-head{display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:10px;}
+.psum-head select{padding:7px 10px; border:1px solid var(--line); border-radius:10px; background:var(--card); font-size:12.5px; font-weight:600;}
+
+/* ---- product table ---- */
+.ptable{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow-sm);}
+.prow{display:grid; grid-template-columns:52px 1.6fr .9fr .8fr .8fr 1fr auto; gap:12px; align-items:center; padding:11px 14px; border-bottom:1px solid var(--line);}
+.prow.head{background:var(--card-2); font-size:10.5px; font-weight:800; letter-spacing:.03em; color:var(--ink-soft); text-transform:uppercase;}
+.prow:last-child{border-bottom:none;}
+/* p-metawrap groups category/price/stock/status so it can act as 4 plain
+   grid columns on desktop (via display:contents) but collapse into one
+   wrapped row on mobile — see the responsive block below. Nothing here is
+   ever display:none anymore, so stock status is always visible. */
+.p-metawrap{display:contents;}
+.p-thumb{width:42px; height:42px; border-radius:9px; background:var(--card-2); overflow:hidden; display:flex; align-items:center; justify-content:center; font-size:19px;}
+.p-thumb img{width:100%; height:100%; object-fit:cover;}
+.p-name{font-weight:700; font-size:13px; display:flex; align-items:center; gap:6px; flex-wrap:wrap;}
+.p-meta{font-size:10.5px; color:var(--ink-mute); margin-top:1px;}
+.p-price{font-family:'JetBrains Mono'; font-weight:700; font-size:12.5px;}
+.p-price .mrp{color:var(--ink-mute); text-decoration:line-through; font-weight:600; font-size:10.5px; margin-left:5px;}
+.stock-input{width:64px; padding:6px 8px; border-radius:7px; border:1px solid var(--line); font-size:12px; text-align:center;}
+.stock-unlimited{color:var(--ink-mute); font-size:11px; font-style:italic;}
+.badge{display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:99px; font-size:10px; font-weight:800; letter-spacing:.02em;}
+.badge-active{background:var(--leaf-light); color:var(--leaf);}
+.badge-oos{background:var(--danger-light); color:var(--danger);}
+.badge-soon{background:var(--gold-light); color:var(--gold);}
+.badge-dupe{background:#FDE9D8; color:#9A5B12;}
+.row-actions{display:flex; gap:6px; justify-content:flex-end;}
+.icon-btn{width:30px; height:30px; border-radius:8px; border:1px solid var(--line); background:var(--card); display:flex; align-items:center; justify-content:center; font-size:13px;}
+.icon-btn:hover{background:var(--card-2);}
+.empty-state{padding:60px 20px; text-align:center; color:var(--ink-mute);}
+.empty-state .ic{font-size:34px; margin-bottom:10px;}
+.dupe-banner{display:flex; align-items:center; gap:10px; background:var(--gold-light); color:#6B5321; border:1px solid #E6D9AF; border-radius:var(--radius); padding:12px 16px; margin-bottom:14px; font-size:12.5px; font-weight:600;}
+.dupe-banner .btn{margin-left:auto; flex:0 0 auto;}
+
+/* ---- category & banner cards ---- */
+.grid-cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:14px;}
+.cat-card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow-sm); display:flex; flex-direction:column; gap:10px;}
+.cat-card .top{display:flex; align-items:center; gap:11px;}
+.cat-card .ic-tile{width:44px; height:44px; border-radius:11px; background:var(--card-2); display:flex; align-items:center; justify-content:center; font-size:20px; overflow:hidden;}
+.cat-card .ic-tile img{width:100%; height:100%; object-fit:cover;}
+.cat-card .nm{font-weight:800; font-size:14px;}
+.cat-card .id{font-size:10.5px; color:var(--ink-mute); font-family:'JetBrains Mono';}
+.cat-card .count{font-size:11.5px; color:var(--ink-soft);}
+.cat-card .foot{display:flex; gap:8px; margin-top:auto;}
+
+.ban-card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow-sm);}
+.ban-preview{aspect-ratio:2.1/1; display:flex; flex-direction:column; justify-content:center; padding:16px; color:#fff; position:relative; background-size:cover; background-position:center;}
+.ban-preview .ey{font-size:9.5px; font-weight:800; letter-spacing:.06em; color:#D8D4C0; margin-bottom:4px;}
+.ban-preview .tt{font-family:'Fraunces'; font-size:15px; font-weight:800; line-height:1.2;}
+.ban-preview .sb{font-size:10.5px; color:#D8D4C0; margin-top:3px;}
+.ban-foot{display:flex; gap:8px; padding:10px 12px;}
+
+
+
+/* ---- delivery chart ---- */
+.dc-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px;}
+.dc-stat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow-sm);}
+.dc-stat .n{font:800 24px 'Fraunces',serif;line-height:1.1;}
+.dc-stat .l{font-size:10.5px;font-weight:800;letter-spacing:.03em;color:var(--ink-soft);text-transform:uppercase;margin-top:4px;}
+.dc-group{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm);margin-bottom:14px;}
+.dc-group-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;background:var(--card-2);border-bottom:1px solid var(--line);flex-wrap:wrap;}
+.dc-group-title{font-size:15px;font-weight:800;}
+.dc-group-meta{font-size:11px;color:var(--ink-soft);margin-top:3px;}
+.dc-table-wrap{overflow:auto;}
+.dc-table{width:100%;border-collapse:collapse;min-width:980px;font-size:11.5px;}
+.dc-table th,.dc-table td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;}
+.dc-table th{font-size:9.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink-soft);background:#faf9f6;font-weight:800;white-space:nowrap;}
+.dc-table tr:last-child td{border-bottom:none;}
+.dc-customer{font-weight:800;font-size:12px;}
+.dc-sub{font-size:10px;color:var(--ink-soft);margin-top:2px;line-height:1.35;}
+.dc-qty{font-family:'JetBrains Mono',monospace;font-weight:800;white-space:nowrap;}
+.dc-other{max-width:280px;line-height:1.45;}
+.dc-empty{padding:42px 20px;text-align:center;color:var(--ink-mute);}
+.dc-person-badge{display:inline-flex;align-items:center;padding:3px 8px;border-radius:99px;background:var(--leaf-light);color:var(--leaf);font-size:9.5px;font-weight:800;}
+@media(max-width:860px){
+  .dc-table{min-width:900px;}
+}
+
+/* ============ RENDER PERFORMANCE ============ */
+.ptable{contain:layout paint style;}
+.prow{content-visibility:auto; contain-intrinsic-size:70px;}
+img{content-visibility:auto;}
+
+/* ============ MODAL ============ */
+.modal-overlay{position:fixed; inset:0; background:rgba(15,14,9,.5); z-index:500; display:none; align-items:flex-start; justify-content:center; padding:30px 16px; overflow-y:auto;}
+.modal-overlay.show{display:flex;}
+.modal{width:100%; max-width:560px; background:var(--card); border-radius:var(--radius-lg); box-shadow:var(--shadow-lg); overflow:hidden; margin-bottom:30px;}
+.modal-head{display:flex; align-items:center; justify-content:space-between; padding:18px 22px; border-bottom:1px solid var(--line);}
+.modal-head h3{font-size:16px; font-weight:800;}
+.modal-close{width:30px; height:30px; border-radius:8px; border:none; background:var(--card-2); font-size:14px;}
+.modal-body{padding:20px 22px; display:flex; flex-direction:column; gap:14px; max-height:70vh; overflow-y:auto;}
+.field{display:flex; flex-direction:column; gap:5px;}
+.field label{font-size:11.5px; font-weight:700; color:var(--ink-soft);}
+.field input,.field select,.field textarea{padding:10px 12px; border-radius:9px; border:1px solid var(--line); font-size:13px; background:var(--card);}
+.field textarea{resize:vertical; min-height:60px;}
+.field-row{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+.field-hint{font-size:10.5px; color:var(--ink-mute);}
+.check-row{display:flex; align-items:center; gap:8px; font-size:12.5px; font-weight:600;}
+.check-row input{width:16px; height:16px;}
+.img-row{display:flex; gap:8px; align-items:center;}
+.img-row input{flex:1;}
+.img-row .rm{width:32px; height:32px; flex:0 0 32px; border-radius:8px; border:1px solid var(--line); background:var(--card); font-size:13px;}
+.add-img-btn{align-self:flex-start; font-size:11.5px; font-weight:700; color:var(--gold); background:none; border:none; padding:4px 0;}
+.modal-foot{display:flex; justify-content:space-between; align-items:center; padding:16px 22px; border-top:1px solid var(--line); gap:10px;}
+
+/* ---- billing page ---- */
+.bill-cust-row{cursor:pointer;}
+.bill-cust-row:hover{background:var(--card-2);}
+.bill-mini-stat{font-family:'JetBrains Mono'; font-weight:700; font-size:12.5px;}
+.modal.wide{max-width:760px;}
+.billing-section-title{font-size:13px; font-weight:800; margin:18px 0 10px;}
+.billing-section-title:first-child{margin-top:0;}
+.rate-grid{display:flex; flex-direction:column; gap:8px; max-height:260px; overflow-y:auto; padding-right:4px;}
+.rate-row{display:grid; grid-template-columns:1fr 120px; gap:10px; align-items:center; padding:8px 10px; border:1px solid var(--line); border-radius:9px;}
+.rate-row .nm{font-size:12.5px; font-weight:700;}
+.rate-row .un{font-size:10.5px; color:var(--ink-mute); margin-top:1px;}
+.rate-row input{width:100%; padding:7px 9px; border-radius:7px; border:1px solid var(--line); font-size:12.5px; text-align:right;}
+.month-table{width:100%; border-collapse:collapse; font-size:12.5px;}
+.month-table th,.month-table td{padding:9px 10px; border-bottom:1px solid var(--line); text-align:left;}
+.month-table th{font-size:10.5px; text-transform:uppercase; letter-spacing:.03em; color:var(--ink-soft); font-weight:800;}
+.month-table td.amt{font-family:'JetBrains Mono'; font-weight:700; text-align:right;}
+.bday-card{border:1px solid var(--line); border-radius:10px; margin-bottom:8px; overflow:hidden;}
+.bday-head{display:flex; justify-content:space-between; align-items:center; padding:10px 12px; background:var(--card-2); cursor:pointer; font-size:12px; font-weight:700; gap:10px;}
+.bday-body{padding:2px 12px 10px; display:none;}
+.bday-card.open .bday-body{display:block;}
+.bday-item{display:flex; justify-content:space-between; gap:10px; font-size:11.5px; padding:6px 0; border-bottom:1px dashed var(--line);}
+.bday-item:last-child{border-bottom:none;}
+
+/* ============ ORDER MANAGEMENT (inside Billing modal) ============ */
+.omg-order{border:1px solid var(--line); border-radius:10px; margin-bottom:10px; overflow:hidden;}
+.omg-order.is-delivered{background:linear-gradient(135deg,#F2FAEC,#E7F5DC); border-color:#BEDFA3;}
+.omg-order-head{display:flex; justify-content:space-between; align-items:center; padding:10px 12px; background:var(--card-2); gap:10px; flex-wrap:wrap;}
+.omg-order.is-delivered .omg-order-head{background:transparent;}
+.omg-order-head .om-id{font-size:12px; font-weight:800;}
+.omg-order-head .om-meta{font-size:10.5px; color:var(--ink-mute); margin-top:1px;}
+.omg-items{padding:8px 12px 10px;}
+.omg-item{padding:7px 0; border-bottom:1px dashed var(--line);}
+.omg-item:last-child{border-bottom:none;}
+.omg-item .om-nm{font-size:12px; font-weight:700; margin-bottom:5px;}
+.omg-dates{display:flex; flex-wrap:wrap; gap:6px;}
+.omg-date{display:flex; align-items:center; gap:6px; background:var(--card); border:1px solid var(--line); border-radius:999px; padding:4px 4px 4px 10px; font-size:10px; font-weight:700;}
+.omg-date.rejected{background:var(--danger-light); border-color:#F1CFC7; color:var(--danger);}
+.omg-date.failed{background:var(--danger-light); border-color:#F1CFC7; color:var(--danger);}
+.omg-date.delivered{background:var(--leaf-light); border-color:#BEE7D2; color:var(--leaf);}
+.omg-date button{background:var(--card); border:1px solid var(--line); color:var(--ink-soft); font-size:8.5px; font-weight:800; padding:3px 7px; border-radius:999px; cursor:pointer;}
+.omg-date button.danger{color:var(--danger); border-color:#F1CFC7;}
+
+.toast{position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px); background:var(--leaf-dark); color:#fff; padding:11px 20px; border-radius:99px; font-size:12.5px; font-weight:600; opacity:0; pointer-events:none; transition:all .3s var(--ease); z-index:900; box-shadow:var(--shadow-md);}
+.toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+
+@media(max-width:860px){
+  #app.show{flex-direction:column;}
+  .sidebar{width:100%; flex:none; height:auto; position:relative; flex-direction:row; align-items:center; padding:14px 16px;}
+  .navlist{flex-direction:row; overflow-x:auto;}
+  .sidebar-foot{margin-top:0; margin-left:auto; padding-top:0; border-top:none;}
+  main{padding:20px 16px 50px;}
+  /* Card-style row on mobile: thumb + name + edit button on the first line,
+     category/price/stock/status wrap onto a second line underneath. Nothing
+     is hidden here anymore — this used to display:none the status badge and
+     price/category, and squash the edit button into a 40px column, which is
+     why stock status looked fine on desktop but vanished (or looked broken)
+     on phones. */
+  .prow.head{display:none;}
+  .prow{display:flex; flex-wrap:wrap; align-items:center; column-gap:10px; row-gap:8px; padding:12px 14px;}
+  .prow .p-thumb{flex:0 0 auto;}
+  .prow > div:nth-child(2){flex:1 1 auto; min-width:0;}
+  .prow .row-actions{flex:0 0 auto;}
+  .p-metawrap{display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; flex-basis:100%; order:5;}
+  .p-metawrap .col-cat{font-size:10.5px; color:var(--ink-soft); background:var(--card-2); padding:3px 8px; border-radius:99px;}
+  .p-metawrap .col-price{font-size:11.5px;}
+  .p-metawrap .col-stock{display:flex; align-items:center;}
+}
+
+/* ============ UX UPGRADE: modals, mobile, billing month view ============ */
+.modal-overlay{align-items:center; padding:16px; overflow:hidden; overscroll-behavior:contain;}
+.modal{display:flex; flex-direction:column; margin-bottom:0; max-height:calc(100vh - 32px); max-height:calc(100dvh - 32px);}
+.modal-head{flex:0 0 auto; background:var(--card);}
+.modal-foot{flex:0 0 auto; background:var(--card);}
+.modal-body{flex:1 1 auto; min-height:0; max-height:none; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain;}
+.modal-close{width:36px; height:36px; flex:0 0 36px;}
+#billingModal .modal-body>:nth-child(1){order:-3;}
+#billingModal .modal-body>:nth-child(4){order:-2;}   /* product-wise total first */
+#billingModal .modal-body>:nth-child(5){order:-1;}   /* monthly bill second */
+#usageModalBody{max-height:none;}
+.uev{align-items:flex-start;}
+.uev>span:last-child{min-width:0; word-break:break-word;}
+
+.mbar{display:flex; align-items:center; gap:8px; margin-bottom:14px; flex-wrap:wrap;}
+.mbar .mnav{width:40px; height:40px; border-radius:10px; border:1px solid var(--line); background:var(--card); font-size:16px; font-weight:800;}
+.mbar .mnav:disabled{opacity:.35;}
+.mbar select{flex:1; min-width:150px; max-width:240px; height:40px; padding:0 12px; border-radius:10px; border:1px solid var(--line); background:var(--card); font-size:14px; font-weight:800;}
+.mbar .mnow{height:40px; padding:0 14px; border-radius:10px; border:1px solid var(--line); background:var(--gold-light); color:var(--gold); font-weight:800; font-size:12px;}
+.badge-ordered{background:#E3F3E6; color:#1F7A34;}
+.badge-none{background:var(--gold-light); color:#8A5A12;}
+.badge-never{background:var(--danger-light); color:var(--danger);}
+.brow{grid-template-columns:1.6fr 1.1fr .7fr .9fr auto;}
+.urow{grid-template-columns:1.5fr 1.1fr 1fr .5fr .7fr auto;}
+.figs{display:contents;}
+.b-fig small{display:none;}
+.chip-filter button{min-height:36px;}
+
+@media(max-width:860px){
+  .sidebar{position:sticky; top:0; z-index:100; padding:10px 12px; gap:8px;}
+  .brand{padding:0; border:none; margin:0;}
+  .brand .tx{display:none;}
+  .navlist{flex:1; min-width:0; overflow-x:auto; scrollbar-width:none;}
+  .navlist::-webkit-scrollbar{display:none;}
+  .navlist button{white-space:nowrap; flex:0 0 auto; padding:9px 12px;}
+  .sidebar-foot button{width:auto; padding:9px 12px; white-space:nowrap;}
+  .prow.brow,.prow.urow{display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px 10px; align-items:center;}
+  .prow.head.brow,.prow.head.urow{display:none;}
+  .brow .figs,.urow .figs{display:flex; gap:16px; flex-wrap:wrap; align-items:center;}
+  .b-fig small{display:block; font-size:9.5px; font-weight:800; letter-spacing:.03em; text-transform:uppercase; color:var(--ink-mute); font-family:'Inter',sans-serif;}
+  .brow .b-cust{grid-column:1; grid-row:1;}
+  .brow .b-status{grid-column:2; grid-row:1; justify-self:end;}
+  .brow .figs{grid-column:1; grid-row:2;}
+  .brow .row-actions{grid-column:2; grid-row:2;}
+  .urow .u-cust{grid-column:1; grid-row:1;}
+  .urow .row-actions{grid-column:2; grid-row:1;}
+  .urow .u-last{grid-column:1/-1; grid-row:2;}
+  .urow .figs{grid-column:1/-1; grid-row:3;}
+  .chip-filter{flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; max-width:100%; padding-bottom:2px;}
+  .chip-filter button{white-space:nowrap; flex:0 0 auto;}
+  .search-box{max-width:none; flex-basis:100%;}
+}
+@media(max-width:640px){
+  .modal-overlay{padding:0; align-items:flex-end;}
+  .modal,.modal.wide{max-width:none; border-radius:20px 20px 0 0; max-height:92vh; max-height:92dvh;}
+  .modal-head{padding:14px 16px;}
+  .modal-body{padding:14px 16px calc(20px + env(safe-area-inset-bottom,0px)); gap:12px;}
+  .modal-foot{padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));}
+  .uev{flex-direction:column; gap:2px;}
+  .uev .t{min-width:0;}
+  .field-row{grid-template-columns:1fr;}
+  .rate-row{grid-template-columns:1fr 100px;}
+  .omg-date{padding:5px 5px 5px 10px; font-size:10.5px;}
+  .omg-date button{font-size:10px; padding:6px 9px;}
+  .bday-head{padding:12px;}
+  .month-table th,.month-table td{padding:8px 6px; font-size:12px;}
+  .mbar select{max-width:none;}
+}
+@media(max-width:480px){
+  main{padding:14px 12px 40px;}
+  .page-head h2{font-size:20px;}
+  .page-head{margin-bottom:14px;}
+  .ustats{grid-template-columns:repeat(2,1fr); gap:10px;}
+  .ustat{padding:12px;} .ustat .n{font-size:22px;}
+  .btn{min-height:40px;}
+  .btn-sm{min-height:34px;}
+  .toolbar .field{min-width:100% !important;}
+  input,select,textarea{font-size:16px !important;}
+  .toast{max-width:92vw; text-align:center;}
+}
+</style>
+</head>
+<body>
+
+
+<div id="adminPreloader" aria-live="polite">
+  <div class="pre-shell">
+    <div class="pre-brand">
+      <div class="pre-mark">अ</div>
+      <div class="pre-brand-tx">Anadi Godham<span>ADMIN PANEL</span></div>
+    </div>
+    <div class="pre-card">
+      <div class="pre-top pre-shimmer"></div>
+      <div class="pre-body">
+        <div class="pre-side">
+          <div class="pre-side-line pre-shimmer"></div>
+          <div class="pre-side-line pre-shimmer"></div>
+          <div class="pre-side-line pre-shimmer"></div>
+          <div class="pre-side-line pre-shimmer"></div>
+        </div>
+        <div class="pre-main">
+          <div class="pre-main-head"><div class="pre-line pre-shimmer"></div><div class="pre-line short pre-shimmer"></div></div>
+          <div class="pre-rows">
+            <div class="pre-row"><div class="pre-thumb pre-shimmer"></div><div class="pre-line pre-shimmer"></div><div class="pre-line pre-shimmer"></div></div>
+            <div class="pre-row"><div class="pre-thumb pre-shimmer"></div><div class="pre-line pre-shimmer"></div><div class="pre-line pre-shimmer"></div></div>
+            <div class="pre-row"><div class="pre-thumb pre-shimmer"></div><div class="pre-line pre-shimmer"></div><div class="pre-line pre-shimmer"></div></div>
+            <div class="pre-row"><div class="pre-thumb pre-shimmer"></div><div class="pre-line pre-shimmer"></div><div class="pre-line pre-shimmer"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="pre-status"><span class="pre-spinner"></span><span id="preloaderText">Loading live catalog…</span></div>
+    <div class="pre-error" id="preloaderError" hidden>
+      <div class="pre-error-text" id="preloaderErrorText">Unable to load the live catalog.</div>
+      <button type="button" class="pre-retry" id="preloaderRetry">Retry connection</button>
+    </div>
+  </div>
+</div>
+
+<div id="gate">
+  <div class="gate-card">
+    <h1>Anadi Godham</h1>
+    <p>Admin panel — enter the admin password to manage products, categories and banners. This is a basic screen-lock only; don't share this link publicly.</p>
+    <input type="password" id="gatePw" placeholder="Admin password" autocomplete="current-password">
+    <button id="gateBtn">Unlock Admin Panel</button>
+    <div class="gate-err" id="gateErr">Wrong password — try again.</div>
+  </div>
+</div>
+
+<div id="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="mark">अ</div>
+      <div class="tx">Anadi Godham<span>ADMIN PANEL</span></div>
+    </div>
+    <div class="navlist">
+      <button data-page="products" class="active"><span class="ic">🧺</span> Products</button>
+      <button data-page="categories"><span class="ic">🗂️</span> Categories</button>
+      <button data-page="banners"><span class="ic">🖼️</span> Banners</button>
+      <button data-page="notifications"><span class="ic">🔔</span> Notifications</button>
+      <button data-page="billing"><span class="ic">🧾</span> Billing</button>
+      <button data-page="deliverychart"><span class="ic">🚚</span> Delivery Chart</button>
+      <button data-page="usage"><span class="ic">📊</span> Usage</button>
+    </div>
+    <div class="sidebar-foot">
+      <button id="lockBtn">🔒 Lock panel</button>
+    </div>
+  </aside>
+
+  <main>
+    <div id="adminLoadNotice"><span class="dot"></span><span id="adminLoadNoticeText">Syncing your live catalog…</span></div>
+    <!-- ========== PRODUCTS PAGE ========== -->
+    <section id="page-products">
+      <div class="page-head">
+        <div>
+          <h2>Products</h2>
+          <div class="sub">Stock, images, pricing and availability — changes appear on the customer app in real time.</div>
+        </div>
+        <button class="btn btn-primary" id="addProductBtn">+ Add Product</button>
+      </div>
+      <div class="dupe-banner" id="dupeBanner" style="display:none;"></div>
+      <div class="toolbar">
+        <div class="search-box"><span class="ic">🔎</span><input type="text" id="productSearch" placeholder="Search products…"></div>
+        <div class="chip-filter" id="catFilterChips"></div>
+      </div>
+      <div class="ptable">
+        <div class="prow head">
+          <div></div>
+          <div>Product</div>
+          <div class="p-metawrap">
+            <div class="col-cat">Category</div>
+            <div class="col-price">Price</div>
+            <div class="col-stock">Stock</div>
+            <div class="col-status">Status</div>
+          </div>
+          <div></div>
+        </div>
+        <div id="productRows"></div>
+      </div>
+    </section>
+
+    <!-- ========== CATEGORIES PAGE ========== -->
+    <section id="page-categories" style="display:none;">
+      <div class="page-head">
+        <div>
+          <h2>Categories</h2>
+          <div class="sub">Create categories and assign products to them from the product form.</div>
+        </div>
+        <button class="btn btn-primary" id="addCategoryBtn">+ Add Category</button>
+      </div>
+      <div class="grid-cards" id="categoryGrid"></div>
+    </section>
+
+    <!-- ========== BANNERS PAGE ========== -->
+    <section id="page-banners" style="display:none;">
+      <div class="page-head">
+        <div>
+          <h2>Home Banners</h2>
+          <div class="sub">The rotating banner strip at the top of the customer app's home tab.</div>
+        </div>
+        <button class="btn btn-primary" id="addBannerBtn">+ Add Banner</button>
+      </div>
+      <div class="grid-cards" id="bannerGrid"></div>
+    </section>
+
+    <!-- ========== NOTIFICATIONS PAGE ========== -->
+    <section id="page-notifications" style="display:none;">
+      <div class="page-head">
+        <div>
+          <h2>Notifications</h2>
+          <div class="sub">Send a push notification straight to every customer who has the app open or installed — reaches their phone even if the app is closed.</div>
+        </div>
+      </div>
+
+      <div class="ptable" style="padding:20px 22px; display:flex; flex-direction:column; gap:14px; max-width:520px;">
+        <div class="field">
+          <label for="notifTitle">Title</label>
+          <input type="text" id="notifTitle" placeholder="e.g. Fresh stock arrived! 🥬" maxlength="60">
+        </div>
+        <div class="field">
+          <label for="notifMessage">Message</label>
+          <textarea id="notifMessage" placeholder="e.g. Farm-fresh vegetables just restocked. Order now before they run out!" maxlength="180" style="min-height:80px;"></textarea>
+          <div class="field-hint"><span id="notifCharCount">0</span>/180</div>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <button class="btn btn-primary" id="notifSendBtn">🔔 Send to All Customers</button>
+          <span class="field-hint" id="notifStatus"></span>
+        </div>
+      </div>
+
+      <div class="page-head" style="margin-top:30px;">
+        <div>
+          <h2 style="font-size:16px;">Recently Sent</h2>
+        </div>
+      </div>
+      <div class="ptable" id="notifHistoryList">
+        <div class="empty-state"><div class="ic">🔔</div>No notifications sent yet.</div>
+      </div>
+    </section>
+
+    <!-- ========== BILLING PAGE ========== -->
+    <section id="page-billing" style="display:none;">
+      <div class="page-head">
+        <div>
+          <h2>Billing</h2>
+          <div class="sub">Mahina chuno — dekho kis customer ne app se order kiya aur kisne nahi. Customer par tap karke poora bill dekho.</div>
+        </div>
+      </div>
+      <div class="mbar">
+        <button class="mnav" id="billingPrev" aria-label="Previous month">‹</button>
+        <select id="billingMonthSel" aria-label="Select month"></select>
+        <button class="mnav" id="billingNext" aria-label="Next month">›</button>
+        <button class="mnow" id="billingNow">This month</button>
+      </div>
+      <div class="ustats" id="billingStats"></div>
+      <div class="toolbar">
+        <div class="search-box"><span class="ic">🔎</span><input type="text" id="billingSearch" placeholder="Search by name or phone…"></div>
+        <div class="chip-filter" id="billingFilter">
+          <button data-bf="all" class="active">All</button>
+          <button data-bf="ordered">✅ Ordered</button>
+          <button data-bf="none">❌ Not ordered</button>
+        </div>
+      </div>
+      <div class="ptable">
+        <div class="prow head brow"><div>Customer</div><div>Status</div><div>Deliveries</div><div>Month total</div><div></div></div>
+        <div id="billingRows"></div>
+      </div>
+    </section>
+    <!-- ========== DELIVERY CHART PAGE ========== -->
+    <section id="page-deliverychart" style="display:none;">
+      <div class="page-head">
+        <div>
+          <h2>Delivery Chart</h2>
+          <div class="sub">All customers are shown. Select a date to see which customers have a delivery scheduled, grouped by delivery person and shift.</div>
+        </div>
+        <button class="btn btn-primary" id="dcRefreshBtn">↻ Refresh</button>
+      </div>
+
+      <div class="ptable" style="padding:16px; margin-bottom:14px;">
+        <div class="toolbar" style="margin-bottom:0;">
+          <div class="field" style="min-width:170px;">
+            <label for="dcDate">Delivery date</label>
+            <input type="date" id="dcDate">
+          </div>
+          <div class="field" style="min-width:150px;">
+            <label for="dcShift">Shift</label>
+            <select id="dcShift">
+              <option value="all">Morning + Evening</option>
+              <option value="morning">Morning</option>
+              <option value="evening">Evening</option>
+            </select>
+          </div>
+          <div class="field" style="min-width:180px;">
+            <label for="dcPerson">Delivery person</label>
+            <select id="dcPerson">
+              <option value="all">All delivery persons</option>
+            </select>
+          </div>
+          <div style="margin-left:auto; display:flex; gap:8px; align-items:end;">
+            <button class="btn btn-ghost" id="dcDownloadAllVisible">Download visible PDFs</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="dc-stats" id="dcStats"></div>
+      <div id="dcGroups"></div>
+    </section>
+
+    <!-- ========== USAGE PAGE ========== -->
+    <section id="page-usage" style="display:none;">
+      <div class="page-head">
+        <div>
+          <h2>Usage</h2>
+          <div class="sub">Kaun sa customer kab active hua — app open, login/logout, orders aur schedule changes.</div>
+        </div>
+      </div>
+      <div class="unote">ℹ️ "Last active" = customer ka last app open / login / order / schedule change. Open, login aur logout tabhi track hote hain jab customer <b>updated customer.html</b> use kare (purane visits ka record nahi hota).</div>
+      <div class="ustats" id="usageStats"></div>
+      <div class="toolbar">
+        <div class="search-box"><span class="ic">🔎</span><input type="text" id="usageSearch" placeholder="Search by name or phone…"></div>
+        <div class="chip-filter" id="usageFilter">
+          <button data-uf="all" class="active">All</button>
+          <button data-uf="today">Active today</button>
+          <button data-uf="week">This week</button>
+          <button data-uf="inactive">Inactive 30d+</button>
+          <button data-uf="never">Never ordered</button>
+        </div>
+      </div>
+      <div class="ptable">
+        <div class="prow head urow">
+          <div>User</div>
+          <div>Last active</div>
+          <div>Joined</div>
+          <div>Orders</div>
+          <div>Push</div>
+          <div></div>
+        </div>
+        <div id="usageRows"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ===== Usage detail modal ===== -->
+<div class="modal-overlay" id="usageModal">
+  <div class="modal wide">
+    <div class="modal-head"><h3 id="usageModalTitle">User activity</h3><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-body">
+      <div id="usageModalMeta" class="field-hint" style="font-size:12px;"></div>
+      <div class="billing-section-title">Activity timeline (latest first)</div>
+      <div id="usageModalBody" style="border:1px solid var(--line); border-radius:12px; overflow:hidden;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Product modal ===== -->
+<div class="modal-overlay" id="productModal">
+  <div class="modal">
+    <div class="modal-head"><h3 id="productModalTitle">Add Product</h3><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Product name</label><input type="text" id="pfName" placeholder="e.g. Fresh Paneer"></div>
+      <div class="field-row">
+        <div class="field"><label>Category</label><select id="pfCat"></select></div>
+        <div class="field"><label>Unit / pack size</label><input type="text" id="pfUnit" placeholder="e.g. 200 g Block"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Price (₹)</label><input type="number" id="pfPrice" min="0"></div>
+        <div class="field"><label>MRP (₹, optional)</label><input type="number" id="pfMrp" min="0"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Tag (optional, e.g. Bestseller)</label><input type="text" id="pfTag"></div>
+        <div class="field"><label>Emoji fallback</label><input type="text" id="pfEmoji" placeholder="🧀" maxlength="4"></div>
+      </div>
+      <div class="field"><label>Description</label><textarea id="pfDesc"></textarea></div>
+
+      <div class="field">
+        <label>Product images (first one is used as the main photo)</label>
+        <div id="pfImagesList"></div>
+        <button type="button" class="add-img-btn" id="pfAddImageBtn">+ Add another image URL</button>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label>Stock quantity</label>
+          <input type="number" id="pfStock" min="0" placeholder="leave blank = unlimited">
+          <span class="field-hint">Decreases automatically as orders come in. Leave blank if you don't track quantity for this SKU.</span>
+        </div>
+        <div class="field">
+          <label style="opacity:0;">.</label>
+          <div class="check-row"><input type="checkbox" id="pfOutOfStock"> Mark out of stock manually</div>
+        </div>
+      </div>
+      <div class="check-row"><input type="checkbox" id="pfComingSoon"> Coming soon (hidden from ordering, shown as preview)</div>
+      <div class="check-row"><input type="checkbox" id="pfPopular"> Show in "Popular" row on home</div>
+      <div class="check-row"><input type="checkbox" id="pfFeatured"> Show in "Featured" row on home</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger" id="pfDeleteBtn" style="display:none;">Delete Product</button>
+      <div style="margin-left:auto; display:flex; gap:10px;">
+        <button class="btn btn-ghost" data-close>Cancel</button>
+        <button class="btn btn-primary" id="pfSaveBtn">Save Product</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Category modal ===== -->
+<div class="modal-overlay" id="categoryModal">
+  <div class="modal">
+    <div class="modal-head"><h3 id="categoryModalTitle">Add Category</h3><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Category name</label><input type="text" id="cfName" placeholder="e.g. Sweets"></div>
+      <div class="field-row">
+        <div class="field"><label>Emoji icon</label><input type="text" id="cfIcon" placeholder="🍬" maxlength="4"></div>
+        <div class="field"><label>Display order</label><input type="number" id="cfOrder" min="0" value="0"></div>
+      </div>
+      <div class="field"><label>Category image URL (optional — replaces the emoji tile)</label><input type="text" id="cfImage" placeholder="https://…"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger" id="cfDeleteBtn" style="display:none;">Delete Category</button>
+      <div style="margin-left:auto; display:flex; gap:10px;">
+        <button class="btn btn-ghost" data-close>Cancel</button>
+        <button class="btn btn-primary" id="cfSaveBtn">Save Category</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Banner modal ===== -->
+<div class="modal-overlay" id="bannerModal">
+  <div class="modal">
+    <div class="modal-head"><h3 id="bannerModalTitle">Add Banner</h3><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Eyebrow label</label><input type="text" id="bfEyebrow" placeholder="e.g. LIMITED OFFER"></div>
+      <div class="field"><label>Title</label><input type="text" id="bfTitle" placeholder="e.g. Flat 10% OFF on Desi Ghee"></div>
+      <div class="field"><label>Subtitle</label><input type="text" id="bfSub"></div>
+      <div class="field"><label>Banner image URL (optional — leave blank to use a plain gradient)</label><input type="text" id="bfImage" placeholder="https://…"></div>
+      <div class="field"><label>Display order</label><input type="number" id="bfOrder" min="0" value="0"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-danger" id="bfDeleteBtn" style="display:none;">Delete Banner</button>
+      <div style="margin-left:auto; display:flex; gap:10px;">
+        <button class="btn btn-ghost" data-close>Cancel</button>
+        <button class="btn btn-primary" id="bfSaveBtn">Save Banner</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Billing detail modal ===== -->
+<div class="modal-overlay" id="billingModal">
+  <div class="modal wide">
+    <div class="modal-head"><h3 id="billingModalTitle">Customer Billing</h3><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-body">
+      <div id="billingModalMeta" class="field-hint" style="font-size:12px;"></div>
+
+      <div>
+        <div class="billing-section-title">Custom product rates</div>
+        <div class="field-hint" style="margin-bottom:8px;">Leave a field blank to charge this customer the normal catalog price. Fill in a number to override it just for them — e.g. a special milk rate — and they'll see that price everywhere in their app.</div>
+        <div class="rate-grid" id="billingRateGrid"></div>
+        <div style="margin-top:10px; display:flex; justify-content:flex-end;">
+          <button class="btn btn-primary btn-sm" id="billingSaveRatesBtn">Save Rates</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="billing-section-title">Manage orders &amp; deliveries</div>
+        <div class="field-hint" style="margin-bottom:8px;">Reject an upcoming date, mark a delivered date as a failed delivery (amount is removed from their bill automatically), or delete an order/date outright. Every change here shows up in the customer's own app immediately.</div>
+        <div id="billingOrdersList"></div>
+      </div>
+
+      <div>
+        <div class="psum-head"><div class="billing-section-title" style="margin:0;">Product-wise total</div><select id="billingSummaryMonth"></select></div>
+        <div class="psum" id="billingSummary"></div>
+      </div>
+
+      <div>
+        <div class="billing-section-title">Monthly bill</div>
+        <table class="month-table" id="billingMonthTable"></table>
+      </div>
+
+      <div>
+        <div class="billing-section-title">Purchase history (day-wise)</div>
+        <div id="billingDayList"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+  getDatabase, ref, get, set, update, remove, push, onValue
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+/* Same Firebase project as customerapp.html / deliverychart.html — this
+   panel reads and writes catalog/{categories,products,banners}, which is
+   exactly what customerapp.html subscribes to live. */
+const firebaseConfig = {
+  apiKey: "AIzaSyA4q2qD7K7o5yN5v9H9jSIvWsTPWlAvurY",
+  authDomain: "delivry-tracking-system.firebaseapp.com",
+  databaseURL: "https://delivry-tracking-system-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "delivry-tracking-system",
+  storageBucket: "delivry-tracking-system.firebasestorage.app",
+  messagingSenderId: "181704924735",
+  appId: "1:181704924735:web:7c57448137e91b745ca28a",
+  measurementId: "G-43WG6FFZVC"
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getDatabase(fbApp);
+
+/* ================= BASIC PASSWORD GATE ================= */
+/* Change this before handing the file/link to anyone. This only hides the
+   UI in the browser — it does not stop someone who has direct Firebase
+   access. For real protection, lock down write access to the `catalog`
+   node with Firebase Realtime Database security rules. */
+const ADMIN_PASSWORD = "admin123";
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+const $ = s=>document.querySelector(s);
+const $$ = s=>[...document.querySelectorAll(s)];
+
+function unlock(){
+  $('#gate').classList.add('hide');
+  $('#app').classList.add('show');
+  showAdminPreloader('Opening admin panel…');
+  requestAnimationFrame(()=>boot());
+}
+if (sessionStorage.getItem('ag_admin_unlocked')==='1'){
+  unlock();
+} else {
+  /* Keep the password gate as the first interactive screen, but don't hide it
+     behind a long blank load. */
+  hideAdminPreloader();
+}
+$('#gateBtn').addEventListener('click', tryUnlock);
+$('#gatePw').addEventListener('keydown', e=>{ if (e.key==='Enter') tryUnlock(); });
+function tryUnlock(){
+  if ($('#gatePw').value === ADMIN_PASSWORD){
+    sessionStorage.setItem('ag_admin_unlocked','1');
+    unlock();
+  } else {
+    $('#gateErr').classList.add('show');
+  }
+}
+$('#lockBtn').addEventListener('click', ()=>{
+  sessionStorage.removeItem('ag_admin_unlocked');
+  showAdminPreloader('Locking panel…');
+  location.reload();
+});
+
+/* ================= STATE ================= */
+let categories = [];
+let products = [];
+let banners = [];
+let activeCatFilter = 'all';
+let editingProductId = null;   // null = creating new
+let editingCategoryId = null;
+let editingBannerId = null;
+let customersList = [];        // live customers/{id} records, from Firebase
+let deliveryBoysMap = {};        // live deliveryBoys/{id} -> {name,...}
+let activeBillingCustomerId = null;
+let billingSearchTerm = '';
+
+function showToast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function slugify(name){
+  return (name||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') || ('cat'+Date.now());
+}
+function money(n){ return n===''||n===null||n===undefined ? '' : '₹'+Math.round(n).toLocaleString('en-IN'); }
+function statusOf(p){
+  if (p.comingSoon) return 'coming_soon';
+  if (p.outOfStock) return 'out_of_stock';
+  if (typeof p.stock === 'number' && p.stock<=0) return 'out_of_stock';
+  return 'active';
+}
+function statusBadge(status){
+  if (status==='coming_soon') return `<span class="badge badge-soon">COMING SOON</span>`;
+  if (status==='out_of_stock') return `<span class="badge badge-oos">OUT OF STOCK</span>`;
+  return `<span class="badge badge-active">ACTIVE</span>`;
+}
+function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ================= BOOT / LIVE SYNC ================= */
+let booted = false;
+let catalogDirty = {categories:false, products:false, banners:false};
+let catalogRenderFrame = null;
+let catalogReady = {categories:false, products:false, banners:false};
+let catalogError = false;
+
+function setAdminNotice(msg, isError=false){
+  const notice = $('#adminLoadNotice');
+  const tx = $('#adminLoadNoticeText');
+  if (!notice || !tx) return;
+  tx.textContent = msg;
+  notice.classList.toggle('error', !!isError);
+  notice.classList.add('show');
+}
+
+function clearAdminNotice(){
+  const notice = $('#adminLoadNotice');
+  if (notice) notice.classList.remove('show');
+}
+
+function hideAdminPreloader(message){
+  const pl = $('#adminPreloader');
+  const tx = $('#preloaderText');
+  if (tx && message) tx.textContent = message;
+  if (pl) pl.classList.add('hide');
+  document.documentElement.classList.remove('is-loading');
+  document.body.classList.remove('is-loading');
+}
+
+function showAdminPreloader(message){
+  const pl = $('#adminPreloader');
+  const tx = $('#preloaderText');
+  const err = $('#preloaderError');
+  if (tx && message) tx.textContent = message;
+  if (err) err.hidden = true;
+  if (pl) pl.classList.remove('hide');
+  document.documentElement.classList.add('is-loading');
+  document.body.classList.add('is-loading');
+}
+
+function setPreloaderError(message){
+  const tx = $('#preloaderText');
+  const err = $('#preloaderError');
+  const errTx = $('#preloaderErrorText');
+  if (tx) tx.textContent = 'Waiting for the live catalog…';
+  if (errTx) errTx.textContent = message;
+  if (err) err.hidden = false;
+  showAdminPreloader();
+}
+
+function updatePreloaderProgress(){
+  const done = Object.values(catalogReady).filter(Boolean).length;
+  const tx = $('#preloaderText');
+  if (!tx) return;
+  if (done===0) tx.textContent = 'Connecting to live catalog…';
+  else if (done===1) tx.textContent = 'Catalog connection established… loading the rest…';
+  else if (done===2) tx.textContent = 'Almost ready… rendering your catalog…';
+  else tx.textContent = 'Finishing up…';
+}
+
+function maybeFinishAdminLoad(){
+  if (!catalogReady.categories || !catalogReady.products || !catalogReady.banners) return;
+  if (catalogRenderFrame) return;
+  /* Give the browser two paint opportunities so the complete table/list is
+     actually committed before the loading screen disappears. */
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    if (catalogReady.categories && catalogReady.products && catalogReady.banners){
+      hideAdminPreloader();
+      clearAdminNotice();
+    }
+  }));
+}
+
+function scheduleCatalogRender(){
+  if (catalogRenderFrame) return;
+  catalogRenderFrame = requestAnimationFrame(()=>{
+    catalogRenderFrame = null;
+
+    const dirty = {...catalogDirty};
+    catalogDirty = {categories:false, products:false, banners:false};
+
+    /* One frame for an initial Firebase burst — prevents categories/products/
+       banners from triggering several full DOM rebuilds back-to-back. */
+    if (dirty.categories){
+      renderCategoryFilterChips();
+      renderCategoriesPage();
+      populateCategorySelect();
+    }
+    if (dirty.products){
+      renderProductsPage();
+      renderCategoriesPage();
+    }
+    if (dirty.categories && !dirty.products){
+      renderProductsPage();
+    }
+    if (dirty.banners){
+      renderBannersPage();
+    }
+
+    updatePreloaderProgress();
+    maybeFinishAdminLoad();
+  });
+}
+
+function markCatalogDirty(kind){
+  catalogDirty[kind] = true;
+  scheduleCatalogRender();
+}
+
+function boot(){
+  if (booted) return;
+  booted = true;
+
+  showAdminPreloader('Connecting to live catalog…');
+
+  onValue(ref(db,'catalog/categories'), snap=>{
+    const val = snap.val() || {};
+    categories = Object.entries(val)
+      .map(([id,c])=>({...c, id}))
+      .sort((a,b)=>(a.order||0)-(b.order||0));
+
+    catalogReady.categories = true;
+    catalogError = false;
+    updatePreloaderProgress();
+    markCatalogDirty('categories');
+  }, err=>{
+    console.error('Categories load failed', err);
+    catalogError = true;
+    setPreloaderError('Categories are not reachable yet. The admin panel will open only after the live catalog finishes loading.');
+  });
+
+  onValue(ref(db,'catalog/products'), snap=>{
+    const val = snap.val() || {};
+    products = Object.entries(val).map(([id,p])=>({...p, id}));
+
+    catalogReady.products = true;
+    catalogError = false;
+    updatePreloaderProgress();
+    markCatalogDirty('products');
+  }, err=>{
+    console.error('Products load failed', err);
+    catalogError = true;
+    setPreloaderError('Products are not reachable yet. Please retry when your Firebase connection is available.');
+  });
+
+  onValue(ref(db,'catalog/banners'), snap=>{
+    const val = snap.val() || {};
+    banners = Object.entries(val)
+      .map(([id,b])=>({...b, id}))
+      .sort((a,b)=>(a.order||0)-(b.order||0));
+
+    catalogReady.banners = true;
+    catalogError = false;
+    updatePreloaderProgress();
+    markCatalogDirty('banners');
+  }, err=>{
+    console.error('Banners load failed', err);
+    catalogError = true;
+    setPreloaderError('Banners are not reachable yet. The page will stay in loading state until the catalog is complete.');
+  });
+
+  attachCustomersListener();
+  attachDeliveryBoysListener();
+
+  /* Agar internet slow ho to panel hamesha loading par atka na rahe. */
+  setTimeout(()=>{
+    if (!(catalogReady.categories && catalogReady.products && catalogReady.banners)){
+      hideAdminPreloader();
+      setAdminNotice('Catalog abhi poora load nahi hua — internet check karke page refresh karein.', true);
+    }
+  }, 15000);
+}
+
+/* ================= BILLING (customers + their orders) =================
+   Independent of the products/categories/banners preloader above — the
+   Billing tab isn't needed for the panel to open, so it streams in the
+   background and simply re-renders whenever new data arrives. Reads the
+   same `customers/{id}` and `customers/{id}/webOrders` nodes that
+   customerapp.html itself writes to, so figures always match what the
+   customer sees in their own "My Bill" tab. */
+function attachCustomersListener(){
+  onValue(ref(db,'customers'), snap=>{
+    const val = snap.val() || {};
+    customersList = Object.entries(val).map(([id,c])=>({...c, id}));
+    renderBillingPage();
+    if (typeof renderDeliveryChartPage==='function' && $('#page-deliverychart') && $('#page-deliverychart').style.display!=='none') renderDeliveryChartPage();
+    if (activeBillingCustomerId) renderBillingModal(activeBillingCustomerId);
+    if (typeof renderUsagePage==='function' && $('#page-usage').style.display!=='none'){ renderUsagePage(); if (activeUsageId) renderUsageModal(activeUsageId); }
+  }, err=>{
+    console.error('Customers load failed', err);
+  });
+}
+
+/* Delivery charge removed: koi bhi order par ab delivery fee nahi lagti.
+   (Function isliye rakha hai taaki baaki billing code na toote.) */
+function deliveryChargeFor(){ return 0; }
+function isDateRejected(order, dateStr){
+  return !!(order.rejectedDates && order.rejectedDates[dateStr]);
+}
+/* A "failed delivery" is an admin-only mark placed on a date that's already
+   past (i.e. was supposed to be delivered). It behaves like a rejected date
+   for billing purposes (the amount is dropped from every total below) but
+   keeps its own red "Delivery Failed" tag on the customer's side instead of
+   the green "Delivered" one, so a failed delivery is never silently billed. */
+function isDateFailed(order, dateStr){
+  return !!(order.failedDates && order.failedDates[dateStr]);
+}
+function customerOrdersArr(cust){
+  return Object.values(cust.webOrders || {});
+}
+/* date (YYYY-MM-DD) -> {items:[{name,unit,qty,price,orderId}], itemsTotal}
+   across every order this customer has ever placed, counting only dates
+   that weren't stopped by the customer or rejected by the admin — the same
+   rule buildDayWiseMap() in customerapp.html uses for "My Bill". */
+function buildCustomerDayMap(cust){
+  const map = new Map();
+  customerOrdersArr(cust).forEach(o=>{
+    (o.items||[]).forEach(it=>{
+      (it.dates||[]).forEach(d=>{
+        const date = typeof d === 'string' ? d : d.date;
+        const stopped = typeof d === 'object' && !!d.stopped;
+        if (!date || stopped || isDateRejected(o, date) || isDateFailed(o, date)) return;
+        if (!map.has(date)) map.set(date, {items:[], itemsTotal:0});
+        const day = map.get(date);
+        day.items.push({name:it.name, unit:it.unit, qty:it.qty, price:it.price, orderId:o.id});
+        day.itemsTotal += (it.price||0) * (it.qty||0);
+      });
+    });
+  });
+  return map;
+}
+/* 'YYYY-MM' -> {deliveries, total} — total includes the per-date delivery
+   fee, same as the customer's own bill. */
+function buildCustomerMonthMap(dayMap){
+  const map = new Map();
+  [...dayMap.entries()].forEach(([date, day])=>{
+    const month = date.slice(0,7);
+    if (!map.has(month)) map.set(month, {deliveries:0, total:0});
+    const m = map.get(month);
+    m.deliveries += 1;
+    m.total += day.itemsTotal + deliveryChargeFor(day.itemsTotal);
+  });
+  return map;
+}
+function monthLabel(ym){
+  const [y,m] = ym.split('-').map(Number);
+  return new Date(y, m-1, 1).toLocaleDateString('en-IN',{month:'long', year:'numeric'});
+}
+function currentMonthKey(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+
+let billingMonth = currentMonthKey(), billingFilter = 'all';
+function ymOf(t){ const d = new Date(t); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function billingMonthsList(){
+  const set = new Set([currentMonthKey()]);
+  customersList.forEach(c=> customerOrdersArr(c).forEach(o=>{
+    if (ts(o.placedAt)) set.add(ymOf(ts(o.placedAt)));
+    (o.items||[]).forEach(it=>(it.dates||[]).forEach(d=>{ const x = typeof d==='string' ? d : d.date; if (x) set.add(x.slice(0,7)); }));
+  }));
+  return [...set].sort().reverse();
+}
+/* Has this customer ordered in month ym? (order placed in that month OR any delivery date falling in it) */
+function custMonthInfo(c, ym){
+  const orders = customerOrdersArr(c);
+  let placed = 0, sched = 0, last = 0;
+  orders.forEach(o=>{
+    const t = ts(o.placedAt);
+    if (t){ last = Math.max(last, t); if (ymOf(t) === ym) placed++; }
+    (o.items||[]).forEach(it=>(it.dates||[]).forEach(d=>{ const x = typeof d==='string' ? d : d.date; if (x && x.slice(0,7) === ym) sched++; }));
+  });
+  const mm = buildCustomerMonthMap(buildCustomerDayMap(c)).get(ym);
+  return {ordered: placed>0 || sched>0, never: !orders.length, deliveries: mm ? mm.deliveries : 0, total: mm ? mm.total : 0, last};
+}
+function renderBillingPage(){
+  const host = $('#billingRows');
+  if (!host) return;
+  const months = billingMonthsList();
+  if (!months.includes(billingMonth)) billingMonth = months[0];
+  const sel = $('#billingMonthSel');
+  sel.innerHTML = months.map(m=>`<option value="${m}">${monthLabel(m)}</option>`).join('');
+  sel.value = billingMonth;
+  const mi = months.indexOf(billingMonth);
+  $('#billingPrev').disabled = mi >= months.length-1;
+  $('#billingNext').disabled = mi <= 0;
+  $('#billingNow').style.display = billingMonth === currentMonthKey() ? 'none' : '';
+
+  const all = customersList.map(c=>({c, ...custMonthInfo(c, billingMonth)}));
+  const nOrd = all.filter(r=>r.ordered).length;
+  const sum = all.reduce((a,r)=>a+r.total, 0);
+  $('#billingStats').innerHTML = [[all.length,'Customers'],[nOrd,'Ordered'],[all.length-nOrd,'Not ordered'],[money(sum)||'₹0','Month total']]
+    .map(([n,l])=>`<div class="ustat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');
+  const labels = {all:`All (${all.length})`, ordered:`✅ Ordered (${nOrd})`, none:`❌ Not ordered (${all.length-nOrd})`};
+  $$('#billingFilter button').forEach(b=>{ const k = b.getAttribute('data-bf'); b.textContent = labels[k]; b.classList.toggle('active', k===billingFilter); });
+
+  const term = billingSearchTerm.trim().toLowerCase();
+  const list = all
+    .filter(r=> billingFilter==='all' || (billingFilter==='ordered' ? r.ordered : !r.ordered))
+    .filter(r=> !term || (r.c.name||'').toLowerCase().includes(term) || (r.c.phone||'').includes(term))
+    .sort((a,b)=> (b.ordered-a.ordered) || (b.total-a.total) || (a.c.name||'').localeCompare(b.c.name||''));
+
+  if (!list.length){
+    host.innerHTML = `<div class="empty-state"><div class="ic">🧾</div>${customersList.length ? 'Is filter me koi customer nahi mila.' : 'No customers yet — they show up here once someone logs into the app.'}</div>`;
+    return;
+  }
+  host.innerHTML = list.map(r=>{
+    const c = r.c;
+    const badge = r.ordered ? '<span class="badge badge-ordered">✅ Ordered</span>'
+      : r.never ? '<span class="badge badge-never">Never ordered</span>'
+      : '<span class="badge badge-none">No order</span>';
+    const lastTxt = r.last ? ` · Last order ${uFmtShort(r.last)}` : '';
+    return `<div class="prow bill-cust-row brow" data-view-bill="${escapeHtml(c.id)}">
+      <div class="b-cust"><div class="p-name">${escapeHtml(c.name||'Unnamed')}</div><div class="p-meta">${escapeHtml(c.phone||'—')}${lastTxt}</div></div>
+      <div class="b-status">${badge}</div>
+      <div class="figs">
+        <div class="b-fig bill-mini-stat"><small>Deliveries</small>${r.deliveries}</div>
+        <div class="b-fig bill-mini-stat"><small>Month total</small>${money(r.total) || '₹0'}</div>
+      </div>
+      <div class="row-actions"><button class="btn btn-ghost btn-sm">View</button></div>
+    </div>`;
+  }).join('');
+  $$('#billingRows [data-view-bill]').forEach(el=>el.addEventListener('click', ()=> openBillingModal(el.getAttribute('data-view-bill'))));
+}
+$('#billingSearch').addEventListener('input', ()=>{ billingSearchTerm = $('#billingSearch').value; renderBillingPage(); });
+$('#billingMonthSel').addEventListener('change', e=>{ billingMonth = e.target.value; renderBillingPage(); });
+$('#billingPrev').addEventListener('click', ()=>{ const m = billingMonthsList(), i = m.indexOf(billingMonth); if (i < m.length-1){ billingMonth = m[i+1]; renderBillingPage(); } });
+$('#billingNext').addEventListener('click', ()=>{ const m = billingMonthsList(), i = m.indexOf(billingMonth); if (i > 0){ billingMonth = m[i-1]; renderBillingPage(); } });
+$('#billingNow').addEventListener('click', ()=>{ billingMonth = currentMonthKey(); renderBillingPage(); });
+$$('#billingFilter button').forEach(b=>b.addEventListener('click', ()=>{ billingFilter = b.getAttribute('data-bf'); renderBillingPage(); }));
+
+function openBillingModal(custId){
+  activeBillingCustomerId = custId;
+  billingSummaryCust = null;   // start on the current month for each customer you open
+  $('#billingRateGrid').dataset.key = '';
+  renderBillingModal(custId);
+  $('#billingModal').classList.add('show');
+}
+function renderBillingModal(custId){
+  const cust = customersList.find(c=>c.id===custId);
+  if (!cust){
+    $('#billingModal').classList.remove('show');
+    activeBillingCustomerId = null;
+    return;
+  }
+  $('#billingModalTitle').textContent = cust.name || 'Customer Billing';
+  $('#billingModalMeta').innerHTML = `${escapeHtml(cust.phone||'—')} · ${escapeHtml(cust.address||'No address on file')}`;
+
+  const overrides = cust.priceOverrides || {};
+  const rateGrid = $('#billingRateGrid');
+  const rateKey = custId+'|'+products.map(p=>p.id+':'+p.price).join(',');
+  if (rateGrid.dataset.key !== rateKey){
+  rateGrid.dataset.key = rateKey;
+  rateGrid.innerHTML = products.length ? products.map(p=>{
+    const val = (overrides[p.id]!=null) ? overrides[p.id] : '';
+    return `<div class="rate-row">
+      <div><div class="nm">${escapeHtml(p.name)}</div><div class="un">${escapeHtml(p.unit||'')} · catalog ${money(p.price)}</div></div>
+      <input type="number" min="0" step="0.5" placeholder="${money(p.price)}" data-rate-input="${p.id}" value="${val}">
+    </div>`;
+  }).join('') : `<div class="field-hint">No products yet — add products first.</div>`;
+  }
+
+  const dayMap = buildCustomerDayMap(cust);
+  const monthMap = buildCustomerMonthMap(dayMap);
+  const months = [...monthMap.keys()].sort().reverse();
+  $('#billingMonthTable').innerHTML = months.length ? `
+    <tr><th>Month</th><th>Deliveries</th><th style="text-align:right;">Total</th></tr>
+    ${months.map(m=>{ const row = monthMap.get(m); return `<tr><td>${monthLabel(m)}</td><td>${row.deliveries}</td><td class="amt">${money(row.total)}</td></tr>`; }).join('')}
+  ` : `<tr><td class="field-hint">No billed deliveries yet.</td></tr>`;
+
+  renderBillingOrders(cust);
+  renderBillingSummary(cust, dayMap);
+
+  const dates = [...dayMap.keys()].sort().reverse();
+  $('#billingDayList').innerHTML = dates.length ? dates.map((date, idx)=>{
+    const day = dayMap.get(date);
+    const dayTotal = day.itemsTotal + deliveryChargeFor(day.itemsTotal);
+    const dateLabel = new Date(date+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+    return `<div class="bday-card ${idx===0?'open':''}">
+      <div class="bday-head" data-bday-toggle>
+        <span>${dateLabel}</span>
+        <span>${money(dayTotal)}</span>
+      </div>
+      <div class="bday-body">
+        ${day.items.map(it=>`<div class="bday-item"><span>${escapeHtml(it.name)} · ${it.qty} × ${money(it.price)}</span><span>${money((it.price||0)*(it.qty||0))}</span></div>`).join('')}
+      </div>
+    </div>`;
+  }).join('') : `<div class="empty-state"><div class="ic">🧾</div>No purchases yet.</div>`;
+  $$('#billingDayList [data-bday-toggle]').forEach(el=>el.addEventListener('click', ()=> el.closest('.bday-card').classList.toggle('open')));
+}
+
+/* ---- Manage orders & deliveries (reject / mark-failed / delete) ----
+   Writes straight to customers/{id}/webOrders/{orderId}, the exact node
+   customerapp.html itself listens on with onValue — so every action here
+   (reject a date, mark a delivery failed, delete a date or a whole order)
+   shows up in that customer's own app in real time, with no refresh
+   needed on either side. */
+/* ---- Product-wise total: "Product = total qty × price = amount", then grand total.
+   Uses the same billable-delivery rules as the monthly bill (stopped / rejected /
+   failed dates are excluded), so the grand total always matches Monthly bill. ---- */
+let billingSummaryMonth = null, billingSummaryCust = null;
+function renderBillingSummary(cust, dayMap){
+  if (billingSummaryCust !== cust.id){ billingSummaryCust = cust.id; billingSummaryMonth = null; }
+  const months = [...new Set([...dayMap.keys()].map(d=>d.slice(0,7)))].sort().reverse();
+  if (billingSummaryMonth === null) billingSummaryMonth = months.includes(billingMonth) ? billingMonth : (months.includes(currentMonthKey()) ? currentMonthKey() : 'all');
+  if (billingSummaryMonth !== 'all' && !months.includes(billingSummaryMonth)) billingSummaryMonth = 'all';
+
+  const sel = $('#billingSummaryMonth');
+  sel.innerHTML = `<option value="all">All time</option>` + months.map(m=>`<option value="${m}">${monthLabel(m)}</option>`).join('');
+  sel.value = billingSummaryMonth;
+  sel.onchange = ()=>{ billingSummaryMonth = sel.value; renderBillingSummary(cust, dayMap); };
+
+  const rows = new Map(); let delivery = 0;
+  dayMap.forEach((day, date)=>{
+    if (billingSummaryMonth !== 'all' && date.slice(0,7) !== billingSummaryMonth) return;
+    day.items.forEach(it=>{
+      const price = it.price || 0;
+      const key = (it.name||'')+'|'+(it.unit||'')+'|'+price;   // same product at a different rate = separate line
+      if (!rows.has(key)) rows.set(key, {name:it.name||'Item', unit:it.unit||'', price, qty:0});
+      rows.get(key).qty += (it.qty || 0);
+    });
+    delivery += deliveryChargeFor(day.itemsTotal);
+  });
+
+  const list = [...rows.values()].sort((a,b)=>a.name.localeCompare(b.name));
+  if (!list.length){
+    $('#billingSummary').innerHTML = `<div class="psum-row muted">No purchases in this period.</div>`;
+    return;
+  }
+  let grand = 0;
+  const lines = list.map(r=>{
+    const amount = r.price * r.qty; grand += amount;
+    return `<div class="psum-row"><span>${escapeHtml(r.name)}${r.unit?` <span class="field-hint">(${escapeHtml(r.unit)})</span>`:''} <span class="calc">= ${r.qty} × ${money(r.price)} =</span></span><span class="amt">${money(amount)}</span></div>`;
+  }).join('');
+  const deliveryLine = delivery > 0
+    ? `<div class="psum-row muted"><span>Delivery charges</span><span class="amt">${money(delivery)}</span></div>` : '';
+  $('#billingSummary').innerHTML = lines + deliveryLine +
+    `<div class="psum-row grand"><span>Grand Total</span><span class="amt">${money(grand + delivery)}</span></div>`;
+}
+
+function renderBillingOrders(cust){
+  const host = $('#billingOrdersList');
+  if (!host) return;
+  const custId = cust.id;
+  const orders = Object.entries(cust.webOrders || {}).map(([id,o])=>({...o, id}));
+  if (!orders.length){
+    host.innerHTML = `<div class="empty-state"><div class="ic">📦</div>No orders from this customer yet.</div>`;
+    return;
+  }
+  const today = todayStr();
+  host.innerHTML = orders.map(o=>{
+    const allDates = (o.items||[]).flatMap(it=>(it.dates||[]).map(d=> typeof d==='string'?d:d.date));
+    const isDelivered = allDates.length>0 && allDates.every(dt=>dt<today);
+    const itemsHtml = (o.items||[]).map((it,ii)=>{
+      const datesHtml = (it.dates||[]).map((dd,di)=>{
+        const date = typeof dd==='string' ? dd : dd.date;
+        const rejected = isDateRejected(o, date);
+        const failed = isDateFailed(o, date);
+        const isPast = date < today;
+        let cls = '', tag = '', actions = '';
+        if (rejected){
+          cls = 'rejected'; tag = '❌ Rejected';
+          actions = `<button data-om-unreject="${o.id}:${date}">Undo</button>`;
+        } else if (failed){
+          cls = 'failed'; tag = '⚠️ Delivery Failed';
+          actions = `<button data-om-unfail="${o.id}:${date}">Undo</button>`;
+        } else if (isPast){
+          cls = 'delivered'; tag = '✅ Delivered';
+          actions = `<button data-om-fail="${o.id}:${date}" class="danger">Mark Failed</button>`;
+        } else {
+          tag = '';
+          actions = `<button data-om-reject="${o.id}:${date}">Reject</button>`;
+        }
+        actions += `<button data-om-delete-date="${o.id}:${ii}:${date}" class="danger" title="Delete this date entirely">🗑</button>`;
+        return `<div class="omg-date ${cls}">${fmtDateShort(date)} ${tag?`<span>${tag}</span>`:''}${actions}</div>`;
+      }).join('');
+      return `<div class="omg-item">
+        <div class="om-nm">${escapeHtml(it.name||'')} <span class="field-hint">· ${it.qty}× ${money(it.price)}</span></div>
+        <div class="omg-dates">${datesHtml}</div>
+      </div>`;
+    }).join('');
+    return `<div class="omg-order ${isDelivered?'is-delivered':''}">
+      <div class="omg-order-head">
+        <div>
+          <div class="om-id">Order #${o.id}</div>
+          <div class="om-meta">${o.placedAt ? new Date(o.placedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : ''} · ${(o.items||[]).length} item(s)${isDelivered?' · Delivered':''}</div>
+        </div>
+        <button class="btn btn-danger btn-sm" data-om-delete-order="${o.id}">Delete Order</button>
+      </div>
+      <div class="omg-items">${itemsHtml}</div>
+    </div>`;
+  }).join('');
+
+  function fmtDateShort(d){
+    if (!d) return '';
+    return new Date(d+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+  }
+
+  async function patchOrder(orderId, path, value){
+    await update(ref(db, `customers/${custId}/webOrders/${orderId}/${path}`), value);
+  }
+
+  host.onclick = async (e)=>{
+    const rejectBtn = e.target.closest('[data-om-reject]');
+    const unrejectBtn = e.target.closest('[data-om-unreject]');
+    const failBtn = e.target.closest('[data-om-fail]');
+    const unfailBtn = e.target.closest('[data-om-unfail]');
+    const delDateBtn = e.target.closest('[data-om-delete-date]');
+    const delOrderBtn = e.target.closest('[data-om-delete-order]');
+    try{
+      if (rejectBtn){
+        const [orderId, date] = rejectBtn.getAttribute('data-om-reject').split(':');
+        await update(ref(db, `customers/${custId}/webOrders/${orderId}/rejectedDates`), {[date]: Date.now()});
+        showToast('Delivery rejected — reflected in customer app');
+      } else if (unrejectBtn){
+        const [orderId, date] = unrejectBtn.getAttribute('data-om-unreject').split(':');
+        await update(ref(db, `customers/${custId}/webOrders/${orderId}/rejectedDates`), {[date]: null});
+        showToast('Rejection undone');
+      } else if (failBtn){
+        const [orderId, date] = failBtn.getAttribute('data-om-fail').split(':');
+        if (!confirm('Mark this delivery as failed? The amount for this date will be removed from the customer\u2019s bill.')) return;
+        await update(ref(db, `customers/${custId}/webOrders/${orderId}/failedDates`), {[date]: Date.now()});
+        showToast('Marked as delivery failed — amount deducted for customer');
+      } else if (unfailBtn){
+        const [orderId, date] = unfailBtn.getAttribute('data-om-unfail').split(':');
+        await update(ref(db, `customers/${custId}/webOrders/${orderId}/failedDates`), {[date]: null});
+        showToast('Failed mark undone');
+      } else if (delDateBtn){
+        const [orderId, iiStr, date] = delDateBtn.getAttribute('data-om-delete-date').split(':');
+        const ii = Number(iiStr);
+        if (!confirm('Delete this date from the order? This cannot be undone.')) return;
+        const order = orders.find(o=>o.id===orderId);
+        if (!order) return;
+        const items = JSON.parse(JSON.stringify(order.items||[]));
+        if (items[ii]){
+          items[ii].dates = (items[ii].dates||[]).filter(d=> (typeof d==='string'?d:d.date) !== date);
+        }
+        const cleanItems = items.filter(it=> (it.dates||[]).length>0);
+        if (!cleanItems.length){
+          await remove(ref(db, `customers/${custId}/webOrders/${orderId}`));
+        } else {
+          await update(ref(db, `customers/${custId}/webOrders/${orderId}`), {items: cleanItems});
+        }
+        showToast('Date deleted from order');
+      } else if (delOrderBtn){
+        const orderId = delOrderBtn.getAttribute('data-om-delete-order');
+        if (!confirm('Delete this entire order? This removes it permanently from the customer\u2019s app too.')) return;
+        await remove(ref(db, `customers/${custId}/webOrders/${orderId}`));
+        showToast('Order deleted');
+      }
+    } catch(err){ console.error(err); showToast('Could not update order'); }
+  };
+}
+$$('#billingModal [data-close]').forEach(b=>b.addEventListener('click', ()=>{
+  $('#billingModal').classList.remove('show');
+  activeBillingCustomerId = null;
+}));
+$('#billingSaveRatesBtn').addEventListener('click', async ()=>{
+  if (!activeBillingCustomerId) return;
+  const btn = $('#billingSaveRatesBtn');
+  btn.disabled = true;
+  try{
+    const overrides = {};
+    // Any product left blank is written as null so Firebase's update()
+    // actually removes that override (rather than leaving a stale rate
+    // behind) — the customer then just falls back to the catalog price.
+    products.forEach(p=>{
+      const inp = document.querySelector(`[data-rate-input="${p.id}"]`);
+      const v = inp ? inp.value.trim() : '';
+      overrides[p.id] = (v !== '' && !isNaN(Number(v))) ? Number(v) : null;
+    });
+    await update(ref(db,'customers/'+activeBillingCustomerId+'/priceOverrides'), overrides);
+    $('#billingRateGrid').dataset.key = '';
+    showToast('Rates saved for this customer');
+  } catch(e){ console.error(e); showToast('Could not save rates'); }
+  finally { btn.disabled = false; }
+});
+
+$('#preloaderRetry').addEventListener('click', ()=>location.reload());
+
+
+/* ================= DELIVERY CHART =================
+   Uses the same live customers/{id}/webOrders data used by Billing.
+   A delivery is included only when its selected date is active (not stopped,
+   rejected, or failed). `assignedTo === null` is treated as "Me", while any
+   matching deliveryBoys/{id} record is shown by that person's name.
+*/
+let deliveryChartBoysReady = false;
+let deliveryChartDate = todayStr();
+let deliveryChartShift = 'all';
+let deliveryChartPerson = 'all';
+
+function attachDeliveryBoysListener(){
+  onValue(ref(db,'deliveryBoys'), snap=>{
+    deliveryBoysMap = snap.val() || {};
+    deliveryChartBoysReady = true;
+    renderDeliveryPersonSelect();
+    if ($('#page-deliverychart') && $('#page-deliverychart').style.display!=='none') renderDeliveryChartPage();
+  }, err=>{
+    console.error('Delivery boys load failed', err);
+    deliveryBoysMap = {};
+    deliveryChartBoysReady = true;
+    renderDeliveryPersonSelect();
+  });
+}
+
+function dcPersonName(id){
+  if (!id) return 'Me';
+  return deliveryBoysMap[id]?.name || id;
+}
+
+function dcPersonKey(c){
+  return c.assignedTo || '__ME__';
+}
+
+function dcShiftForCustomer(c){
+  return c.shift === 'evening' ? 'evening' : 'morning';
+}
+
+function dcFormatDate(iso){
+  if (!iso) return '';
+  return new Date(iso+'T00:00:00').toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+}
+
+function dcDateEntryActive(order, d){
+  if (typeof d === 'string') return true;
+  if (!d || !d.date) return false;
+  return !d.stopped;
+}
+
+function dcOrderDateRejected(order, date){
+  return !!(order.rejectedDates && order.rejectedDates[date]);
+}
+
+function dcOrderDateFailed(order, date){
+  return !!(order.failedDates && order.failedDates[date]);
+}
+
+function dcBuildRowsForDate(date){
+  const rows = [];
+  customersList.forEach(c=>{
+    const orders = Object.values(c.webOrders || {});
+    const itemMap = new Map();
+    const other = [];
+
+    orders.forEach(order=>{
+      (order.items||[]).forEach(it=>{
+        (it.dates||[]).forEach(dd=>{
+          const d = typeof dd === 'string' ? dd : dd?.date;
+          if (d !== date) return;
+          if (!dcDateEntryActive(order, dd)) return;
+          if (dcOrderDateRejected(order,date) || dcOrderDateFailed(order,date)) return;
+
+          const key = (it.productId || '') + '|' + (it.name || '') + '|' + (it.unit || '');
+          const existing = itemMap.get(key) || {
+            productId:it.productId||'', name:it.name||'', unit:it.unit||'', qty:0
+          };
+          existing.qty += Number(it.qty)||0;
+          itemMap.set(key, existing);
+        });
+      });
+    });
+
+    const items = [...itemMap.values()];
+    items.forEach(it=>{
+      const n=(it.name||'').toLowerCase();
+      if (/chaas|chach|butter\s*milk/.test(n) || /\bmilk\b/.test(n) ||
+          /paneer/.test(n) || /\bghee\b/.test(n) || /\bbutter\b/.test(n) ||
+          /curd|dahi/.test(n)) return;
+      other.push(`${it.name}${it.unit?' '+it.unit:''} ×${it.qty}`);
+    });
+
+    const qty = {milk:0,paneer:0,ghee:0,chach:0,butter:0,curd:0};
+    items.forEach(it=>{
+      const n=(it.name||'').toLowerCase();
+      if (/chaas|chach|butter\s*milk/.test(n)) qty.chach += it.qty;
+      else if (/\bmilk\b/.test(n)) qty.milk += it.qty;
+      else if (/paneer/.test(n)) qty.paneer += it.qty;
+      else if (/\bghee\b/.test(n)) qty.ghee += it.qty;
+      else if (/\bbutter\b/.test(n)) qty.butter += it.qty;
+      else if (/curd|dahi/.test(n)) qty.curd += it.qty;
+    });
+
+    rows.push({
+      customerId:c.id,
+      name:c.name||'Unnamed customer',
+      phone:c.phone||'',
+      address:c.address||'',
+      shift:dcShiftForCustomer(c),
+      personKey:dcPersonKey(c),
+      personName:dcPersonName(c.assignedTo),
+      qty,
+      other:[...new Set(other)],
+      hasDelivery:items.length>0
+    });
+  });
+  return rows;
+}
+
+function dcFilteredGroups(){
+  const rows=dcBuildRowsForDate(deliveryChartDate)
+    .filter(r=>deliveryChartShift==='all' || r.shift===deliveryChartShift)
+    .filter(r=>deliveryChartPerson==='all' || r.personKey===deliveryChartPerson);
+
+  const groups=new Map();
+  rows.forEach(r=>{
+    const key=r.personKey+'|'+r.shift;
+    if(!groups.has(key)) groups.set(key,{
+      personKey:r.personKey, personName:r.personName, shift:r.shift, rows:[]
+    });
+    groups.get(key).rows.push(r);
+  });
+  return [...groups.values()].sort((a,b)=>{
+    if (a.personKey==='__ME__') return -1;
+    if (b.personKey==='__ME__') return 1;
+    return a.personName.localeCompare(b.personName) || a.shift.localeCompare(b.shift);
+  });
+}
+
+function renderDeliveryPersonSelect(){
+  const sel=$('#dcPerson');
+  if(!sel) return;
+  const current=deliveryChartPerson;
+  const people=[
+    {id:'__ME__',name:'Me'},
+    ...Object.entries(deliveryBoysMap).map(([id,v])=>({id,name:v?.name||id}))
+  ];
+  const seen=new Set();
+  const unique=people.filter(p=>!seen.has(p.id)&&seen.add(p.id));
+  sel.innerHTML='<option value="all">All delivery persons</option>'+
+    unique.map(p=>`<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)}</option>`).join('');
+  sel.value=unique.some(p=>p.id===current)?current:'all';
+  if(sel.value!==current) deliveryChartPerson='all';
+}
+
+function renderDeliveryChartPage(){
+  const groups=dcFilteredGroups();
+  const allRows=groups.flatMap(g=>g.rows);
+  const totalCustomers=allRows.length;
+  const deliveryCustomers=allRows.filter(r=>r.hasDelivery).length;
+  const totalGroups=groups.length;
+
+  $('#dcStats').innerHTML=`
+    <div class="dc-stat"><div class="n">${totalCustomers}</div><div class="l">Total Customers</div></div>
+    <div class="dc-stat"><div class="n">${deliveryCustomers}</div><div class="l">Deliveries on selected date</div></div>
+    <div class="dc-stat"><div class="n">${allRows.filter(r=>r.shift==='morning').length}</div><div class="l">Morning Customers</div></div>
+    <div class="dc-stat"><div class="n">${allRows.filter(r=>r.shift==='evening').length}</div><div class="l">Evening Customers</div></div>`;
+
+  const host=$('#dcGroups');
+  if(!groups.length){
+    host.innerHTML=`<div class="ptable dc-empty">No customers found for the selected filters.</div>`;
+    return;
+  }
+
+  host.innerHTML=groups.map(g=>{
+    const shiftLabel=g.shift==='morning'?'Morning':'Evening';
+    const rowsHtml=g.rows.map((r,i)=>`
+      <tr>
+        <td>${i+1}</td>
+        <td>
+          <div class="dc-customer">${escapeHtml(r.name)}</div>
+          <div class="dc-sub">${escapeHtml(r.phone||'—')}</div>
+          <div class="dc-sub">${escapeHtml(r.address||'No address')}</div>
+        </td>
+        <td class="dc-qty">${r.hasDelivery?'Delivery':'—'}</td>
+        <td class="dc-qty">${r.qty.milk||'—'}</td>
+        <td class="dc-qty">${r.qty.paneer||'—'}</td>
+        <td class="dc-qty">${r.qty.ghee||'—'}</td>
+        <td class="dc-qty">${r.qty.chach||'—'}</td>
+        <td class="dc-qty">${r.qty.butter||'—'}</td>
+        <td class="dc-qty">${r.qty.curd||'—'}</td>
+        <td class="dc-other">${escapeHtml(r.other.join(', ')||'—')}</td>
+      </tr>`).join('');
+    return `<div class="dc-group" data-dc-group="${escapeHtml(g.personKey)}" data-dc-shift="${g.shift}">
+      <div class="dc-group-head">
+        <div>
+          <div class="dc-group-title">🚚 ${escapeHtml(g.personName)} · ${shiftLabel}</div>
+          <div class="dc-group-meta">${g.rows.length} customer${g.rows.length===1?'':'s'} · ${escapeHtml(dcFormatDate(deliveryChartDate))}</div>
+        </div>
+        <button class="btn btn-primary btn-sm" data-dc-pdf="${escapeHtml(g.personKey)}" data-dc-pdf-shift="${g.shift}">⬇ Download PDF</button>
+      </div>
+      <div class="dc-table-wrap">
+        <table class="dc-table">
+          <thead><tr>
+            <th>#</th><th>Customer / Address</th><th>Status</th><th>Milk</th><th>Paneer</th><th>Ghee</th>
+            <th>Chach</th><th>Butter</th><th>Curd</th><th>Other products</th>
+          </tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>
+    </div>`;
+  }).join('');
+
+  $$('[data-dc-pdf]').forEach(btn=>btn.addEventListener('click',()=>{
+    downloadDeliveryChartPDF(btn.getAttribute('data-dc-pdf'),btn.getAttribute('data-dc-pdf-shift'));
+  }));
+}
+
+function dcSafeFileName(s){
+  return (s||'delivery').replace(/[^a-z0-9-_]+/gi,'-').replace(/^-+|-+$/g,'')||'delivery';
+}
+
+function downloadDeliveryChartPDF(personKey, shift){
+  const groups=dcFilteredGroups().filter(g=>g.personKey===personKey && g.shift===shift);
+  if(!groups.length) return showToast('No deliveries found for this selection');
+  const g=groups[0];
+  const jsPDF=window.jspdf?.jsPDF;
+  if(!jsPDF) return showToast('PDF library is still loading — please try again');
+
+  const doc=new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  const title=`Anadi Godham — Delivery Chart`;
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(16);
+  doc.text(title,14,14);
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(10);
+  doc.text(`${g.personName} · ${shift==='morning'?'Morning':'Evening'} · ${dcFormatDate(deliveryChartDate)}`,14,21);
+  doc.text(`Customers: ${g.rows.length}`,14,27);
+
+  const body=g.rows.map((r,i)=>[
+    String(i+1),
+    `${r.name}\n${r.phone||''}\n${r.address||''}`,
+    r.qty.milk?String(r.qty.milk):'—',
+    r.qty.paneer?String(r.qty.paneer):'—',
+    r.qty.ghee?String(r.qty.ghee):'—',
+    r.qty.chach?String(r.qty.chach):'—',
+    r.qty.butter?String(r.qty.butter):'—',
+    r.qty.curd?String(r.qty.curd):'—',
+    r.other.join(', ')||'—'
+  ]);
+
+  if(typeof doc.autoTable==='function'){
+    doc.autoTable({
+      startY:31,
+      head:[['#','Customer / Address','Milk','Paneer','Ghee','Chach','Butter','Curd','Other products']],
+      body,
+      theme:'grid',
+      styles:{font:'helvetica',fontSize:7.5,cellPadding:2,overflow:'linebreak',valign:'top'},
+      headStyles:{fontStyle:'bold',fillColor:[32,40,31],textColor:255},
+      columnStyles:{
+        0:{cellWidth:8},1:{cellWidth:72},2:{cellWidth:16},3:{cellWidth:16},
+        4:{cellWidth:16},5:{cellWidth:16},6:{cellWidth:16},7:{cellWidth:16},8:{cellWidth:65}
+      },
+      margin:{left:10,right:10,top:31,bottom:12},
+      didDrawPage:data=>{
+        doc.setFontSize(7);
+        doc.setFont('helvetica','normal');
+        doc.text(`Page ${data.pageNumber}`,doc.internal.pageSize.getWidth()-25,doc.internal.pageSize.getHeight()-6);
+      }
+    });
+  }
+
+  const totals={milk:0,paneer:0,ghee:0,chach:0,butter:0,curd:0};
+  g.rows.forEach(r=>Object.keys(totals).forEach(k=>totals[k]+=Number(r.qty[k])||0));
+  const y=(doc.lastAutoTable?.finalY||31)+7;
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(9);
+  doc.text(`Route totals: Milk ${totals.milk} · Paneer ${totals.paneer} · Ghee ${totals.ghee} · Chach ${totals.chach} · Butter ${totals.butter} · Curd ${totals.curd}`,10,y);
+
+  doc.save(`${dcSafeFileName(g.personName)}-${shift}-${deliveryChartDate}.pdf`);
+  showToast('PDF downloaded');
+}
+
+function initDeliveryChartPage(){
+  $('#dcDate').value=deliveryChartDate;
+  $('#dcShift').value=deliveryChartShift;
+  renderDeliveryPersonSelect();
+
+  $('#dcDate').addEventListener('change',()=>{
+    deliveryChartDate=$('#dcDate').value||todayStr();
+    renderDeliveryChartPage();
+  });
+  $('#dcShift').addEventListener('change',()=>{
+    deliveryChartShift=$('#dcShift').value;
+    renderDeliveryChartPage();
+  });
+  $('#dcPerson').addEventListener('change',()=>{
+    deliveryChartPerson=$('#dcPerson').value;
+    renderDeliveryChartPage();
+  });
+  $('#dcRefreshBtn').addEventListener('click',renderDeliveryChartPage);
+  $('#dcDownloadAllVisible').addEventListener('click',()=>{
+    const groups=dcFilteredGroups();
+    if(!groups.length) return showToast('No deliveries to download');
+    groups.forEach((g,i)=>setTimeout(()=>downloadDeliveryChartPDF(g.personKey,g.shift),i*900));
+  });
+  renderDeliveryChartPage();
+}
+initDeliveryChartPage();
+
+/* ================= USAGE (built from data already in Firebase) =================
+   No change needed in customer.html. Activity is reconstructed from what the
+   customer app already saves under customers/{id}: createdAt (signup),
+   each order's placedAt (orders), overrides/{date}/updatedAt (schedule
+   changes / stops / order notes) and completedAt (delivery done). */
+let usageTerm = '', usageFilter = 'all', activeUsageId = null;
+
+function ts(v){ if (!v) return 0; const n = typeof v === 'number' ? v : Date.parse(v); return isNaN(n) ? 0 : n; }
+function uFmtFull(t){ return t ? new Date(t).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true}) : '—'; }
+function uFmtShort(t){ return t ? new Date(t).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '—'; }
+function uRel(t){
+  if (!t) return 'No activity yet';
+  const s = Math.max(0, Math.round((Date.now()-t)/1000));
+  if (s < 90) return 'Just now';
+  if (s < 3600) return Math.round(s/60)+' min ago';
+  if (s < 86400) return Math.round(s/3600)+' hr ago';
+  return Math.round(s/86400)+' day ago';
+}
+
+function usageEventsFor(c){
+  const ev = [];
+  const created = ts(c.createdAt);
+  if (created) ev.push({t:created, label:'🆕 Signed up / first login'});
+  Object.values(c.webOrders||{}).forEach(o=>{
+    const t = ts(o.placedAt);
+    if (t) ev.push({t, label:`✅ Placed order ${escapeHtml(o.id||'')} — ${money(o.total)} · ${(o.items||[]).length} item(s)`});
+  });
+  Object.entries(c.overrides||{}).forEach(([date,ov])=>{
+    const t = ts(ov && ov.updatedAt);
+    if (t) ev.push({t, label:`🗓️ Schedule / order change for ${escapeHtml(date)}`});
+  });
+  const ACT = {open:'📱 Opened the app', login:'🔑 Logged in', logout:'🚪 Logged out'};
+  Object.values(c.activity||{}).forEach(x=>{ const t = ts(x && x.t); if (t) ev.push({t, label: ACT[x.type] || escapeHtml(x.type||'Activity')}); });
+  const done = ts(c.completedAt);
+  if (done) ev.push({t:done, label:'🛵 Latest delivery marked complete'});
+  return ev.sort((a,b)=>b.t-a.t);
+}
+function usageRowFor(c){
+  const ev = usageEventsFor(c);
+  const custActions = ev.filter(e=>!e.label.startsWith('🛵'));   // delivery is done by staff, not the customer
+  const lastActive = Math.max(custActions.length ? custActions[0].t : 0, ts(c.lastSeen));
+  return { c, ev, lastActive, joined: ts(c.createdAt), orders: Object.keys(c.webOrders||{}).length };
+}
+
+function renderUsagePage(){
+  const host = $('#usageRows'); if (!host) return;
+  const all = customersList.map(usageRowFor).sort((a,b)=>b.lastActive-a.lastActive);
+  const st = new Date(); st.setHours(0,0,0,0);
+  const startToday = st.getTime(), week = Date.now()-7*86400000, month = Date.now()-30*86400000;
+  $('#usageStats').innerHTML = [
+    [all.length,'Total customers'],
+    [all.filter(r=>r.lastActive>=startToday).length,'Active today'],
+    [all.filter(r=>r.lastActive>=week).length,'Active this week'],
+    [all.filter(r=>r.c.pushSubscribed).length,'Push enabled'],
+    [all.filter(r=>r.joined>=startToday).length,'New today']
+  ].map(([n,l])=>`<div class="ustat"><div class="n">${n}</div><div class="l">${l}</div></div>`).join('');
+
+  const term = usageTerm.trim().toLowerCase();
+  const list = all.filter(r=>{
+    if (usageFilter==='today' && r.lastActive < startToday) return false;
+    if (usageFilter==='week' && r.lastActive < week) return false;
+    if (usageFilter==='inactive' && r.lastActive >= month) return false;
+    if (usageFilter==='never' && r.orders > 0) return false;
+    return !term || (r.c.name||'').toLowerCase().includes(term) || (r.c.phone||'').includes(term);
+  });
+  if (!list.length){
+    host.innerHTML = `<div class="empty-state"><div class="ic">📊</div>${all.length ? 'Koi match nahi mila.' : 'Abhi koi customer nahi hai.'}</div>`;
+    return;
+  }
+  host.innerHTML = list.map(r=>{
+    const c = r.c, recent = r.lastActive >= startToday;
+    return `<div class="prow bill-cust-row urow" data-usage-id="${escapeHtml(c.id)}">
+      <div class="u-cust"><div class="p-name">${escapeHtml(c.name||'Unnamed')}</div><div class="p-meta">${escapeHtml(c.phone ? '+91 '+c.phone : '—')}</div></div>
+      <div class="u-last"><div class="p-name" style="font-size:12.5px;"><span class="udot ${recent?'on':''}"></span>${uRel(r.lastActive)}</div><div class="p-meta">${r.lastActive ? uFmtFull(r.lastActive) : ''}</div></div>
+      <div class="figs">
+        <div class="p-meta">Joined ${uFmtShort(r.joined)}</div>
+        <div class="bill-mini-stat">${r.orders} orders</div>
+        <div class="p-meta">${c.pushSubscribed ? '🔔 Push on' : 'Push off'}</div>
+      </div>
+      <div class="row-actions"><button class="btn btn-ghost btn-sm">Activity</button></div>
+    </div>`;
+  }).join('');
+  $$('#usageRows [data-usage-id]').forEach(el=>el.addEventListener('click', ()=> openUsageModal(el.getAttribute('data-usage-id'))));
+}
+function openUsageModal(id){ activeUsageId = id; renderUsageModal(id); $('#usageModal').classList.add('show'); }
+function renderUsageModal(id){
+  const c = customersList.find(x=>x.id===id); if (!c) return;
+  const r = usageRowFor(c);
+  $('#usageModalTitle').textContent = c.name || 'Unnamed';
+  $('#usageModalMeta').innerHTML = `${escapeHtml(c.phone ? '+91 '+c.phone : '—')} · ${escapeHtml(c.address||'No address')} · Joined ${uFmtShort(r.joined)} · ${r.orders} orders`;
+  $('#usageModalBody').innerHTML = r.ev.length
+    ? r.ev.slice(0,80).map(e=>`<div class="uev"><span class="t">${uFmtFull(e.t)}</span><span>${e.label}</span></div>`).join('')
+    : '<div class="empty-state">Is customer ki abhi koi activity record nahi hui.</div>';
+}
+$('#usageSearch').addEventListener('input', ()=>{ usageTerm = $('#usageSearch').value; renderUsagePage(); });
+$$('#usageFilter button').forEach(b=>b.addEventListener('click', ()=>{
+  usageFilter = b.getAttribute('data-uf');
+  $$('#usageFilter button').forEach(x=>x.classList.toggle('active', x===b));
+  renderUsagePage();
+}));
+$$('#usageModal [data-close]').forEach(b=>b.addEventListener('click', ()=>{ $('#usageModal').classList.remove('show'); activeUsageId = null; }));
+
+/* ================= NAV ================= */
+$$('.navlist button[data-page]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    $$('.navlist button[data-page]').forEach(b=>b.classList.toggle('active', b===btn));
+    const page = btn.getAttribute('data-page');
+    if (page==='usage') renderUsagePage();
+    if (page==='deliverychart') renderDeliveryChartPage();
+    ['products','categories','banners','notifications','billing','deliverychart','usage'].forEach(p=>{
+      $('#page-'+p).style.display = (p===page) ? '' : 'none';
+    });
+  });
+});
+
+/* ================= PRODUCTS PAGE ================= */
+function renderCategoryFilterChips(){
+  $('#catFilterChips').innerHTML = ['all', ...categories.map(c=>c.id)].map(id=>{
+    const label = id==='all' ? 'All' : (categories.find(c=>c.id===id)?.name || id);
+    return `<button data-filter="${id}" class="${activeCatFilter===id?'active':''}">${escapeHtml(label)}</button>`;
+  }).join('');
+  $$('#catFilterChips button').forEach(b=>b.addEventListener('click', ()=>{
+    activeCatFilter = b.getAttribute('data-filter');
+    renderCategoryFilterChips();
+    renderProductsPage();
+  }));
+}
+/* Groups products that look like accidental duplicates (same name + same
+   category, case/space-insensitive) so the admin can spot and clean them up
+   instead of having two records silently drift apart (one in stock, one
+   marked out of stock, etc). This does NOT delete anything automatically —
+   it only flags rows so a person can decide what to remove. */
+function findDuplicateProductIds(){
+  const groups = {};
+  products.forEach(p=>{
+    const key = (p.name||'').trim().toLowerCase() + '|' + (p.cat||'');
+    if (!key.trim().replace('|','')) return;
+    (groups[key] = groups[key]||[]).push(p);
+  });
+  const dupeIds = new Set();
+  Object.values(groups).forEach(group=>{
+    if (group.length>1) group.forEach(p=>dupeIds.add(p.id));
+  });
+  return dupeIds;
+}
+function renderProductsPage(){
+  const q = ($('#productSearch').value||'').trim().toLowerCase();
+  let list = products.slice();
+  if (activeCatFilter!=='all') list = list.filter(p=>p.cat===activeCatFilter);
+  if (q) list = list.filter(p=>(p.name||'').toLowerCase().includes(q));
+  list.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  const dupeIds = findDuplicateProductIds();
+  const host = $('#productRows');
+  const banner = $('#dupeBanner');
+  if (dupeIds.size){
+    banner.style.display = '';
+    banner.innerHTML = `⚠️ ${dupeIds.size} product${dupeIds.size===1?'':'s'} look like duplicates (same name + category). They're marked "DUPLICATE" below — open each one to compare and delete the extra copy.`;
+  } else {
+    banner.style.display = 'none';
+  }
+  if (!list.length){
+    host.innerHTML = `<div class="empty-state"><div class="ic">🧺</div>No products found. ${products.length? 'Try a different search or filter.':'Add your first product to get started.'}</div>`;
+    return;
+  }
+  host.innerHTML = list.map(p=>{
+    const status = statusOf(p);
+    const catName = categories.find(c=>c.id===p.cat)?.name || p.cat || '—';
+    const thumb = (p.images&&p.images[0]) || p.image;
+    return `<div class="prow" data-pid="${p.id}">
+      <div class="p-thumb">${thumb?`<img src="${escapeHtml(thumb)}" loading="lazy" decoding="async" fetchpriority="low">`:(p.emoji||'📦')}</div>
+      <div><div class="p-name">${escapeHtml(p.name)}${dupeIds.has(p.id)?`<span class="badge badge-dupe" title="Same name + category as another product">DUPLICATE</span>`:''}</div><div class="p-meta">${escapeHtml(p.unit||'')}</div></div>
+      <div class="p-metawrap">
+        <div class="col-cat">${escapeHtml(catName)}</div>
+        <div class="col-price p-price">${money(p.price)}${p.mrp&&p.mrp>p.price?`<span class="mrp">${money(p.mrp)}</span>`:''}</div>
+        <div class="col-stock">${typeof p.stock==='number' ? `<input type="number" class="stock-input" data-stock-id="${p.id}" value="${p.stock}" min="0">` : `<span class="stock-unlimited">unlimited</span>`}</div>
+        <div class="col-status">${statusBadge(status)}</div>
+      </div>
+      <div class="row-actions">
+        <button class="icon-btn" data-edit-product="${p.id}" title="Edit">✎</button>
+      </div>
+    </div>`;
+  }).join('');
+  $$('[data-stock-id]').forEach(inp=>{
+    inp.addEventListener('change', async ()=>{
+      const id = inp.getAttribute('data-stock-id');
+      const val = Math.max(0, parseInt(inp.value,10) || 0);
+      try{ await update(ref(db,'catalog/products/'+id), { stock: val, outOfStock: false }); showToast('Stock updated'); }
+      catch(e){ console.error(e); showToast('Could not update stock'); }
+    });
+  });
+  $$('[data-edit-product]').forEach(btn=>btn.addEventListener('click', ()=> openProductModal(btn.getAttribute('data-edit-product'))));
+}
+let productSearchTimer = null;
+$('#productSearch').addEventListener('input', ()=>{
+  clearTimeout(productSearchTimer);
+  productSearchTimer = setTimeout(renderProductsPage, 120);
+});
+$('#addProductBtn').addEventListener('click', ()=> openProductModal(null));
+
+/* ---- Product modal ---- */
+function populateCategorySelect(){
+  $('#pfCat').innerHTML = categories.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('') || `<option value="">Add a category first</option>`;
+}
+function pfImagesRowHtml(url=''){
+  return `<div class="img-row"><input type="text" class="pf-image-input" value="${escapeHtml(url)}" placeholder="https://…"><button type="button" class="rm" data-rm-img>✕</button></div>`;
+}
+function bindImageRowRemovers(){
+  $$('#pfImagesList [data-rm-img]').forEach(btn=>{
+    btn.onclick = ()=>{
+      btn.closest('.img-row').remove();
+      if (!$('#pfImagesList').children.length){
+        $('#pfImagesList').insertAdjacentHTML('beforeend', pfImagesRowHtml());
+        bindImageRowRemovers();
+      }
+    };
+  });
+}
+$('#pfAddImageBtn').addEventListener('click', ()=>{
+  $('#pfImagesList').insertAdjacentHTML('beforeend', pfImagesRowHtml());
+  bindImageRowRemovers();
+});
+function openProductModal(id){
+  editingProductId = id;
+  const p = id ? products.find(x=>x.id===id) : null;
+  $('#productModalTitle').textContent = p ? 'Edit Product' : 'Add Product';
+  $('#pfName').value = p?.name || '';
+  populateCategorySelect();
+  $('#pfCat').value = p?.cat || (categories[0]?.id||'');
+  $('#pfUnit').value = p?.unit || '';
+  $('#pfPrice').value = p?.price ?? '';
+  $('#pfMrp').value = p?.mrp ?? '';
+  $('#pfTag').value = p?.tag || '';
+  $('#pfEmoji').value = p?.emoji || '📦';
+  $('#pfDesc').value = p?.desc || '';
+  const imgs = (p?.images && p.images.length) ? p.images : (p?.image ? [p.image] : ['']);
+  $('#pfImagesList').innerHTML = imgs.map(pfImagesRowHtml).join('');
+  bindImageRowRemovers();
+  $('#pfStock').value = (typeof p?.stock==='number') ? p.stock : '';
+  $('#pfOutOfStock').checked = !!p?.outOfStock;
+  $('#pfComingSoon').checked = !!p?.comingSoon;
+  $('#pfPopular').checked = !!p?.popular;
+  $('#pfFeatured').checked = !!p?.featured;
+  $('#pfDeleteBtn').style.display = p ? '' : 'none';
+  $('#productModal').classList.add('show');
+}
+$$('#productModal [data-close]').forEach(b=>b.addEventListener('click', ()=>{ $('#productModal').classList.remove('show'); editingProductId = null; }));
+$('#pfSaveBtn').addEventListener('click', async ()=>{
+  const btn = $('#pfSaveBtn');
+  if (btn.disabled) return; // guard against double-tap firing this twice and creating a duplicate
+  const name = $('#pfName').value.trim();
+  const cat = $('#pfCat').value;
+  if (!name){ showToast('Product name is required'); return; }
+  if (!cat){ showToast('Add a category first'); return; }
+  const images = $$('.pf-image-input').map(i=>i.value.trim()).filter(Boolean);
+  const stockRaw = $('#pfStock').value;
+  const payload = {
+    name, cat,
+    unit: $('#pfUnit').value.trim(),
+    price: Number($('#pfPrice').value)||0,
+    mrp: $('#pfMrp').value===''? null : Number($('#pfMrp').value),
+    tag: $('#pfTag').value.trim(),
+    emoji: $('#pfEmoji').value.trim() || '📦',
+    desc: $('#pfDesc').value.trim(),
+    images,
+    image: images[0] || '',
+    stock: stockRaw===''? null : Math.max(0,parseInt(stockRaw,10) || 0),
+    outOfStock: $('#pfOutOfStock').checked,
+    comingSoon: $('#pfComingSoon').checked,
+    popular: $('#pfPopular').checked,
+    featured: $('#pfFeatured').checked,
+  };
+  const wasEditing = !!editingProductId;
+  btn.disabled = true;
+  try{
+    if (wasEditing){
+      await update(ref(db,'catalog/products/'+editingProductId), payload);
+    } else {
+      const newRef = push(ref(db,'catalog/products'));
+      await set(newRef, { id:newRef.key, ...payload });
+    }
+    $('#productModal').classList.remove('show');
+    editingProductId = null;
+    showToast(wasEditing ? 'Product updated' : 'Product added');
+  } catch(e){ console.error(e); showToast('Could not save product'); }
+  finally { btn.disabled = false; }
+});
+$('#pfDeleteBtn').addEventListener('click', async ()=>{
+  if (!editingProductId) return;
+  if (!confirm('Delete this product permanently? This cannot be undone.')) return;
+  try{ await remove(ref(db,'catalog/products/'+editingProductId)); $('#productModal').classList.remove('show'); showToast('Product deleted'); }
+  catch(e){ console.error(e); showToast('Could not delete product'); }
+});
+
+/* ================= CATEGORIES PAGE ================= */
+function renderCategoriesPage(){
+  const host = $('#categoryGrid');
+  if (!categories.length){
+    host.innerHTML = `<div class="empty-state"><div class="ic">🗂️</div>No categories yet. Add one to start organizing products.</div>`;
+    return;
+  }
+  host.innerHTML = categories.map(c=>{
+    const count = products.filter(p=>p.cat===c.id).length;
+    return `<div class="cat-card">
+      <div class="top">
+        <div class="ic-tile">${c.image?`<img src="${escapeHtml(c.image)}" loading="lazy" decoding="async" fetchpriority="low">`:c.icon||'🗂️'}</div>
+        <div><div class="nm">${escapeHtml(c.name)}</div><div class="id">${escapeHtml(c.id)}</div></div>
+      </div>
+      <div class="count">${count} product${count===1?'':'s'}</div>
+      <div class="foot">
+        <button class="btn btn-ghost btn-sm" data-edit-cat="${c.id}" style="flex:1;">Edit</button>
+      </div>
+    </div>`;
+  }).join('');
+  $$('[data-edit-cat]').forEach(btn=>btn.addEventListener('click', ()=> openCategoryModal(btn.getAttribute('data-edit-cat'))));
+}
+$('#addCategoryBtn').addEventListener('click', ()=> openCategoryModal(null));
+function openCategoryModal(id){
+  editingCategoryId = id;
+  const c = id ? categories.find(x=>x.id===id) : null;
+  $('#categoryModalTitle').textContent = c ? 'Edit Category' : 'Add Category';
+  $('#cfName').value = c?.name || '';
+  $('#cfIcon').value = c?.icon || '';
+  $('#cfOrder').value = c?.order ?? categories.length;
+  $('#cfImage').value = c?.image || '';
+  $('#cfDeleteBtn').style.display = c ? '' : 'none';
+  $('#categoryModal').classList.add('show');
+}
+$$('#categoryModal [data-close]').forEach(b=>b.addEventListener('click', ()=>{ $('#categoryModal').classList.remove('show'); editingCategoryId = null; }));
+$('#cfSaveBtn').addEventListener('click', async ()=>{
+  const btn = $('#cfSaveBtn');
+  if (btn.disabled) return;
+  const name = $('#cfName').value.trim();
+  if (!name){ showToast('Category name is required'); return; }
+  const payload = {
+    name,
+    icon: $('#cfIcon').value.trim() || '🗂️',
+    image: $('#cfImage').value.trim(),
+    order: Number($('#cfOrder').value)||0,
+  };
+  btn.disabled = true;
+  try{
+    const id = editingCategoryId || slugify(name);
+    await update(ref(db,'catalog/categories/'+id), { id, ...payload });
+    $('#categoryModal').classList.remove('show');
+    editingCategoryId = null;
+    showToast('Category saved');
+  } catch(e){ console.error(e); showToast('Could not save category'); }
+  finally { btn.disabled = false; }
+});
+$('#cfDeleteBtn').addEventListener('click', async ()=>{
+  if (!editingCategoryId) return;
+  const count = products.filter(p=>p.cat===editingCategoryId).length;
+  const msg = count
+    ? `${count} product${count===1?'':'s'} are still in this category. Delete the category anyway? Those products will stay assigned to a category that no longer exists until you re-assign them.`
+    : 'Delete this category?';
+  if (!confirm(msg)) return;
+  try{ await remove(ref(db,'catalog/categories/'+editingCategoryId)); $('#categoryModal').classList.remove('show'); showToast('Category deleted'); }
+  catch(e){ console.error(e); showToast('Could not delete category'); }
+});
+
+/* ================= BANNERS PAGE ================= */
+function renderBannersPage(){
+  const host = $('#bannerGrid');
+  if (!banners.length){
+    host.innerHTML = `<div class="empty-state"><div class="ic">🖼️</div>No banners yet. Add one to show it on the customer app's home tab.</div>`;
+    return;
+  }
+  host.innerHTML = banners.map(b=>{
+    const bg = b.image ? `background-image:url('${escapeHtml(b.image)}')` : `background:${b.grad||'var(--grad-brand)'}`;
+    return `<div class="ban-card">
+      <div class="ban-preview" style="${bg}">
+        <div class="ey">${escapeHtml(b.eyebrow||'')}</div>
+        <div class="tt">${escapeHtml(b.title||'')}</div>
+        <div class="sb">${escapeHtml(b.sub||'')}</div>
+      </div>
+      <div class="ban-foot">
+        <button class="btn btn-ghost btn-sm" data-edit-ban="${b.id}" style="flex:1;">Edit</button>
+      </div>
+    </div>`;
+  }).join('');
+  $$('[data-edit-ban]').forEach(btn=>btn.addEventListener('click', ()=> openBannerModal(btn.getAttribute('data-edit-ban'))));
+}
+$('#addBannerBtn').addEventListener('click', ()=> openBannerModal(null));
+const DEFAULT_GRADS = [
+  'linear-gradient(135deg,#2E2C22,#15140F)', 'linear-gradient(135deg,#A38F5E,#6E5D38)',
+  'linear-gradient(135deg,#3C3A2E,#20281F)', 'linear-gradient(135deg,#5C5B51,#312F26)'
+];
+function openBannerModal(id){
+  editingBannerId = id;
+  const b = id ? banners.find(x=>x.id===id) : null;
+  $('#bannerModalTitle').textContent = b ? 'Edit Banner' : 'Add Banner';
+  $('#bfEyebrow').value = b?.eyebrow || '';
+  $('#bfTitle').value = b?.title || '';
+  $('#bfSub').value = b?.sub || '';
+  $('#bfImage').value = b?.image || '';
+  $('#bfOrder').value = b?.order ?? banners.length;
+  $('#bfDeleteBtn').style.display = b ? '' : 'none';
+  $('#bannerModal').classList.add('show');
+  $('#bannerModal').dataset.grad = b?.grad || DEFAULT_GRADS[banners.length % DEFAULT_GRADS.length];
+}
+$$('#bannerModal [data-close]').forEach(b=>b.addEventListener('click', ()=>{ $('#bannerModal').classList.remove('show'); editingBannerId = null; }));
+$('#bfSaveBtn').addEventListener('click', async ()=>{
+  const btn = $('#bfSaveBtn');
+  if (btn.disabled) return;
+  const title = $('#bfTitle').value.trim();
+  if (!title){ showToast('Banner title is required'); return; }
+  const payload = {
+    eyebrow: $('#bfEyebrow').value.trim(),
+    title,
+    sub: $('#bfSub').value.trim(),
+    image: $('#bfImage').value.trim(),
+    grad: $('#bannerModal').dataset.grad || DEFAULT_GRADS[0],
+    order: Number($('#bfOrder').value)||0,
+  };
+  const wasEditing = !!editingBannerId;
+  btn.disabled = true;
+  try{
+    if (wasEditing){
+      await update(ref(db,'catalog/banners/'+editingBannerId), payload);
+    } else {
+      const newRef = push(ref(db,'catalog/banners'));
+      await set(newRef, payload);
+    }
+    $('#bannerModal').classList.remove('show');
+    editingBannerId = null;
+    showToast('Banner saved');
+  } catch(e){ console.error(e); showToast('Could not save banner'); }
+  finally { btn.disabled = false; }
+});
+$('#bfDeleteBtn').addEventListener('click', async ()=>{
+  if (!editingBannerId) return;
+  if (!confirm('Delete this banner?')) return;
+  try{ await remove(ref(db,'catalog/banners/'+editingBannerId)); $('#bannerModal').classList.remove('show'); showToast('Banner deleted'); }
+  catch(e){ console.error(e); showToast('Could not delete banner'); }
+});
+
+/* ================= NOTIFICATIONS PAGE ================= */
+/* Sends a broadcast push to every OneSignal-subscribed customer via the
+   same serverless endpoint customerapp.html uses for per-customer pushes
+   (see /api/send-notification.js) — just without an externalId, which
+   that endpoint treats as "send to everyone subscribed" instead of one
+   specific customer. The REST API Key that actually authorizes sending
+   stays server-side in that function; this admin panel never touches it. */
+let notifHistory = [];
+onValue(ref(db,'adminNotifications'), snap=>{
+  const val = snap.val() || {};
+  notifHistory = Object.entries(val)
+    .map(([id,v])=>({id, ...v}))
+    .sort((a,b)=>(b.sentAt||0)-(a.sentAt||0))
+    .slice(0,20);
+  renderNotifHistory();
+});
+function renderNotifHistory(){
+  const host = $('#notifHistoryList');
+  if (!notifHistory.length){
+    host.innerHTML = `<div class="empty-state"><div class="ic">🔔</div>No notifications sent yet.</div>`;
+    return;
+  }
+  host.innerHTML = notifHistory.map(n=>{
+    const when = n.sentAt ? new Date(n.sentAt).toLocaleString() : '';
+    const failed = n.status === 'failed';
+    return `<div class="prow" style="grid-template-columns:1fr auto;">
+      <div>
+        <div class="p-name">${escapeHtml(n.title||'')}</div>
+        <div class="p-meta">${escapeHtml(n.message||'')}</div>
+        ${failed && n.error ? `<div class="p-meta" style="color:var(--danger); margin-top:3px;">${escapeHtml(n.error)}</div>` : ''}
+      </div>
+      <div style="text-align:right;">
+        <div class="badge ${failed?'badge-oos':'badge-active'}">${failed?'Failed':'Sent'}</div>
+        <div class="p-meta" style="margin-top:4px;">${when}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+$('#notifMessage').addEventListener('input', ()=>{
+  $('#notifCharCount').textContent = $('#notifMessage').value.length;
+});
+$('#notifSendBtn').addEventListener('click', async ()=>{
+  const btn = $('#notifSendBtn');
+  const title = $('#notifTitle').value.trim();
+  const message = $('#notifMessage').value.trim();
+  const statusEl = $('#notifStatus');
+  if (!message){ showToast('Message is required'); return; }
+  if (!confirm(`Send this notification to ALL customers?\n\nTitle: ${title || '(default)'}\nMessage: ${message}`)) return;
+
+  btn.disabled = true;
+  statusEl.textContent = 'Sending…';
+  let ok = false;
+  let errDetail = '';
+  try{
+    const res = await fetch('/api/send-notification', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ broadcast:true, title, message })
+    });
+    ok = res.ok;
+    if (!ok){ errDetail = await res.text(); console.error('Send failed', errDetail); }
+  } catch(e){ errDetail = String(e); console.error('Send failed', e); }
+
+  try{
+    await push(ref(db,'adminNotifications'), {
+      title, message, sentAt: Date.now(), status: ok ? 'sent' : 'failed',
+      error: ok ? null : (errDetail || '').slice(0, 300)
+    });
+  } catch(e){ console.error('Could not log notification', e); }
+
+  statusEl.textContent = '';
+  btn.disabled = false;
+  if (ok){
+    showToast('Notification sent to all customers');
+    $('#notifTitle').value = '';
+    $('#notifMessage').value = '';
+    $('#notifCharCount').textContent = '0';
+  } else {
+    showToast('Could not send — check Vercel function logs');
+  }
+});
+
+/* Click outside modal card to close */
+$$('.modal-overlay').forEach(ov=> ov.addEventListener('click', e=>{
+  if (e.target!==ov) return;
+  ov.classList.remove('show');
+  if (ov.id==='productModal') editingProductId = null;
+  if (ov.id==='categoryModal') editingCategoryId = null;
+  if (ov.id==='bannerModal') editingBannerId = null;
+  if (ov.id==='billingModal') activeBillingCustomerId = null;
+  if (ov.id==='usageModal') activeUsageId = null;
+}));
+
+/* ===== Modal UX: lock page scroll behind popup, tap outside / Esc to close ===== */
+new MutationObserver(()=>{ document.body.style.overflow = document.querySelector('.modal-overlay.show') ? 'hidden' : ''; })
+  .observe(document.body, {subtree:true, attributes:true, attributeFilter:['class']});
+$$('.modal-overlay').forEach(ov=>ov.addEventListener('mousedown', e=>{
+  if (e.target === ov){ const x = ov.querySelector('[data-close]'); if (x) x.click(); else ov.classList.remove('show'); }
+}));
+document.addEventListener('keydown', e=>{
+  if (e.key !== 'Escape') return;
+  const open = [...document.querySelectorAll('.modal-overlay.show')].pop();
+  if (open){ const x = open.querySelector('[data-close]'); if (x) x.click(); else open.classList.remove('show'); }
+});
+</script>
+</body>
+</html>
