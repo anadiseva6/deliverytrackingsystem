@@ -455,6 +455,7 @@ img{content-visibility:auto;}
   input,select,textarea{font-size:16px !important;}
   .toast{max-width:92vw; text-align:center;}
 }
+@media (max-width:820px){#popLayout{grid-template-columns:1fr !important;}}
 </style>
 </head>
 <body>
@@ -514,6 +515,7 @@ img{content-visibility:auto;}
       <button data-page="products" class="active"><span class="ic">🧺</span> Products</button>
       <button data-page="categories"><span class="ic">🗂️</span> Categories</button>
       <button data-page="banners"><span class="ic">🖼️</span> Banners</button>
+      <button data-page="popup"><span class="ic">🎁</span> Popup</button>
       <button data-page="notifications"><span class="ic">🔔</span> Notifications</button>
       <button data-page="billing"><span class="ic">🧾</span> Billing</button>
       <button data-page="deliverychart"><span class="ic">🚚</span> Delivery Chart</button>
@@ -578,6 +580,63 @@ img{content-visibility:auto;}
         <button class="btn btn-primary" id="addBannerBtn">+ Add Banner</button>
       </div>
       <div class="grid-cards" id="bannerGrid"></div>
+    </section>
+
+    <!-- ========== POPUP PAGE ========== -->
+    <section id="page-popup" style="display:none;">
+      <div class="page-head">
+        <div>
+          <h2>App Popup</h2>
+          <div class="sub">Customer jab bhi app khole, neeche se ek bada offer popup aayega. Cross se band hoga, aur tap karne par category ya product page khulega.</div>
+        </div>
+        <button class="btn btn-primary" id="popSaveBtn">Save Popup</button>
+      </div>
+      <div style="display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:22px; align-items:start;" id="popLayout">
+        <div style="display:flex; flex-direction:column; gap:14px; background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:18px;">
+          <label style="display:flex; align-items:center; gap:10px; font-weight:800; font-size:13.5px; cursor:pointer;">
+            <input type="checkbox" id="popEnabled" style="width:18px;height:18px;"> Popup chalu rakhein (ON)
+          </label>
+          <div class="field"><label>Image link (URL)</label><input type="text" id="popImage" placeholder="https://… (4:3 image, jaise 1200×900, sabse achhi dikhti hai)"></div>
+          <div class="field"><label>Title</label><input type="text" id="popTitle" maxlength="70" placeholder="e.g. Diwali Special Offers 🪔"></div>
+          <div class="field"><label>Text / Offer details</label><textarea id="popText" maxlength="300" placeholder="e.g. Desi Ghee par flat 10% OFF — sirf is hafte!" style="min-height:90px;"></textarea></div>
+          <div class="field-row">
+            <div class="field"><label>Tap karne par kya khule?</label>
+              <select id="popTargetType">
+                <option value="none">Kuch nahi (sirf popup band ho)</option>
+                <option value="category">Ek Category</option>
+                <option value="product">Ek Product page</option>
+              </select>
+            </div>
+            <div class="field" id="popTargetWrap" style="display:none;"><label id="popTargetLabel">Category chuniye</label><select id="popTargetId"></select></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Button ka text (optional)</label><input type="text" id="popBtnText" maxlength="24" placeholder="e.g. Abhi dekhein"></div>
+            <div class="field"><label>Kitni baar dikhana hai?</label>
+              <select id="popFreq">
+                <option value="always">Har baar app khulne par</option>
+                <option value="daily">Din mein sirf ek baar</option>
+                <option value="once">Sirf ek baar (jab tak naya save na karo)</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+            <div class="field-hint" id="popStatusHint"></div>
+            <button class="btn btn-danger btn-sm" id="popDeleteBtn" style="display:none;">Popup hata dein</button>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:11.5px; font-weight:800; color:var(--ink-soft); margin-bottom:8px;">LIVE PREVIEW</div>
+          <div id="popPreview" style="border-radius:22px 22px 0 0; overflow:hidden; background:#fff; border:1px solid var(--line); box-shadow:0 10px 30px rgba(0,0,0,.12); position:relative;">
+            <div id="popPrevImgWrap" style="aspect-ratio:4/3; background:#EEF2EC center/cover no-repeat; display:flex; align-items:center; justify-content:center; color:#98A39A; font-size:12px;">Image preview</div>
+            <div style="position:absolute; top:10px; right:10px; width:28px; height:28px; border-radius:50%; background:rgba(0,0,0,.55); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px;">✕</div>
+            <div style="padding:14px 16px 16px;">
+              <div id="popPrevTitle" style="font-weight:800; font-size:16px; margin-bottom:5px;">Title yahan dikhega</div>
+              <div id="popPrevText" style="font-size:12.5px; color:var(--ink-soft); line-height:1.5;">Offer ka text yahan dikhega.</div>
+              <div id="popPrevBtn" style="display:none; margin-top:12px; text-align:center; background:var(--brand,#2F6B35); color:#fff; border-radius:11px; padding:10px; font-weight:800; font-size:13px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- ========== NOTIFICATIONS PAGE ========== -->
@@ -1967,7 +2026,7 @@ $$('.navlist button[data-page]').forEach(btn=>{
     const page = btn.getAttribute('data-page');
     if (page==='usage') renderUsagePage();
     if (page==='deliverychart') renderDeliveryChartPage();
-    ['products','categories','banners','notifications','billing','deliverychart','usage'].forEach(p=>{
+    ['products','categories','banners','popup','notifications','billing','deliverychart','usage'].forEach(p=>{
       $('#page-'+p).style.display = (p===page) ? '' : 'none';
     });
   });
@@ -2292,6 +2351,98 @@ $('#bfDeleteBtn').addEventListener('click', async ()=>{
   if (!confirm('Delete this banner?')) return;
   try{ await remove(ref(db,'catalog/banners/'+editingBannerId)); $('#bannerModal').classList.remove('show'); showToast('Banner deleted'); }
   catch(e){ console.error(e); showToast('Could not delete banner'); }
+});
+
+
+/* ================= POPUP PAGE =================
+   One popup record at catalog/popup — customerapp.html listens to it live.
+   {enabled, image, title, text, btnText, targetType:'none'|'category'|'product',
+    targetId, freq:'always'|'daily'|'once', version} — `version` changes on every
+   save so "show only once" popups come back after an edit. */
+let popupData = null;
+function popFillTargets(){
+  const type = $('#popTargetType').value;
+  const wrap = $('#popTargetWrap'), sel = $('#popTargetId');
+  if (type==='none'){ wrap.style.display='none'; return; }
+  wrap.style.display='';
+  const keep = sel.value;
+  if (type==='category'){
+    $('#popTargetLabel').textContent = 'Category chuniye';
+    sel.innerHTML = categories.map(c=>`<option value="${escapeHtml(c.id)}">${escapeHtml(c.name)}</option>`).join('') || '<option value="">Pehle category banaiye</option>';
+  } else {
+    $('#popTargetLabel').textContent = 'Product chuniye';
+    const catName = id => (categories.find(c=>c.id===id)||{}).name || '';
+    sel.innerHTML = products.slice().sort((a,b)=>(a.name||'').localeCompare(b.name||'')).map(p=>`<option value="${escapeHtml(p.id)}">${escapeHtml(p.name||p.id)}${catName(p.cat)?' — '+escapeHtml(catName(p.cat)):''}</option>`).join('') || '<option value="">Pehle product banaiye</option>';
+  }
+  if ([...sel.options].some(o=>o.value===keep)) sel.value = keep;
+}
+function popPreview(){
+  const img = $('#popImage').value.trim();
+  const w = $('#popPrevImgWrap');
+  if (img){ w.style.backgroundImage = `url("${img.replace(/"/g,'%22')}")`; w.textContent=''; }
+  else { w.style.backgroundImage=''; w.textContent='Image preview'; }
+  $('#popPrevTitle').textContent = $('#popTitle').value.trim() || 'Title yahan dikhega';
+  $('#popPrevText').textContent = $('#popText').value.trim() || 'Offer ka text yahan dikhega.';
+  const type = $('#popTargetType').value;
+  const bt = $('#popBtnText').value.trim() || (type==='none' ? '' : 'Abhi dekhein');
+  const b = $('#popPrevBtn'); b.style.display = bt ? '' : 'none'; b.textContent = bt;
+}
+function popLoadForm(){
+  const d = popupData || {};
+  $('#popEnabled').checked = d.enabled !== false && !!popupData;
+  $('#popImage').value = d.image || '';
+  $('#popTitle').value = d.title || '';
+  $('#popText').value = d.text || '';
+  $('#popBtnText').value = d.btnText || '';
+  $('#popFreq').value = d.freq || 'always';
+  $('#popTargetType').value = d.targetType || 'none';
+  popFillTargets();
+  if (d.targetId) $('#popTargetId').value = d.targetId;
+  $('#popDeleteBtn').style.display = popupData ? '' : 'none';
+  $('#popStatusHint').textContent = popupData ? (d.enabled ? '✅ Popup abhi customers ko dikh raha hai.' : '⏸️ Popup saved hai par OFF hai.') : 'Abhi koi popup set nahi hai.';
+  popPreview();
+}
+['popImage','popTitle','popText','popBtnText'].forEach(id=>$('#'+id).addEventListener('input', popPreview));
+$('#popTargetType').addEventListener('change', ()=>{ popFillTargets(); popPreview(); });
+let popFormTouched = false;
+$$('#page-popup input, #page-popup select, #page-popup textarea').forEach(el=>el.addEventListener('input', ()=>{ popFormTouched = true; }));
+onValue(ref(db,'catalog/popup'), snap=>{
+  popupData = snap.val() || null;
+  if (!popFormTouched) popLoadForm();
+  else $('#popDeleteBtn').style.display = popupData ? '' : 'none';
+}, err=>console.error('Popup load failed', err));
+// category / product lists arrive asynchronously — refresh the dropdown once they do
+setInterval(()=>{ if ($('#page-popup').style.display!=='none' && $('#popTargetType').value!=='none' && !$('#popTargetId').options.length) popFillTargets(); }, 1500);
+$$('.navlist button[data-page="popup"]').forEach(b=>b.addEventListener('click', ()=>{ popFillTargets(); }));
+
+$('#popSaveBtn').addEventListener('click', async ()=>{
+  const btn = $('#popSaveBtn'); if (btn.disabled) return;
+  const image = $('#popImage').value.trim(), title = $('#popTitle').value.trim(), text = $('#popText').value.trim();
+  if (!image && !title && !text){ showToast('Kam se kam image, title ya text daaliye'); return; }
+  if (image && !/^https?:\/\//i.test(image)){ showToast('Image link https:// se shuru hona chahiye'); return; }
+  const targetType = $('#popTargetType').value;
+  const targetId = targetType==='none' ? '' : $('#popTargetId').value;
+  if (targetType!=='none' && !targetId){ showToast('Category / product chuniye'); return; }
+  const payload = {
+    enabled: $('#popEnabled').checked,
+    image, title, text,
+    btnText: $('#popBtnText').value.trim(),
+    targetType, targetId,
+    freq: $('#popFreq').value,
+    version: Date.now(),
+  };
+  btn.disabled = true;
+  try{
+    await set(ref(db,'catalog/popup'), payload);
+    popFormTouched = false;
+    showToast(payload.enabled ? 'Popup save ho gaya — ab customers ko dikhega' : 'Popup save hua (OFF hai)');
+  } catch(e){ console.error(e); showToast('Popup save nahi ho paya'); }
+  finally { btn.disabled = false; }
+});
+$('#popDeleteBtn').addEventListener('click', async ()=>{
+  if (!confirm('Popup hata dein?')) return;
+  try{ await remove(ref(db,'catalog/popup')); popFormTouched = false; popupData = null; popLoadForm(); showToast('Popup hata diya'); }
+  catch(e){ console.error(e); showToast('Popup hata nahi paya'); }
 });
 
 /* ================= NOTIFICATIONS PAGE ================= */
