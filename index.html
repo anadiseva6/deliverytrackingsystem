@@ -558,6 +558,11 @@
           <div class="field"><label>Name</label><input id="boyName" type="text" placeholder="e.g. Amit Kumar"></div>
           <div class="field"><label>Primary zone</label><select id="boyZone"><option value="">No zone</option></select></div>
         </div>
+        <div class="field-row">
+          <div class="field"><label>Phone no.</label><input id="boyPhone" type="tel" inputmode="numeric" maxlength="14" placeholder="10-digit mobile"></div>
+          <div class="field"><label>Vehicle</label><input id="boyVehicle" type="text" placeholder="e.g. Activa / Splendor"></div>
+        </div>
+        <div class="field"><label>Vehicle number</label><input id="boyVehicleNo" type="text" maxlength="14" placeholder="e.g. DL 3S AB 1234" style="text-transform:uppercase;"></div>
         <button class="btn btn-primary btn-sm" id="addBoyBtn" style="width:100%;">Add to team</button>
         <div class="hint">They'll log in with password <b>123</b> and pick their name from the login screen.</div>
 
@@ -702,6 +707,10 @@
 
 <div class="modal-backdrop" id="boyModal">
   <div class="modal wide" id="boyModalContent"></div>
+</div>
+
+<div class="modal-backdrop" id="editBoyModal">
+  <div class="modal" id="editBoyModalContent"></div>
 </div>
 
 <div class="modal-backdrop" id="editCustModal">
@@ -1967,10 +1976,14 @@ document.getElementById('addBoyBtn').onclick = withBtnLoading(document.getElemen
   const name = document.getElementById('boyName').value.trim();
   const zone = document.getElementById('boyZone').value;
   if (!name) return;
+  const phone = normalizePhone(document.getElementById('boyPhone').value);
+  if (phone === null){ showToast("Phone number 10 digit ka hona chahiye"); return; }
+  const vehicle = document.getElementById('boyVehicle').value.trim();
+  const vehicleNo = document.getElementById('boyVehicleNo').value.trim().toUpperCase();
   const color = COLORS[deliveryBoys.length % COLORS.length];
   const newRef = push(ref(db, 'deliveryBoys'));
-  await set(newRef, { name, zone: zone || null, color, lat:null, lng:null, lastUpdate:null });
-  document.getElementById('boyName').value = '';
+  await set(newRef, { name, zone: zone || null, color, phone: phone || null, vehicle: vehicle || null, vehicleNo: vehicleNo || null, lat:null, lng:null, lastUpdate:null });
+  ['boyName','boyPhone','boyVehicle','boyVehicleNo'].forEach(id => document.getElementById(id).value = '');
   showToast("Delivery boy added!");
 });
 
@@ -2297,6 +2310,42 @@ window.deliverFromMap = (id) => { infoWindow.close(); openInfoFor = null; markCo
 window.reassignCustomer = async (id, bId) => { await update(ref(db, 'customers/' + id), { assignedTo: bId || null }); };
 window.setCustomerShift = async (id, shift) => { await update(ref(db, 'customers/' + id), { shift: shift==='evening'?'evening':'morning' }); };
 window.deleteCustomer = (id) => confirmAction("Delete customer?", async () => await remove(ref(db, 'customers/' + id)));
+// Returns '' if blank, a clean 10-digit string if valid, or null if invalid.
+function normalizePhone(raw){
+  let d = String(raw||'').replace(/\D/g,'');
+  if (!d) return '';
+  if (d.length === 12 && d.startsWith('91')) d = d.slice(2);
+  if (d.length === 11 && d.startsWith('0')) d = d.slice(1);
+  return d.length === 10 ? d : null;
+}
+window.openEditBoy = (id) => {
+  const b = deliveryBoys.find(x=>x.id===id);
+  if (!b) return;
+  document.getElementById('editBoyModalContent').innerHTML = `
+    <h3>✏️ Edit delivery boy</h3>
+    <div class="field"><label>Name</label><input id="ebName" type="text" value="${escapeHtml(b.name||'')}"></div>
+    <div class="field"><label>Phone no.</label><input id="ebPhone" type="tel" inputmode="numeric" maxlength="14" value="${escapeHtml(b.phone||'')}" placeholder="10-digit mobile"></div>
+    <div class="field"><label>Vehicle</label><input id="ebVehicle" type="text" value="${escapeHtml(b.vehicle||'')}" placeholder="e.g. Activa / Splendor"></div>
+    <div class="field"><label>Vehicle number</label><input id="ebVehicleNo" type="text" maxlength="14" value="${escapeHtml(b.vehicleNo||'')}" placeholder="e.g. DL 3S AB 1234" style="text-transform:uppercase;"></div>
+    <div class="hint" style="margin:-4px 0 14px;">Save karne ke baad customers ko ye phone aur vehicle detail unke app me dikhegi.</div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="closeModal('editBoyModal')">Cancel</button>
+      <button class="btn btn-primary" id="ebSaveBtn">Save</button>
+    </div>`;
+  const saveBtn = document.getElementById('ebSaveBtn');
+  saveBtn.onclick = withBtnLoading(saveBtn, async ()=>{
+    const name = document.getElementById('ebName').value.trim();
+    if (!name){ showToast("Name khali nahi ho sakta"); return; }
+    const phone = normalizePhone(document.getElementById('ebPhone').value);
+    if (phone === null){ showToast("Phone number 10 digit ka hona chahiye"); return; }
+    const vehicle = document.getElementById('ebVehicle').value.trim();
+    const vehicleNo = document.getElementById('ebVehicleNo').value.trim().toUpperCase();
+    await update(ref(db, 'deliveryBoys/' + id), { name, phone: phone || null, vehicle: vehicle || null, vehicleNo: vehicleNo || null });
+    closeModal('editBoyModal');
+    showToast("Delivery boy details saved!");
+  });
+  openModal('editBoyModal');
+};
 window.removeBoy = (id) => confirmAction("Remove delivery boy?", async () => await remove(ref(db, 'deliveryBoys/' + id)));
 window.deleteZone = (id) => confirmAction("Delete zone?", async () => await remove(ref(db, 'zones/' + id)));
 window.toggleNewBadge = async (id, checked) => {
@@ -2757,9 +2806,16 @@ function renderTeamList(){
       return `<div class="boy-card" style="cursor:default;">
             <div class="top">
               <div class="boy-name"><span class="boy-swatch" style="background:${b.color}"></span>${escapeHtml(b.name)}</div>
-              <button onclick="removeBoy('${b.id}')" class="btn btn-danger btn-sm">Remove</button>
+              <div style="display:flex; gap:6px;">
+                <button onclick="openEditBoy('${b.id}')" class="btn btn-ghost btn-sm">✏️ Edit</button>
+                <button onclick="removeBoy('${b.id}')" class="btn btn-danger btn-sm">Remove</button>
+              </div>
             </div>
             <div class="boy-mini-stats"><span><b>${mine.length}</b> assigned customers</span></div>
+            <div class="boy-mini-stats" style="margin-bottom:0;">
+              <span>📞 ${b.phone ? '<b>+91 ' + escapeHtml(b.phone) + '</b>' : '<i>phone not added</i>'}</span>
+              <span>🛵 ${b.vehicle || b.vehicleNo ? '<b>' + escapeHtml([b.vehicle, b.vehicleNo].filter(Boolean).join(' · ')) + '</b>' : '<i>vehicle not added</i>'}</span>
+            </div>
         </div>`;
     }).join('') : '<div class="empty-state">No delivery boys yet.</div>';
 }
